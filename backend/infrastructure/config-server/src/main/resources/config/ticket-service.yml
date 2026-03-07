@@ -1,0 +1,26 @@
+server:
+  port: 8085
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/alpha_ticket_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      # Tự động cập nhật bảng trong DB khi code Entity thay đổi (phù hợp lúc dev)
+      ddl-auto: update
+    # Hiển thị câu lệnh SQL thực thi dưới log để dễ debug
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # Dùng MySQLDialect để Hibernate biết cách sinh SQL phù hợp với MySQL
+        dialect: org.hibernate.dialect.MySQLDialect
+
+eureka:
+  client:
+    service-url:
+      # Nơi đăng ký với Eureka Server với tên là ticket-service
+      defaultZone: http://localhost:8761/eureka/

@@ -1,0 +1,8 @@
+server:
+  port: 8088 # Port chạy service AI
+
+eureka:
+  client:
+    service-url:
+      # Nơi đăng ký với Eureka Server với tên là ai-service
+      defaultZone: http://localhost:8761/eureka/

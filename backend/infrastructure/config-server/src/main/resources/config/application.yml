@@ -1,0 +1,11 @@
+spring:
+  jackson:
+    serialization:
+      # Định dạng ngày tháng về kiểu ISO-8601 (String) thay vì mảng số (Timestamps)
+      write-dates-as-timestamps: false
+
+eureka:
+  client:
+    service-url:
+      # Địa chỉ của Eureka Server để các microservice gửi thông tin đăng ký
+      defaultZone: http://localhost:8761/eureka/

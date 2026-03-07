@@ -1,0 +1,25 @@
+# Config Server là nơi cấu hình cho các service khác
+# Các service khác sẽ đăng ký với Eureka Server và lấy cấu hình từ Config Server
+# Config Server sẽ đọc cấu hình từ file .yml trong thư mục config
+
+server:
+  port: 8888 # Port mặc định của Config Server
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    # Sử dụng profile 'native' để đọc cấu hình từ file cục bộ (thay vì Git)
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # Thư mục chứa các file cấu hình (.yml) mà server này sẽ phục vụ
+          search-locations: classpath:/config
+
+eureka:
+  client:
+    service-url:
+      # Đăng ký chính Config Server với Eureka
+      defaultZone: http://localhost:8761/eureka/

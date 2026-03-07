@@ -1,0 +1,8 @@
+server:
+  port: 8087 # Port chạy service thông báo
+
+eureka:
+  client:
+    service-url:
+      # Nơi đăng ký với Eureka Server với tên là notification-service
+      defaultZone: http://localhost:8761/eureka/

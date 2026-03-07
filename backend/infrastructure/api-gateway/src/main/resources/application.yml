@@ -1,0 +1,54 @@
+# API Gateway là cổng vào của hệ thống
+# Nơi người dùng truy cập vào hệ thống
+# API Gateway sẽ là nơi định tuyến các request đến các microservice khác
+
+server:
+  port: 8080 # Port chạy của API Gateway, người dùng sẽ truy cập qua port này
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          # Cho phép Gateway tự động tìm các service đã đăng ký với Eureka
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Route cho dịch vụ quản lý rạp phim
+        - id: cinema-management-service
+          uri: lb://cinema-management-service # lb:// nghĩa là Load Balanced (sẽ tìm service qua Eureka)
+          predicates: # Điều kiện để route này được kích hoạt, ở đây là khi URL bắt đầu bằng /api/cinemas/**
+            - Path=/api/cinemas/**
+        # Route cho dịch vụ quản lý giá/vé
+        - id: ticket-service
+          uri: lb://ticket-service
+          predicates:
+            - Path=/api/tickets/**
+        # Route cho dịch vụ quản lý người dùng
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+        # Route cho dịch vụ quản lý sản phẩm (suất chiếu, phim, combo,...)
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+        # Route cho dịch vụ quản lý đơn hàng
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+        # Route cho dịch vụ thanh toán
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+
+eureka:
+  client:
+    service-url:
+      # Địa chỉ để Gateway đăng ký và lấy danh sách các microservice từ Eureka
+      defaultZone: http://localhost:8761/eureka/
