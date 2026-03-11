@@ -26,6 +26,13 @@ public class TicketController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<TicketPrice>> getTicketPriceById(@PathVariable String id) {
+        TicketPrice ticketPrice = ticketService.getTicketPriceById(id);
+        ApiResponse<TicketPrice> response = ApiResponse.success(ticketPrice, "Ticket price retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<TicketPrice>> createTicketPrice(@Valid @RequestBody CreateTicketPriceDto createTicketPriceDto) {
         TicketPrice createdPrice = ticketService.createTicketPrice(createTicketPriceDto);

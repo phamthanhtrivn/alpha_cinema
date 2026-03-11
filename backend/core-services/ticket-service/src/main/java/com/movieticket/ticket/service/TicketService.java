@@ -21,6 +21,11 @@ public class TicketService {
         return ticketRepository.getAllPrices(pageable);
     }
 
+    public TicketPrice getTicketPriceById(String id) {
+        return ticketRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Ticket price not found with id: " + id));
+    }
+
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
         boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
                 createTicketPriceDto.getSeatTypeId(),
