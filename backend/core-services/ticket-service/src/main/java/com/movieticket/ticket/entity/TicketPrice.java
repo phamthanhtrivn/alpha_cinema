@@ -1,5 +1,7 @@
 package com.movieticket.ticket.entity;
 
+import com.movieticket.ticket.enums.DayType;
+import com.movieticket.ticket.enums.ProjectionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,0 +1,31 @@
+package com.movieticket.ticket.dto;
+
+import com.movieticket.ticket.enums.DayType;
+import com.movieticket.ticket.enums.ProjectionType;
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class CreateTicketPriceDto {
+    @NotBlank(message = "Seat type ID is required")
+    private String seatTypeId;
+
+    @NotNull(message = "Projection type is required")
+    private ProjectionType projectionType;
+
+    @NotNull(message = "Day type is required")
+    private DayType dayType;
+
+    @NotNull(message = "Price is required")
+    @Min(value = 30000, message = "Price must be at least 30,000")
+    @Max(value = 200000, message = "Price must be at most 200,000")
+    private Double price;
+}
