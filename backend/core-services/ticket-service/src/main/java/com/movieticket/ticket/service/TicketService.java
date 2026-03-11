@@ -1,6 +1,7 @@
 package com.movieticket.ticket.service;
 
 import com.movieticket.ticket.dto.CreateTicketPriceDto;
+import com.movieticket.ticket.dto.UpdateTicketPriceDto;
 import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.exception.BusinessException;
 import com.movieticket.ticket.repository.TicketRepository;
@@ -51,5 +52,27 @@ public class TicketService {
     public void deleteTicketPrice(String id) {
         TicketPrice ticketPrice = getTicketPriceById(id);
         ticketRepository.delete(ticketPrice);
+    }
+
+    public TicketPrice updateTicketPrice(String id, UpdateTicketPriceDto updateDto) {
+        TicketPrice existingPrice = getTicketPriceById(id);
+
+        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
+                updateDto.getSeatTypeId(),
+                updateDto.getProjectionType(),
+                updateDto.getDayType()
+        );
+
+        if (exists && !existingPrice.getId().equals(id)) {
+            throw new BusinessException("Another ticket price already exists for the given seat type, projection type, and day type");
+        }
+
+        existingPrice.setSeatTypeId(updateDto.getSeatTypeId());
+        existingPrice.setProjectionType(updateDto.getProjectionType());
+        existingPrice.setDayType(updateDto.getDayType());
+        existingPrice.setPrice(updateDto.getPrice());
+        existingPrice.setStatus(updateDto.isStatus());
+
+        return ticketRepository.save(existingPrice);
     }
 }

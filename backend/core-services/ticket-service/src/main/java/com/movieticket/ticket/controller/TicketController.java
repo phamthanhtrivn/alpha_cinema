@@ -2,6 +2,7 @@ package com.movieticket.ticket.controller;
 
 import com.movieticket.ticket.common.ApiResponse;
 import com.movieticket.ticket.dto.CreateTicketPriceDto;
+import com.movieticket.ticket.dto.UpdateTicketPriceDto;
 import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.service.TicketService;
 import jakarta.validation.Valid;
@@ -44,6 +45,15 @@ public class TicketController {
     public ResponseEntity<ApiResponse<Void>> deleteTicketPrice(@PathVariable String id) {
         ticketService.deleteTicketPrice(id);
         ApiResponse<Void> response = ApiResponse.success(null, "Ticket price deleted successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TicketPrice>> updateTicketPrice(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateTicketPriceDto updateDto) {
+        TicketPrice updatedPrice = ticketService.updateTicketPrice(id, updateDto);
+        ApiResponse<TicketPrice> response = ApiResponse.success(updatedPrice, "Ticket price updated successfully");
         return ResponseEntity.ok(response);
     }
 }

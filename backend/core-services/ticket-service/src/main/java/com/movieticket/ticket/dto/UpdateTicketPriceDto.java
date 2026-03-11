@@ -2,7 +2,10 @@ package com.movieticket.ticket.dto;
 
 import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.enums.ProjectionType;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +15,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateTicketPriceDto {
+public class UpdateTicketPriceDto {
     @NotBlank(message = "Seat type ID is required")
     private String seatTypeId;
 
@@ -26,4 +29,7 @@ public class CreateTicketPriceDto {
     @Min(value = 30000, message = "Price must be at least 30,000")
     @Max(value = 500000, message = "Price must be at most 500,000")
     private Double price;
+
+    private boolean status;
 }
+
