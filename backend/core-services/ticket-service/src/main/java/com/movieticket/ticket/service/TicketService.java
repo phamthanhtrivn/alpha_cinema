@@ -6,6 +6,8 @@ import com.movieticket.ticket.exception.BusinessException;
 import com.movieticket.ticket.repository.TicketRepository;
 import com.movieticket.ticket.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +16,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TicketService {
     private final TicketRepository ticketRepository;
+
+    public Page<TicketPrice> getAllTicketPrices(Pageable pageable) {
+        return ticketRepository.getAllPrices(pageable);
+    }
 
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
         boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(

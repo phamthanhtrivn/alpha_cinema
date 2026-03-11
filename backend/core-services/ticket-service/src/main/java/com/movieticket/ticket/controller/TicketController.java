@@ -6,17 +6,25 @@ import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
 public class TicketController {
     private final TicketService ticketService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<TicketPrice>>> getAllTicketPrices(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<TicketPrice> ticketPrices = ticketService.getAllTicketPrices(PageRequest.of(page, size));
+        ApiResponse<Page<TicketPrice>> response = ApiResponse.success(ticketPrices, "Ticket prices retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<TicketPrice>> createTicketPrice(@Valid @RequestBody CreateTicketPriceDto createTicketPriceDto) {

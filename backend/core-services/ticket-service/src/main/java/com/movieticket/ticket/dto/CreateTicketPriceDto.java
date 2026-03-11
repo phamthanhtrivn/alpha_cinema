@@ -26,6 +26,6 @@ public class CreateTicketPriceDto {
 
     @NotNull(message = "Price is required")
     @Min(value = 30000, message = "Price must be at least 30,000")
-    @Max(value = 200000, message = "Price must be at most 200,000")
+    @Max(value = 500000, message = "Price must be at most 500,000")
     private Double price;
 }
