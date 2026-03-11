@@ -48,5 +48,8 @@ public class TicketService {
         return ticketRepository.save(ticketPrice);
     }
 
-
+    public void deleteTicketPrice(String id) {
+        TicketPrice ticketPrice = getTicketPriceById(id);
+        ticketRepository.delete(ticketPrice);
+    }
 }

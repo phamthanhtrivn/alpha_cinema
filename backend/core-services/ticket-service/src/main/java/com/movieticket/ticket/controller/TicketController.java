@@ -39,4 +39,11 @@ public class TicketController {
         ApiResponse<TicketPrice> response = ApiResponse.success(createdPrice, "Ticket price created successfully");
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTicketPrice(@PathVariable String id) {
+        ticketService.deleteTicketPrice(id);
+        ApiResponse<Void> response = ApiResponse.success(null, "Ticket price deleted successfully");
+        return ResponseEntity.ok(response);
+    }
 }
