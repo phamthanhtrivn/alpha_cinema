@@ -1,0 +1,73 @@
+package com.movieticket.ticket.service;
+
+import com.movieticket.ticket.dto.CreateHolidayDto;
+import com.movieticket.ticket.dto.UpdateHolidayDto;
+import com.movieticket.ticket.entity.Holiday;
+import com.movieticket.ticket.exception.BusinessException;
+import com.movieticket.ticket.repository.HolidayRepository;
+import com.movieticket.ticket.util.IdGenerator;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class HolidayService {
+    private final HolidayRepository holidayRepository;
+
+    public Page<Holiday> getAllHolidays(Pageable pageable) {
+        return holidayRepository.getAllHolidays(pageable);
+    }
+
+    public Holiday getHolidayById(String id) {
+        return holidayRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Holiday not found with id: " + id));
+    }
+
+    public Holiday createHoliday(CreateHolidayDto createHolidayDto) {
+        if (holidayRepository.existsByStartDateAndEndDate(createHolidayDto.getStartDate(), createHolidayDto.getEndDate())) {
+            throw new BusinessException("A holiday already exists for the given date range");
+        }
+
+        if (createHolidayDto.getStartDate().isAfter(createHolidayDto.getEndDate())) {
+            throw new BusinessException("Start date cannot be after end date");
+        }
+
+        Holiday holiday = new Holiday();
+        holiday.setId(IdGenerator.generateHolidayId());
+        holiday.setName(createHolidayDto.getName());
+        holiday.setStartDate(createHolidayDto.getStartDate());
+        holiday.setEndDate(createHolidayDto.getEndDate());
+        holiday.setDescription(createHolidayDto.getDescription());
+        holiday.setStatus(true);
+
+        return holidayRepository.save(holiday);
+    }
+
+    public void deleteHoliday(String id) {
+        Holiday holiday = getHolidayById(id);
+        holidayRepository.delete(holiday);
+    }
+
+    public Holiday updateHoliday(String id, UpdateHolidayDto updateHolidayDto) {
+        Holiday existingHoliday = getHolidayById(id);
+
+        if (holidayRepository.existsByStartDateAndEndDate(updateHolidayDto.getStartDate(), updateHolidayDto.getEndDate())) {
+            throw new BusinessException("A holiday already exists for the given date range");
+        }
+
+        if (updateHolidayDto.getStartDate().isAfter(updateHolidayDto.getEndDate())) {
+            throw new BusinessException("Start date cannot be after end date");
+        }
+
+        existingHoliday.setName(updateHolidayDto.getName());
+        existingHoliday.setStartDate(updateHolidayDto.getStartDate());
+        existingHoliday.setEndDate(updateHolidayDto.getEndDate());
+        existingHoliday.setDescription(updateHolidayDto.getDescription());
+        existingHoliday.setStatus(updateHolidayDto.isStatus());
+
+        return holidayRepository.save(existingHoliday);
+    }
+
+}

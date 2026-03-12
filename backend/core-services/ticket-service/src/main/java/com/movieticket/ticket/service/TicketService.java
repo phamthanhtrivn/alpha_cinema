@@ -1,22 +1,24 @@
 package com.movieticket.ticket.service;
 
 import com.movieticket.ticket.dto.CreateTicketPriceDto;
+import com.movieticket.ticket.dto.DetermineTicketPriceDto;
 import com.movieticket.ticket.dto.UpdateTicketPriceDto;
 import com.movieticket.ticket.entity.TicketPrice;
+import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.exception.BusinessException;
 import com.movieticket.ticket.repository.TicketRepository;
+import com.movieticket.ticket.util.DayTypeResolver;
 import com.movieticket.ticket.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class TicketService {
     private final TicketRepository ticketRepository;
+    private final DayTypeResolver dayTypeResolver;
 
     public Page<TicketPrice> getAllTicketPrices(Pageable pageable) {
         return ticketRepository.getAllPrices(pageable);
@@ -63,7 +65,7 @@ public class TicketService {
                 updateDto.getDayType()
         );
 
-        if (exists && !existingPrice.getId().equals(id)) {
+        if (exists) {
             throw new BusinessException("Another ticket price already exists for the given seat type, projection type, and day type");
         }
 
@@ -74,5 +76,22 @@ public class TicketService {
         existingPrice.setStatus(updateDto.isStatus());
 
         return ticketRepository.save(existingPrice);
+    }
+
+    public TicketPrice resolveTicketPrice(DetermineTicketPriceDto determineDto) {
+        DayType dayType = dayTypeResolver.resolveDayType(determineDto.getShowTime());
+
+        TicketPrice ticketPrice = ticketRepository.findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(
+                determineDto.getSeatTypeId(),
+                determineDto.getProjectionType(),
+                dayType,
+                true
+        );
+
+        if (ticketPrice == null) {
+            throw new BusinessException("No active ticket price found for the given criteria");
+        }
+
+        return ticketPrice;
     }
 }

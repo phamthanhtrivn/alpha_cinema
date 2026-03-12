@@ -17,4 +17,6 @@ public interface TicketRepository extends JpaRepository<TicketPrice, String> {
             "FROM TicketPrice tp " +
             "ORDER BY tp.seatTypeId, tp.projectionType, tp.dayType")
     Page<TicketPrice> getAllPrices(Pageable pageable);
+
+    TicketPrice findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(String seatTypeId, ProjectionType projectionType, DayType dayType, boolean status);
 }

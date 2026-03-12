@@ -1,13 +1,26 @@
 package com.movieticket.ticket.util;
 
 import com.movieticket.ticket.enums.DayType;
+import com.movieticket.ticket.repository.HolidayRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class DayResolver {
+@Service
+@RequiredArgsConstructor
+public class DayTypeResolver {
+    private final HolidayRepository holidayRepository;
 
-    public static DayType resolveDayType(LocalDateTime showTime) {
+    public DayType resolveDayType(LocalDateTime showTime) {
+        LocalDate date = showTime.toLocalDate();
+
+        if (holidayRepository.isHoliday(date)) {
+            return DayType.HOLIDAY;
+        }
+
         DayOfWeek dayOfWeek = showTime.getDayOfWeek();
         int hour = showTime.getHour();
 

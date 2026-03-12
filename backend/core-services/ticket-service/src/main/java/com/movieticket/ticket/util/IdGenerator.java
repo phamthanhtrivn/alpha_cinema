@@ -8,4 +8,7 @@ public class IdGenerator {
         return "TP" + UUID.randomUUID().toString().substring(0, 10);
     }
 
+    public static String generateHolidayId() {
+        return "HD" + UUID.randomUUID().toString().substring(0, 10);
+    }
 }
