@@ -23,10 +23,7 @@ public class Combo {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ElementCollection
-    @CollectionTable(name = "combo_pictures", joinColumns = @JoinColumn(name = "combo_id"))
-    @Column(name = "picture_url")
-    private List<String> pictures;
+    private String pictureUrl;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

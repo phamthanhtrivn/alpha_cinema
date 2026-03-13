@@ -1,5 +1,6 @@
 package com.movieticket.user.entity;
 
+import com.movieticket.user.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;

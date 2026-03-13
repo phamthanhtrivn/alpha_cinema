@@ -1,4 +1,4 @@
-package com.movieticket.product.entity;
+package com.movieticket.product.enums;
 
 public enum TranslationType {
   SUBTITLES, VOICE_OVER, DUBBING

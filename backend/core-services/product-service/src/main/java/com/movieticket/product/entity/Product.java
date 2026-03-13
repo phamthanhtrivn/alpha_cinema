@@ -14,16 +14,12 @@ import java.util.List;
 @Builder
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     private String name;
     private double unitPrice;
 
-    @ElementCollection
-    @CollectionTable(name = "product_pictures", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "picture_url")
-    private List<String> pictures;
+    private String pictureUrl;
 
     @Column(columnDefinition = "TEXT")
     private String description;

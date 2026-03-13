@@ -1,4 +1,4 @@
-package com.movieticket.product.entity;
+package com.movieticket.product.enums;
 
 public enum ArtistType {
   ACTOR, DIRECTOR
