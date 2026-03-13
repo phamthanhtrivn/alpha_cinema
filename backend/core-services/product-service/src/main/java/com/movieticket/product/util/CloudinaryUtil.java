@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class CloudinaryUtil {
                         file.getBytes(),
                         Map.of(
                                 "folder", "alpha-cinema",
-                                "public_id", fileName,
+                                "public_id", UUID.randomUUID() + "_" + fileName.substring(0, fileName.lastIndexOf(".")),
                                 "resource_type", "image",
                                 "overwrite", true
                         )
@@ -52,9 +53,9 @@ public class CloudinaryUtil {
     }
 
     private String extractPublicId(String url) {
-        // filename.jpg
-        String filename = url.substring(url.lastIndexOf("/") + 1);
-        // filename
-        return filename.substring(0, filename.lastIndexOf("."));
+        // alpha-cinema/abc123_avatar.png
+        String path = url.substring(url.indexOf("alpha-cinema"));
+        // alpha-cinema/abc123_avatar
+        return path.substring(0, path.lastIndexOf("."));
     }
 }
