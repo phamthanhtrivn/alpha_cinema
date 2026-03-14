@@ -1,5 +1,6 @@
 package com.movieticket.product.entity;
 
+import com.movieticket.product.enums.ProductType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,8 @@ public class Product {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+    @Enumerated(EnumType.STRING)
+    private ProductType type;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

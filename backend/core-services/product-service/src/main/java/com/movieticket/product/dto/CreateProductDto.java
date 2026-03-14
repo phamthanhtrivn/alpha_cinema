@@ -1,5 +1,6 @@
 package com.movieticket.product.dto;
 
+import com.movieticket.product.enums.ProductType;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,4 +21,6 @@ public class CreateProductDto {
     private double unitPrice;
 
     private String description;
+    @NotNull(message = "Product type is required")
+    private ProductType type;
 }

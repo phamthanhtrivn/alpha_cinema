@@ -44,6 +44,7 @@ public class ProductService {
         product.setName(createProductDto.getName());
         product.setUnitPrice(createProductDto.getUnitPrice());
         product.setDescription(createProductDto.getDescription());
+        product.setType(createProductDto.getType());
         product.setPictureUrl(pictureUrl);
         product.setStatus(true);
 
@@ -72,6 +73,7 @@ public class ProductService {
         product.setName(updateProductDto.getName());
         product.setUnitPrice(updateProductDto.getUnitPrice());
         product.setDescription(updateProductDto.getDescription());
+        product.setType(updateProductDto.getType() );
         product.setStatus(updateProductDto.isStatus());
 
         return productRepository.save(product);

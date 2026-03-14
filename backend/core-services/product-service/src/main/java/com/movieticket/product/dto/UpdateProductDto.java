@@ -1,5 +1,6 @@
 package com.movieticket.product.dto;
 
+import com.movieticket.product.enums.ProductType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -23,5 +24,7 @@ public class UpdateProductDto {
     private double unitPrice;
 
     private String description;
+    @NotNull(message = "Product type is required")
+    private ProductType type;
     private boolean status;
 }
