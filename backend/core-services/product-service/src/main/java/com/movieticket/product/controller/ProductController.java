@@ -2,6 +2,7 @@ package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.CreateProductDto;
+import com.movieticket.product.dto.SearchProductDto;
 import com.movieticket.product.dto.UpdateProductDto;
 import com.movieticket.product.entity.Product;
 import com.movieticket.product.service.ProductService;
@@ -23,9 +24,10 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Product>>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Page<Product> products = productService.getAllProducts(PageRequest.of(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute SearchProductDto searchProductDto
+            ) {
+        Page<Product> products = productService.searchProducts(PageRequest.of(page, size), searchProductDto);
         ApiResponse<Page<Product>> response = ApiResponse.success(products, "Products retrieved successfully");
         return ResponseEntity.ok(response);
     }
@@ -64,4 +66,5 @@ public class ProductController {
         ApiResponse<Product> response = ApiResponse.success(updatedProduct, "Product updated successfully");
         return ResponseEntity.ok(response);
     }
+
 }
