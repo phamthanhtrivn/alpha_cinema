@@ -1,6 +1,7 @@
 package com.movieticket.ticket.service;
 
 import com.movieticket.ticket.dto.CreateHolidayDto;
+import com.movieticket.ticket.dto.SearchHolidayDto;
 import com.movieticket.ticket.dto.UpdateHolidayDto;
 import com.movieticket.ticket.entity.Holiday;
 import com.movieticket.ticket.exception.BusinessException;
@@ -16,8 +17,17 @@ import org.springframework.stereotype.Service;
 public class HolidayService {
     private final HolidayRepository holidayRepository;
 
-    public Page<Holiday> getAllHolidays(Pageable pageable) {
-        return holidayRepository.getAllHolidays(pageable);
+    public Page<Holiday> getAllHolidays(SearchHolidayDto searchHolidayDto, Pageable pageable) {
+        return holidayRepository.getAllHolidays(
+                searchHolidayDto.getId(),
+                searchHolidayDto.getName(),
+                searchHolidayDto.getStartDateFrom(),
+                searchHolidayDto.getStartDateTo(),
+                searchHolidayDto.getEndDateFrom(),
+                searchHolidayDto.getEndDateTo(),
+                searchHolidayDto.getStatus(),
+                pageable
+        );
     }
 
     public Holiday getHolidayById(String id) {

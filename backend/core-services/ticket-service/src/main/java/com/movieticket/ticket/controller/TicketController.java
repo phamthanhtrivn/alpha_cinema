@@ -71,8 +71,10 @@ public class TicketController {
     @GetMapping("/holidays")
     public ResponseEntity<ApiResponse<Page<Holiday>>> getHolidays(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Page<Holiday> holidays = holidayService.getAllHolidays(PageRequest.of(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute SearchHolidayDto searchHolidayDto
+    ) {
+        Page<Holiday> holidays = holidayService.getAllHolidays(searchHolidayDto, PageRequest.of(page, size));
         ApiResponse<Page<Holiday>> response = ApiResponse.success(holidays, "Holidays retrieved successfully");
         return ResponseEntity.ok(response);
     }
