@@ -23,8 +23,10 @@ public class TicketController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<TicketPrice>>> getAllTicketPrices(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Page<TicketPrice> ticketPrices = ticketService.getAllTicketPrices(PageRequest.of(page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute SearchTicketPriceDto searchDto
+            ) {
+        Page<TicketPrice> ticketPrices = ticketService.getAllTicketPrices(searchDto, PageRequest.of(page, size));
         ApiResponse<Page<TicketPrice>> response = ApiResponse.success(ticketPrices, "Ticket prices retrieved successfully");
         return ResponseEntity.ok(response);
     }

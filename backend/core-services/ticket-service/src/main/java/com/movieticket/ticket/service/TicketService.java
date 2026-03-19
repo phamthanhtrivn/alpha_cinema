@@ -2,6 +2,7 @@ package com.movieticket.ticket.service;
 
 import com.movieticket.ticket.dto.CreateTicketPriceDto;
 import com.movieticket.ticket.dto.DetermineTicketPriceDto;
+import com.movieticket.ticket.dto.SearchTicketPriceDto;
 import com.movieticket.ticket.dto.UpdateTicketPriceDto;
 import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.enums.DayType;
@@ -20,8 +21,17 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final DayTypeResolver dayTypeResolver;
 
-    public Page<TicketPrice> getAllTicketPrices(Pageable pageable) {
-        return ticketRepository.getAllPrices(pageable);
+    public Page<TicketPrice> getAllTicketPrices(SearchTicketPriceDto searchTicketPriceDto, Pageable pageable) {
+        return ticketRepository.getAllPrices(
+                searchTicketPriceDto.getId(),
+                searchTicketPriceDto.getSeatTypeId(),
+                searchTicketPriceDto.getProjectionType(),
+                searchTicketPriceDto.getDayType(),
+                searchTicketPriceDto.getMinPrice(),
+                searchTicketPriceDto.getMaxPrice(),
+                searchTicketPriceDto.getStatus(),
+                pageable
+        );
     }
 
     public TicketPrice getTicketPriceById(String id) {
