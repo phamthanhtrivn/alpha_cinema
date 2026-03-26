@@ -8,15 +8,15 @@ import {
 } from "@/components/ui/select"
 
 interface FilterSelectProps {
-  label: string;
-  options: { label: string; value: string }[];
+  placeholder: string;
+  options: string[];
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
 }
 
-const FilterSelect: React.FC<FilterSelectProps> = ({
-  label,
+export const FilterSelect: React.FC<FilterSelectProps> = ({
+  placeholder,
   options,
   value,
   onChange,
@@ -24,19 +24,18 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
 }) => {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full bg-white border-slate-200 rounded-lg h-9 text-xs font-bold text-slate-600 focus:ring-sky-400 focus:ring-offset-0 shadow-none">
-          <SelectValue placeholder={`Chọn ${label}`} />
+        <SelectTrigger className="w-full bg-white/50 border-slate-100 rounded-2xl h-11 text-xs font-bold text-slate-600 focus:ring-4 focus:ring-sky-500/5 focus:border-sky-500/20 transition-all shadow-sm">
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+        <SelectContent className="rounded-2xl border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.08)] bg-white/95 backdrop-blur-sm p-1">
           {options.map((opt) => (
             <SelectItem
-              key={opt.value}
-              value={opt.value}
-              className="text-xs font-bold text-slate-600 focus:bg-sky-50 focus:text-sky-600 rounded-lg"
+              key={opt}
+              value={opt}
+              className="text-xs font-bold text-slate-600 focus:bg-sky-50 focus:text-sky-600 rounded-xl py-2.5 transition-colors"
             >
-              {opt.label}
+              {opt}
             </SelectItem>
           ))}
         </SelectContent>
@@ -44,5 +43,3 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
     </div>
   );
 };
-
-export default FilterSelect;
