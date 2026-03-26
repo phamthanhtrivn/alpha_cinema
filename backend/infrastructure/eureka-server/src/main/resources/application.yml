@@ -13,3 +13,7 @@ eureka:
   server:
     # Thời gian server chờ để đồng bộ hóa dữ liệu nếu registry đang trống (set = 0 để dev cho nhanh)
     wait-time-in-ms-when-sync-empty: 0
+    # Tắt chế độ tự bảo vệ để tránh tình trạng service bị đánh dấu là down khi có sự cố mạng hoặc khi service thực sự down (để dev cho nhanh)
+    enable-self-preservation: false
+    # Khoảng thời gian để server thực hiện việc dọn dẹp các instance đã bị đánh dấu là down
+    eviction-interval-timer-in-ms: 5000

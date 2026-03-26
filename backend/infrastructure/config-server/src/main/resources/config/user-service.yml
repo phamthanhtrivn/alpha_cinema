@@ -24,3 +24,6 @@ eureka:
     service-url:
       # Nơi đăng ký với Eureka Server với tên là user-service
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    # Sử dụng IP thay vì hostname để đăng ký với Eureka, giúp tránh lỗi khi hostname không phân giải được
+    prefer-ip-address: true

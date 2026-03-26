@@ -1,5 +1,6 @@
 package com.movieticket.product.entity;
 
+import com.movieticket.product.enums.ArtistType;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,5 +1,8 @@
 package com.movieticket.product.entity;
 
+import com.movieticket.product.enums.ProjectionType;
+import com.movieticket.product.enums.ReleaseStatus;
+import com.movieticket.product.enums.TranslationType;
 import jakarta.persistence.*;
 import lombok.*;
 

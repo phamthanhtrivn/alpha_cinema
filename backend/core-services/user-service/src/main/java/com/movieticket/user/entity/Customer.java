@@ -1,5 +1,6 @@
 package com.movieticket.user.entity;
 
+import com.movieticket.user.enums.CustomerType;
 import jakarta.persistence.*;
 import lombok.*;
 
