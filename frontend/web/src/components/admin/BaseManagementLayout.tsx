@@ -111,7 +111,7 @@ const BaseManagementLayout: React.FC<BaseManagementLayoutProps> = ({
               size="sm"
               onClick={() => onPageChange?.(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
+              className="cursor-pointer h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
             >
               <ChevronLeft size={18} />
             </Button>
@@ -138,7 +138,7 @@ const BaseManagementLayout: React.FC<BaseManagementLayoutProps> = ({
               size="sm"
               onClick={() => onPageChange?.(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100 cursor-pointer"
+              className="cursor-pointer h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100 cursor-pointer"
             >
               <ChevronRight size={18} />
             </Button>

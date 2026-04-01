@@ -1,27 +1,17 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import axios from 'axios';
 
-// Define a service using a base URL and expected endpoints
-export const alphaApi = createApi({
-  reducerPath: 'alphaApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_BACKEND_API_URL,
-    prepareHeaders: (headers) => {
-      // Typically we'd get the token from the store here
-      // const token = (getState() as RootState).auth.token
-      // if (token) {
-      //   headers.set('authorization', `Bearer ${token}`)
-      // }
-      return headers;
-    },
-  }),
-  tagTypes: ['Movies', 'Users', 'Tickets'],
-  endpoints: (builder) => ({
-    // Placeholder endpoints
-    getMovies: builder.query<any[], void>({
-      query: () => '/movies',
-      providesTags: ['Movies'],
-    }),
-  }),
-});
+export const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  }
+})
 
-export const { useGetMoviesQuery } = alphaApi;
+// Add interceptors for token handling if needed later
+// apiClient.interceptors.request.use((config) => {
+//   const token = localStorage.getItem("token");
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// });
