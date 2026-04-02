@@ -1,11 +1,8 @@
-import axios from 'axios';
+import axios from "axios";
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  }
-})
+});
 
 // Add interceptors for token handling if needed later
 // apiClient.interceptors.request.use((config) => {

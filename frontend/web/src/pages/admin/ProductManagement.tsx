@@ -15,6 +15,11 @@ import type { ProductFilterParams, ProductType } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterSelect } from "@/components/admin/FilterSelect";
+import BaseFormModal, {
+  type FieldConfig,
+} from "@/components/admin/BaseFormModal";
+import Swal from "sweetalert2";
+import ViewModal from "@/components/admin/ViewModal";
 
 const ProductManagement: React.FC = () => {
   const pageSize = 5;
@@ -23,6 +28,21 @@ const ProductManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    unitPrice: "",
+    description: "",
+    type: "SINGLE",
+    imageFile: null,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewData, setViewData] = useState<any>(null);
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [filters, setFilters] = useState<ProductFilterParams>({
@@ -62,7 +82,7 @@ const ProductManagement: React.FC = () => {
       if (res.success) {
         setProducts(res.data.content);
         setTotalItems(res.data.totalElements);
-      } else {  
+      } else {
         toast.error(res.message || "Error fetching products");
       }
     } catch (error) {
@@ -85,6 +105,119 @@ const ProductManagement: React.FC = () => {
     setFilters(reset);
     setAppliedFilters(reset);
     setCurrentPage(1);
+  };
+
+  const handleFormChange = (name: string, value: any) => {
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCancelForm = () => {
+    setForm({
+      name: "",
+      unitPrice: "",
+      description: "",
+      type: "SINGLE",
+      imageFile: null,
+    });
+    setIsAddOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setLoadingSubmit(true);
+      setErrors({});
+
+      const formPayload = new FormData();
+
+      const product = {
+        name: form.name,
+        unitPrice: Number(form.unitPrice),
+        description: form.description,
+        type: form.type,
+      };
+
+      const productBlob = new Blob([JSON.stringify(product)], {
+        type: "application/json",
+      });
+
+      formPayload.append("product", productBlob);
+
+      if (form.imageFile) {
+        formPayload.append("imageFile", form.imageFile);
+      }
+
+      const res = await productService.addProduct(formPayload);
+
+      if (res.success) {
+        toast.success("Thêm sản phẩm thành công");
+        handleFetchProducts();
+
+        setForm({
+          name: "",
+          unitPrice: "",
+          description: "",
+          type: "SINGLE",
+          imageFile: null,
+        });
+        setIsAddOpen(false);
+      }
+    } catch (err: any) {
+      const data = err.response?.data;
+      if (!data) {
+        toast.error("Server không phản hồi!");
+        return;
+      }
+      if (data.errors) {
+        setErrors(data.errors);
+        return;
+      }
+
+      if (data.message) {
+        toast.error(data.message);
+        return;
+      }
+
+      toast.error("Thiếu thông tin sản phẩm!");
+    } finally {
+      setLoadingSubmit(false);
+    }
+  };
+
+  const handleView = (product: any) => {
+    setViewData(product);
+    setIsViewOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    Swal.fire({
+      title: "Bạn có muốn xóa sản phẩm này?",
+      text: "Bạn sẽ không thể khôi phục lại sản phẩm này!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await productService.deleteProduct(id);
+
+          if (res.success) {
+            toast.success("Product deleted successfully");
+            handleFetchProducts();
+          } else {
+            toast.error(res.message || "Error deleting product");
+          }
+        } catch (error) {
+          console.log(error);
+          toast.error("Error deleting product");
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -231,11 +364,112 @@ const ProductManagement: React.FC = () => {
     </div>
   );
 
+  const productFields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Tên sản phẩm",
+      type: "text",
+      placeholder: "Nhập tên...",
+    },
+    {
+      name: "unitPrice",
+      label: "Giá",
+      type: "number",
+      placeholder: "Nhập giá...",
+    },
+    {
+      name: "type",
+      label: "Loại",
+      type: "select",
+      options: [
+        { label: "SINGLE", value: "SINGLE" },
+        { label: "COMBO", value: "COMBO" },
+      ],
+    },
+    {
+      name: "imageFile",
+      label: "Ảnh sản phẩm",
+      type: "file",
+      preview: true,
+    },
+    {
+      name: "description",
+      label: "Mô tả",
+      type: "textarea",
+      placeholder: "Nhập mô tả...",
+    },
+  ];
+
+  const productViewFields = [
+    {
+      key: "id",
+      label: "Mã sản phẩm",
+    },
+    {
+      key: "name",
+      label: "Tên sản phẩm",
+    },
+    {
+      key: "unitPrice",
+      label: "Giá",
+      render: (val: number) => val?.toLocaleString("vi-VN") + " ₫",
+    },
+    {
+      key: "type",
+      label: "Loại",
+      render: (val: string) => (val === "SINGLE" ? "Sản phẩm lẻ" : "Combo"),
+    },
+    {
+      key: "pictureUrl",
+      label: "Ảnh sản phẩm",
+      render: (val: string) =>
+        val ? (
+          <img
+            src={val}
+            alt="product"
+            className="w-24 h-24 object-cover rounded-md border"
+          />
+        ) : (
+          "Không có ảnh"
+        ),
+    },
+    {
+      key: "description",
+      label: "Mô tả",
+      render: (val: string) => val || "Không có mô tả",
+    },
+    {
+      key: "createdAt",
+      label: "Ngày tạo",
+      render: (val: string) =>
+        val ? new Date(val).toLocaleString("vi-VN") : "-",
+    },
+    {
+      key: "updatedAt",
+      label: "Ngày cập nhật",
+      render: (val: string) =>
+        val ? new Date(val).toLocaleString("vi-VN") : "-",
+    },
+    {
+      key: "status",
+      label: "Trạng thái",
+      render: (val: boolean) => (
+        <span
+          className={`px-2 py-1 rounded text-xs font-medium ${
+            val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+          }`}
+        >
+          {val ? "Hoạt động" : "Ngừng"}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <BaseManagementLayout
       title="Quản lý Sản phẩm"
       subtitle="Quản lý bắp, nước, combo và các dịch vụ đi kèm."
-      onAdd={() => console.log("Add product")}
+      onAdd={() => setIsAddOpen(true)}
       addLabel="THÊM SẢN PHẨM"
       totalItems={totalItems}
       currentPage={currentPage}
@@ -251,6 +485,28 @@ const ProductManagement: React.FC = () => {
         </ManagementFilterBar>
       }
     >
+      <BaseFormModal
+        mode="add"
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        title="Thêm sản phẩm"
+        fields={productFields}
+        values={form}
+        onChange={handleFormChange}
+        onSubmit={handleSubmit}
+        onCancel={handleCancelForm}
+        errors={errors}
+        loading={loadingSubmit}
+      />
+
+      <ViewModal
+        open={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Chi tiết sản phẩm"
+        data={viewData}
+        fields={productViewFields}
+      />
+
       <ManagementTable
         headers={["Sản phẩm", "Giá", "Loại", "Trạng thái", "Hành động"]}
         isLoading={loading}
@@ -304,9 +560,9 @@ const ProductManagement: React.FC = () => {
             {/* Actions */}
             <TableCell className="px-6 py-4 text-right">
               <TableActions
-                onView={() => console.log(product)}
+                onView={() => handleView(product)}
                 onEdit={() => console.log("edit", product.id)}
-                onDelete={() => console.log("delete", product.id)}
+                onDelete={() => handleDelete(product.id)}
               />
             </TableCell>
           </TableRow>
