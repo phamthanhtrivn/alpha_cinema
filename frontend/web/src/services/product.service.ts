@@ -16,4 +16,8 @@ export const productService = {
     const response = await apiClient.delete(`/products/${id}`);
     return response.data;
   },
+  updateProduct: async (id: string, data: FormData) => {
+    const response = await apiClient.put(`/products/${id}`, data);
+    return response.data;
+  }
 };

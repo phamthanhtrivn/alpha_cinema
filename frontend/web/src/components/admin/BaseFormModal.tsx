@@ -143,12 +143,15 @@ const BaseFormModal: React.FC<Props> = ({
             />
 
             {field.preview && values[field.name] && (
-              <div className="mt-2 relative w-fit">
+              <div
+                className="mt-2 relative w-fit"
+                key={values[field.name]?.toString()}
+              >
                 <img
                   src={
-                    typeof values[field.name] === "string"
-                      ? values[field.name]
-                      : URL.createObjectURL(values[field.name])
+                    values[field.name] instanceof File
+                      ? URL.createObjectURL(values[field.name])
+                      : values[field.name]
                   }
                   className="w-32 h-32 object-cover rounded-xl border"
                 />
@@ -213,21 +216,21 @@ const BaseFormModal: React.FC<Props> = ({
           </Button>
 
           <Button
-              className="bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
-              onClick={onSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin" />
-                  <span>Đang xử lý...</span>
-                </div>
-              ) : mode === "add" ? (
-                "Thêm mới"
-              ) : (
-                "Cập nhật"
-              )}
-            </Button>
+            className="bg-sky-500 hover:bg-sky-600 text-white cursor-pointer"
+            onClick={onSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="animate-spin" />
+                <span>Đang xử lý...</span>
+              </div>
+            ) : mode === "add" ? (
+              "Thêm mới"
+            ) : (
+              "Cập nhật"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

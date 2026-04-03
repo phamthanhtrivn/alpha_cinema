@@ -40,6 +40,17 @@ const ProductManagement: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [updateForm, setUpdateForm] = useState({
+    name: "",
+    unitPrice: "",
+    description: "",
+    type: "SINGLE",
+    imageFile: null,
+    status: true,
+  });
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewData, setViewData] = useState<any>(null);
 
@@ -122,6 +133,7 @@ const ProductManagement: React.FC = () => {
       type: "SINGLE",
       imageFile: null,
     });
+    setErrors({});
     setIsAddOpen(false);
   };
 
@@ -218,6 +230,85 @@ const ProductManagement: React.FC = () => {
         }
       }
     });
+  };
+
+  const handleEdit = (product: any) => {
+    setSelectedProduct(product);
+    setUpdateForm({
+      name: product.name,
+      unitPrice: product.unitPrice,
+      description: product.description,
+      type: product.type,
+      imageFile: product.pictureUrl,
+      status: product.status,
+    });
+    
+    setIsUpdateOpen(true);
+  };
+
+  console.log(products);
+  
+
+  const handleUpdateFormChange = (name: string, value: any) => {
+    setUpdateForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdate = async () => {
+    try {
+      setLoadingSubmit(true);
+      setErrors({});
+
+      const formPayload = new FormData();
+
+      const product = {
+        name: updateForm.name,
+        unitPrice: Number(updateForm.unitPrice),
+        description: updateForm.description,
+        type: updateForm.type,
+        status: updateForm.status,
+      };
+
+      const productBlob = new Blob([JSON.stringify(product)], {
+        type: "application/json",
+      });
+
+      formPayload.append("product", productBlob);
+
+      if (updateForm.imageFile && typeof updateForm.imageFile !== "string") {
+        formPayload.append("imageFile", updateForm.imageFile);
+      }
+
+      const res = await productService.updateProduct(
+        selectedProduct.id,
+        formPayload,
+      );
+
+      if (res.success) {
+        toast.success("Cập nhật thành công");
+        handleFetchProducts();
+        setIsUpdateOpen(false);
+        setSelectedProduct(null);
+      }
+    } catch (err: any) {
+      const data = err.response?.data;
+
+      if (!data) {
+        toast.error("Server không phản hồi!");
+        return;
+      }
+
+      if (data.errors) {
+        setErrors(data.errors);
+        return;
+      }
+
+      toast.error(data.message || "Lỗi cập nhật!");
+    } finally {
+      setLoadingSubmit(false);
+    }
   };
 
   useEffect(() => {
@@ -400,6 +491,52 @@ const ProductManagement: React.FC = () => {
     },
   ];
 
+  const productUpdateFields: FieldConfig[] = [
+    {
+      name: "name",
+      label: "Tên sản phẩm",
+      type: "text",
+      placeholder: "Nhập tên...",
+    },
+    {
+      name: "unitPrice",
+      label: "Giá",
+      type: "number",
+      placeholder: "Nhập giá...",
+    },
+    {
+      name: "type",
+      label: "Loại",
+      type: "select",
+      options: [
+        { label: "SINGLE", value: "SINGLE" },
+        { label: "COMBO", value: "COMBO" },
+      ],
+    },
+    {
+      name: "imageFile",
+      label: "Ảnh sản phẩm",
+      type: "file",
+      preview: true,
+    },
+    {
+      name: "description",
+      label: "Mô tả",
+      type: "textarea",
+      placeholder: "Nhập mô tả...",
+    },
+    {
+      name: "status",
+      label: "Trạng thái",
+      type: "select",
+      options: [
+        { label: "Hoạt động", value: true },
+        { label: "Ngừng", value: false },
+      ],
+      placeholder: "Chọn trạng thái...",
+    },
+  ];
+
   const productViewFields = [
     {
       key: "id",
@@ -499,6 +636,23 @@ const ProductManagement: React.FC = () => {
         loading={loadingSubmit}
       />
 
+      <BaseFormModal
+        mode="update"
+        open={isUpdateOpen}
+        onOpenChange={setIsUpdateOpen}
+        title="Cập nhật sản phẩm"
+        fields={productUpdateFields}
+        values={updateForm}
+        onChange={handleUpdateFormChange}
+        onSubmit={handleUpdate}
+        onCancel={() => {
+          setIsUpdateOpen(false);
+          setSelectedProduct(null);
+        }}
+        errors={errors}
+        loading={loadingSubmit}
+      />
+
       <ViewModal
         open={isViewOpen}
         onClose={() => setIsViewOpen(false)}
@@ -553,7 +707,7 @@ const ProductManagement: React.FC = () => {
             <TableCell className="px-6 py-4">
               <StatusBadge
                 status={product.status ? "Hoạt động" : "Ngừng"}
-                type={product.status ? "success" : "neutral"}
+                type={product.status ? "success" : "error"}
               />
             </TableCell>
 
@@ -561,7 +715,7 @@ const ProductManagement: React.FC = () => {
             <TableCell className="px-6 py-4 text-right">
               <TableActions
                 onView={() => handleView(product)}
-                onEdit={() => console.log("edit", product.id)}
+                onEdit={() => handleEdit(product)}
                 onDelete={() => handleDelete(product.id)}
               />
             </TableCell>

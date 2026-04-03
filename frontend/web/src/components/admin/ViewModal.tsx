@@ -58,7 +58,7 @@ const ViewModal: React.FC<ViewModalProps> = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className="cursor-pointer">
             Đóng
           </Button>
         </DialogFooter>

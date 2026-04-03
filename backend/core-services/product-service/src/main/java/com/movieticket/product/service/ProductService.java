@@ -69,7 +69,7 @@ public class ProductService {
     public Product updateProduct(String id, UpdateProductDto updateProductDto, MultipartFile file) {
         Product product = getProductById(id);
 
-        if (productRepository.existsByNameAndUnitPrice(updateProductDto.getName(), updateProductDto.getUnitPrice())) {
+        if (productRepository.existsByNameAndUnitPriceAndIdNot(updateProductDto.getName(), updateProductDto.getUnitPrice(), id)) {
             throw new BusinessException("Sản phẩm với tên và giá đã tồn tại");
         }
 
