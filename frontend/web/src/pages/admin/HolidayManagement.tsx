@@ -1,30 +1,28 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
-import BaseManagementLayout from "@/components/admin/BaseManagementLayout";
+import BaseManagementLayout from "../../components/admin/BaseManagementLayout";
+import type { HolidayFilterParams } from "@/types/holiday";
+import { ticketService } from "@/services/ticket.service";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FilterSelect } from "@/components/admin/FilterSelect";
+import type { FieldConfig } from "@/components/admin/BaseFormModal";
+import ManagementFilterBar from "@/components/admin/ManagementFilterBar";
+import BaseFormModal from "@/components/admin/BaseFormModal";
+import ViewModal from "@/components/admin/ViewModal";
 import ManagementTable from "@/components/admin/ManagementTable";
+import { TableCell, TableRow } from "@/components/ui/table";
 import StatusBadge from "@/components/admin/StatusBadge";
 import TableActions from "@/components/admin/TableActions";
-import ManagementFilterBar from "@/components/admin/ManagementFilterBar";
-import { TableRow, TableCell } from "@/components/ui/table";
-import { Package } from "lucide-react";
-import { productService } from "@/services/product.service";
-import { toast } from "react-toastify";
-import type { ProductFilterParams, ProductType } from "@/types/product";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FilterSelect } from "@/components/admin/FilterSelect";
-import BaseFormModal, {
-  type FieldConfig,
-} from "@/components/admin/BaseFormModal";
-import Swal from "sweetalert2";
-import ViewModal from "@/components/admin/ViewModal";
 
-const ProductManagement: React.FC = () => {
+const HolidayManagement: React.FC = () => {
   const pageSize = 5;
 
-  const [products, setProducts] = useState<any[]>([]);
+  const [holidays, setHolidays] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,22 +30,20 @@ const ProductManagement: React.FC = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    unitPrice: "",
+    startDate: "",
+    endDate: "",
     description: "",
-    type: "SINGLE",
-    imageFile: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedHoliday, setSelectedHoliday] = useState<any>(null);
   const [updateForm, setUpdateForm] = useState({
     name: "",
-    unitPrice: "",
+    startDate: "",
+    endDate: "",
     description: "",
-    type: "SINGLE",
-    imageFile: null,
     status: true,
   });
 
@@ -56,22 +52,24 @@ const ProductManagement: React.FC = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const [filters, setFilters] = useState<ProductFilterParams>({
+  const [filters, setFilters] = useState<HolidayFilterParams>({
     id: undefined,
     name: undefined,
-    type: undefined,
+    startDateFrom: undefined,
+    startDateTo: undefined,
+    endDateFrom: undefined,
+    endDateTo: undefined,
     status: undefined,
-    minPrice: undefined,
-    maxPrice: undefined,
   });
 
-  const [appliedFilters, setAppliedFilters] = useState<ProductFilterParams>({
+  const [appliedFilters, setAppliedFilters] = useState<HolidayFilterParams>({
     id: undefined,
     name: undefined,
-    type: undefined,
+    startDateFrom: undefined,
+    startDateTo: undefined,
+    endDateFrom: undefined,
+    endDateTo: undefined,
     status: undefined,
-    minPrice: undefined,
-    maxPrice: undefined,
   });
 
   const buildParams = () => {
@@ -84,21 +82,21 @@ const ProductManagement: React.FC = () => {
     );
   };
 
-  const handleFetchProducts = async () => {
+  const handleFetchHolidays = async () => {
     try {
       setLoading(true);
 
-      const res = await productService.getAllProduct(buildParams());
+      const res = await ticketService.getAllHolidays(buildParams());
 
       if (res.success) {
-        setProducts(res.data.content);
+        setHolidays(res.data.content);
         setTotalItems(res.data.totalElements);
       } else {
-        toast.error(res.message || "Error fetching products");
+        toast.error(res.message || "Error fetching holidays");
       }
     } catch (error) {
       console.log(error);
-      toast.error("Error fetching products");
+      toast.error("Error fetching holidays");
     } finally {
       setLoading(false);
     }
@@ -108,10 +106,11 @@ const ProductManagement: React.FC = () => {
     const reset = {
       id: undefined,
       name: undefined,
-      type: undefined,
+      startDateFrom: undefined,
+      startDateTo: undefined,
+      endDateFrom: undefined,
+      endDateTo: undefined,
       status: undefined,
-      minPrice: undefined,
-      maxPrice: undefined,
     };
     setFilters(reset);
     setAppliedFilters(reset);
@@ -128,10 +127,9 @@ const ProductManagement: React.FC = () => {
   const handleCancelForm = () => {
     setForm({
       name: "",
-      unitPrice: "",
+      startDate: "",
+      endDate: "",
       description: "",
-      type: "SINGLE",
-      imageFile: null,
     });
     setErrors({});
     setIsAddOpen(false);
@@ -142,37 +140,24 @@ const ProductManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const formPayload = new FormData();
-
-      const product = {
+      const holiday = {
         name: form.name,
-        unitPrice: Number(form.unitPrice),
+        startDate: form.startDate,
+        endDate: form.endDate,
         description: form.description,
-        type: form.type,
       };
 
-      const productBlob = new Blob([JSON.stringify(product)], {
-        type: "application/json",
-      });
-
-      formPayload.append("product", productBlob);
-
-      if (form.imageFile) {
-        formPayload.append("imageFile", form.imageFile);
-      }
-
-      const res = await productService.addProduct(formPayload);
+      const res = await ticketService.createHoliday(holiday);
 
       if (res.success) {
-        toast.success("Thêm sản phẩm thành công");
-        handleFetchProducts();
+        toast.success("Thêm ngày lễ thành công");
+        handleFetchHolidays();
 
         setForm({
           name: "",
-          unitPrice: "",
+          startDate: "",
+          endDate: "",
           description: "",
-          type: "SINGLE",
-          imageFile: null,
         });
         setIsAddOpen(false);
       }
@@ -192,21 +177,21 @@ const ProductManagement: React.FC = () => {
         return;
       }
 
-      toast.error("Thiếu thông tin sản phẩm!");
+      toast.error("Thiếu thông tin ngày lễ!");
     } finally {
       setLoadingSubmit(false);
     }
   };
 
-  const handleView = (product: any) => {
-    setViewData(product);
+  const handleView = (holiday: any) => {
+    setViewData(holiday);
     setIsViewOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     Swal.fire({
-      title: "Bạn có muốn xóa sản phẩm này?",
-      text: "Bạn sẽ không thể khôi phục lại sản phẩm này!",
+      title: "Bạn có muốn xóa ngày lễ này?",
+      text: "Bạn sẽ không thể khôi phục lại ngày lễ này!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -216,36 +201,34 @@ const ProductManagement: React.FC = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const res = await productService.deleteProduct(id);
+          const res = await ticketService.deleteHoliday(id);
 
           if (res.success) {
-            toast.success("Xóa sản phẩm thành công!");
-            handleFetchProducts();
+            toast.success("Ngày lễ đã được xóa thành công");
+            handleFetchHolidays();
           } else {
-            toast.error(res.message || "Lỗi khi xóa sản phẩm!");
+            toast.error(res.message || "Lỗi khi xóa ngày lễ");
           }
         } catch (error) {
           console.log(error);
-          toast.error("Lỗi khi xóa sản phẩm!");
+          toast.error("Lỗi khi xóa ngày lễ");
         }
       }
     });
   };
 
-  const handleEdit = (product: any) => {
-    setSelectedProduct(product);
+  const handleEdit = (holiday: any) => {
+    setSelectedHoliday(holiday);
     setUpdateForm({
-      name: product.name,
-      unitPrice: product.unitPrice,
-      description: product.description,
-      type: product.type,
-      imageFile: product.pictureUrl,
-      status: product.status,
+      name: holiday.name,
+      startDate: holiday.startDate,
+      endDate: holiday.endDate,
+      description: holiday.description,
+      status: holiday.status,
     });
-    
+
     setIsUpdateOpen(true);
   };
-  
 
   const handleUpdateFormChange = (name: string, value: any) => {
     setUpdateForm((prev) => ({
@@ -259,36 +242,24 @@ const ProductManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const formPayload = new FormData();
-
-      const product = {
+      const holiday = {
         name: updateForm.name,
-        unitPrice: Number(updateForm.unitPrice),
+        startDate: updateForm.startDate,
+        endDate: updateForm.endDate,
         description: updateForm.description,
-        type: updateForm.type,
         status: updateForm.status,
       };
 
-      const productBlob = new Blob([JSON.stringify(product)], {
-        type: "application/json",
-      });
-
-      formPayload.append("product", productBlob);
-
-      if (updateForm.imageFile && typeof updateForm.imageFile !== "string") {
-        formPayload.append("imageFile", updateForm.imageFile);
-      }
-
-      const res = await productService.updateProduct(
-        selectedProduct.id,
-        formPayload,
+      const res = await ticketService.updateHoliday(
+        selectedHoliday.id,
+        holiday,
       );
 
       if (res.success) {
         toast.success("Cập nhật thành công");
-        handleFetchProducts();
+        handleFetchHolidays();
         setIsUpdateOpen(false);
-        setSelectedProduct(null);
+        setSelectedHoliday(null);
       }
     } catch (err: any) {
       const data = err.response?.data;
@@ -310,7 +281,7 @@ const ProductManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    handleFetchProducts();
+    handleFetchHolidays();
   }, [currentPage, appliedFilters]);
 
   const FilterContent = (
@@ -318,7 +289,7 @@ const ProductManagement: React.FC = () => {
       {/* ID */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          ID sản phẩm
+          ID ngày lễ
         </label>
         <Input
           placeholder="Nhập ID..."
@@ -330,10 +301,43 @@ const ProductManagement: React.FC = () => {
         />
       </div>
 
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Ngày bắt đầu từ
+        </label>
+        <Input
+          type="date"
+          placeholder="Nhập ngày bắt đầu từ..."
+          value={filters.startDateFrom || ""}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              startDateFrom: e.target.value || undefined,
+            })
+          }
+          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Ngày bắt đầu đến
+        </label>
+        <Input
+          type="date"
+          placeholder="Nhập ngày bắt đầu đến..."
+          value={filters.startDateTo || ""}
+          onChange={(e) =>
+            setFilters({ ...filters, startDateTo: e.target.value || undefined })
+          }
+          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+        />
+      </div>
+
       {/* Name */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Tên sản phẩm
+          Tên ngày lễ
         </label>
         <Input
           placeholder="Nhập tên..."
@@ -345,21 +349,33 @@ const ProductManagement: React.FC = () => {
         />
       </div>
 
-      {/* Type */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Loại
+          Ngày kết thúc từ
         </label>
-        <FilterSelect
-          placeholder="Tất cả loại"
-          options={["Tất cả", "SINGLE", "COMBO"]}
-          value={filters.type || "Tất cả"}
-          onChange={(value) =>
-            setFilters({
-              ...filters,
-              type: value === "Tất cả" ? undefined : (value as ProductType),
-            })
+        <Input
+          type="date"
+          placeholder="Nhập ngày kết thúc từ..."
+          value={filters.endDateFrom || ""}
+          onChange={(e) =>
+            setFilters({ ...filters, endDateFrom: e.target.value || undefined })
           }
+          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Ngày kết thúc đến
+        </label>
+        <Input
+          type="date"
+          placeholder="Nhập ngày kết thúc đến..."
+          value={filters.endDateTo || ""}
+          onChange={(e) =>
+            setFilters({ ...filters, endDateTo: e.target.value || undefined })
+          }
+          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
         />
       </div>
 
@@ -370,13 +386,13 @@ const ProductManagement: React.FC = () => {
         </label>
         <FilterSelect
           placeholder="Tất cả trạng thái"
-          options={["Tất cả", "Hoạt động", "Ngừng"]}
+          options={["Tất cả", "Hoạt động", "Tạm ngưng"]}
           value={
             filters.status === undefined
               ? "Tất cả"
               : filters.status
                 ? "Hoạt động"
-                : "Ngừng"
+                : "Tạm ngưng"
           }
           onChange={(value) => {
             let status;
@@ -386,44 +402,6 @@ const ProductManagement: React.FC = () => {
 
             setFilters({ ...filters, status });
           }}
-        />
-      </div>
-
-      {/* Min Price */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Giá từ
-        </label>
-        <Input
-          type="number"
-          placeholder="0"
-          value={filters.minPrice ?? ""}
-          onChange={(e) =>
-            setFilters({
-              ...filters,
-              minPrice: e.target.value ? Number(e.target.value) : undefined,
-            })
-          }
-          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
-        />
-      </div>
-
-      {/* Max Price */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Giá đến
-        </label>
-        <Input
-          type="number"
-          placeholder="100000"
-          value={filters.maxPrice ?? ""}
-          onChange={(e) =>
-            setFilters({
-              ...filters,
-              maxPrice: e.target.value ? Number(e.target.value) : undefined,
-            })
-          }
-          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
         />
       </div>
 
@@ -453,33 +431,24 @@ const ProductManagement: React.FC = () => {
     </div>
   );
 
-  const productFields: FieldConfig[] = [
+  const holidayFields: FieldConfig[] = [
     {
       name: "name",
-      label: "Tên sản phẩm",
+      label: "Tên ngày lễ",
       type: "text",
       placeholder: "Nhập tên...",
     },
     {
-      name: "unitPrice",
-      label: "Giá",
-      type: "number",
-      placeholder: "Nhập giá...",
+      name: "startDate",
+      label: "Ngày bắt đầu",
+      type: "date",
+      placeholder: "Chọn ngày bắt đầu...",
     },
     {
-      name: "type",
-      label: "Loại",
-      type: "select",
-      options: [
-        { label: "SINGLE", value: "SINGLE" },
-        { label: "COMBO", value: "COMBO" },
-      ],
-    },
-    {
-      name: "imageFile",
-      label: "Ảnh sản phẩm",
-      type: "file",
-      preview: true,
+      name: "endDate",
+      label: "Ngày kết thúc",
+      type: "date",
+      placeholder: "Chọn ngày kết thúc...",
     },
     {
       name: "description",
@@ -489,39 +458,24 @@ const ProductManagement: React.FC = () => {
     },
   ];
 
-  const productUpdateFields: FieldConfig[] = [
+  const holidayUpdateFields: FieldConfig[] = [
     {
       name: "name",
-      label: "Tên sản phẩm",
+      label: "Tên ngày lễ",
       type: "text",
       placeholder: "Nhập tên...",
     },
     {
-      name: "unitPrice",
-      label: "Giá",
-      type: "number",
-      placeholder: "Nhập giá...",
+      name: "startDate",
+      label: "Ngày bắt đầu",
+      type: "date",
+      placeholder: "Chọn ngày bắt đầu...",
     },
     {
-      name: "type",
-      label: "Loại",
-      type: "select",
-      options: [
-        { label: "SINGLE", value: "SINGLE" },
-        { label: "COMBO", value: "COMBO" },
-      ],
-    },
-    {
-      name: "imageFile",
-      label: "Ảnh sản phẩm",
-      type: "file",
-      preview: true,
-    },
-    {
-      name: "description",
-      label: "Mô tả",
-      type: "textarea",
-      placeholder: "Nhập mô tả...",
+      name: "endDate",
+      label: "Ngày kết thúc",
+      type: "date",
+      placeholder: "Chọn ngày kết thúc...",
     },
     {
       name: "status",
@@ -529,44 +483,37 @@ const ProductManagement: React.FC = () => {
       type: "select",
       options: [
         { label: "Hoạt động", value: true },
-        { label: "Ngừng", value: false },
+        { label: "Tạm ngừng", value: false },
       ],
       placeholder: "Chọn trạng thái...",
+    },  
+    {
+      name: "description",
+      label: "Mô tả",
+      type: "textarea",
+      placeholder: "Nhập mô tả...",
     },
+    
   ];
 
   const productViewFields = [
     {
       key: "id",
-      label: "Mã sản phẩm",
+      label: "Mã ngày lễ",
     },
     {
       key: "name",
-      label: "Tên sản phẩm",
+      label: "Tên ngày lễ",
     },
     {
-      key: "unitPrice",
-      label: "Giá",
-      render: (val: number) => val?.toLocaleString("vi-VN") + " ₫",
+      key: "startDate",
+      label: "Ngày bắt đầu",
+      render: (val: string) => val && new Date(val).toLocaleDateString("vi-VN"),
     },
     {
-      key: "type",
-      label: "Loại",
-      render: (val: string) => (val === "SINGLE" ? "Sản phẩm lẻ" : "Combo"),
-    },
-    {
-      key: "pictureUrl",
-      label: "Ảnh sản phẩm",
-      render: (val: string) =>
-        val ? (
-          <img
-            src={val}
-            alt="product"
-            className="w-24 h-24 object-cover rounded-md border"
-          />
-        ) : (
-          "Không có ảnh"
-        ),
+      key: "endDate",
+      label: "Ngày kết thúc",
+      render: (val: string) => val && new Date(val).toLocaleDateString("vi-VN"),
     },
     {
       key: "description",
@@ -594,7 +541,7 @@ const ProductManagement: React.FC = () => {
             val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
           }`}
         >
-          {val ? "Hoạt động" : "Ngừng"}
+          {val ? "Hoạt động" : "Tạm ngừng"}
         </span>
       ),
     },
@@ -625,7 +572,7 @@ const ProductManagement: React.FC = () => {
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
         title="Thêm sản phẩm"
-        fields={productFields}
+        fields={holidayFields}
         values={form}
         onChange={handleFormChange}
         onSubmit={handleSubmit}
@@ -639,13 +586,13 @@ const ProductManagement: React.FC = () => {
         open={isUpdateOpen}
         onOpenChange={setIsUpdateOpen}
         title="Cập nhật sản phẩm"
-        fields={productUpdateFields}
+        fields={holidayUpdateFields}
         values={updateForm}
         onChange={handleUpdateFormChange}
         onSubmit={handleUpdate}
         onCancel={() => {
           setIsUpdateOpen(false);
-          setSelectedProduct(null);
+          selectedHoliday(null);
         }}
         errors={errors}
         loading={loadingSubmit}
@@ -660,61 +607,58 @@ const ProductManagement: React.FC = () => {
       />
 
       <ManagementTable
-        headers={["Sản phẩm", "Giá", "Loại", "Trạng thái", "Hành động"]}
+        headers={[
+          "Ngày lễ",
+          "Ngày bắt đầu",
+          "Ngày kết thúc",
+          "Trạng thái",
+          "Hành động",
+        ]}
         isLoading={loading}
       >
-        {products.map((product) => (
+        {holidays.map((holiday) => (
           <TableRow
-            key={product.id}
+            key={holiday.id}
             className="group hover:bg-slate-50/80 transition"
           >
             {/* Product Info */}
             <TableCell className="px-6 py-4">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center">
-                  {product.pictureUrl ? (
-                    <img
-                      src={product.pictureUrl}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="text-slate-300" />
-                  )}
-                </div>
-
                 <div>
-                  <p className="font-bold text-slate-800">{product.name}</p>
-                  <p className="text-xs text-slate-400">{product.id}</p>
+                  <p className="font-bold text-slate-800">{holiday.name}</p>
+                  <p className="text-xs text-slate-400">{holiday.id}</p>
                 </div>
               </div>
             </TableCell>
 
-            {/* Price */}
+            {/* Start Date */}
             <TableCell className="px-6 py-4 font-semibold text-slate-700">
-              {product.unitPrice.toLocaleString()} đ
+              {holiday.startDate
+                ? new Date(holiday.startDate).toLocaleDateString("vi-VN")
+                : "-"}
             </TableCell>
 
-            {/* Type */}
-            <TableCell className="px-6 py-4">
-              <span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded">
-                {product.type}
-              </span>
+            {/* End Date */}
+            <TableCell className="px-6 py-4 font-semibold text-slate-700">
+              {holiday.endDate
+                ? new Date(holiday.endDate).toLocaleDateString("vi-VN")
+                : "-"}
             </TableCell>
 
             {/* Status */}
             <TableCell className="px-6 py-4">
               <StatusBadge
-                status={product.status ? "Hoạt động" : "Ngừng"}
-                type={product.status ? "success" : "error"}
+                status={holiday.status ? "Hoạt động" : "Tạm ngừng"}
+                type={holiday.status ? "success" : "error"}
               />
             </TableCell>
 
             {/* Actions */}
             <TableCell className="px-6 py-4 text-right">
               <TableActions
-                onView={() => handleView(product)}
-                onEdit={() => handleEdit(product)}
-                onDelete={() => handleDelete(product.id)}
+                onView={() => handleView(holiday)}
+                onEdit={() => handleEdit(holiday)}
+                onDelete={() => handleDelete(holiday.id)}
               />
             </TableCell>
           </TableRow>
@@ -724,4 +668,4 @@ const ProductManagement: React.FC = () => {
   );
 };
 
-export default ProductManagement;
+export default HolidayManagement;

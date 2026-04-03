@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TicketController {
     private final TicketService ticketService;
-    private final HolidayService holidayService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<TicketPrice>>> getAllTicketPrices(
@@ -67,46 +66,4 @@ public class TicketController {
         ApiResponse<TicketPrice> response = ApiResponse.success(ticketPrice, "Ticket price determined successfully");
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/holidays")
-    public ResponseEntity<ApiResponse<Page<Holiday>>> getHolidays(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @ModelAttribute SearchHolidayDto searchHolidayDto
-    ) {
-        Page<Holiday> holidays = holidayService.getAllHolidays(searchHolidayDto, PageRequest.of(page, size));
-        ApiResponse<Page<Holiday>> response = ApiResponse.success(holidays, "Holidays retrieved successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/holidays/{id}")
-    public ResponseEntity<ApiResponse<Holiday>> getHolidayById(@PathVariable String id) {
-        Holiday holiday = holidayService.getHolidayById(id);
-        ApiResponse<Holiday> response = ApiResponse.success(holiday, "Holiday retrieved successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/holidays")
-    public ResponseEntity<ApiResponse<Holiday>> createHoliday(@Valid @RequestBody CreateHolidayDto createHolidayDto) {
-        Holiday createdHoliday = holidayService.createHoliday(createHolidayDto);
-        ApiResponse<Holiday> response = ApiResponse.success(createdHoliday, "Holiday created successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/holidays/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteHoliday(@PathVariable String id) {
-        holidayService.deleteHoliday(id);
-        ApiResponse<Void> response = ApiResponse.success(null, "Holiday deleted successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/holidays/{id}")
-    public ResponseEntity<ApiResponse<Holiday>> updateHolidayTicketPrice(
-            @PathVariable String id,
-            @Valid @RequestBody UpdateHolidayDto updateDto) {
-        Holiday updatedHoliday = holidayService.updateHoliday(id, updateDto);
-        ApiResponse<Holiday> response = ApiResponse.success(updatedHoliday, "Holiday updated successfully");
-        return ResponseEntity.ok(response);
-    }
-
 }

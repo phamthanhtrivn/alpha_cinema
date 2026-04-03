@@ -13,7 +13,8 @@ import {
   Tag,
   DollarSign,
   MapPin,
-  LogOut
+  LogOut,
+  CalendarCog
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
@@ -37,6 +38,7 @@ const Sidebar: React.FC = () => {
 
     // 4. Kinh doanh (bán hàng)
     { icon: <Ticket size={18} />, label: 'Quản lý Đơn hàng', path: '/admin/orders', roles: ['ADMIN', 'EMPLOYEE'] },
+    { icon: <CalendarCog size={18} />, label: 'Quản lý Nghỉ lễ', path: '/admin/holidays', roles: ['ADMIN', 'EMPLOYEE'] },
     { icon: <Package size={18} />, label: 'Quản lý Sản phẩm', path: '/admin/products', roles: ['ADMIN', 'EMPLOYEE'] },
     { icon: <Tag size={18} />, label: 'Quản lý Khuyến mãi', path: '/admin/promotions', roles: ['ADMIN', 'EMPLOYEE'] },
 
@@ -60,7 +62,7 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
 
-      <nav className="flex-grow px-4 overflow-y-auto custom-scrollbar">
+      <nav className="grow px-4 overflow-y-auto custom-scrollbar">
         <ul className="space-y-1">
           {filteredMenu.map((item) => (
             <li key={item.path}>

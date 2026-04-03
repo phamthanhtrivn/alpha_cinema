@@ -15,15 +15,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateHolidayDto {
-    @NotBlank(message = "Holiday name is required")
+    @NotBlank(message = "Tên ngày lễ không được để trống")
     private String name;
 
-    @NotNull(message = "Start date is required")
-    @FutureOrPresent(message = "Start date must be today or in the future")
+    @NotNull(message = "Ngày bắt đầu là bắt buộc")
+    @FutureOrPresent(message = "Ngày bắt đầu phải là hôm nay hoặc trong tương lai")
     private LocalDate startDate;
 
-    @NotNull(message = "End date is required")
-    @FutureOrPresent(message = "End date must be today or in the future")
+    @NotNull(message = "Ngày kết thúc là bắt buộc")
+    @FutureOrPresent(message = "Ngày kết thúc phải là hôm nay hoặc trong tương lai")
     private LocalDate endDate;
 
     private String description;

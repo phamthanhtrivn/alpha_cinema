@@ -41,4 +41,6 @@ public interface HolidayRepository extends JpaRepository<Holiday, String> {
     );
 
     boolean existsByStartDateAndEndDate(LocalDate startDate, LocalDate endDate);
+
+    boolean existsByStartDateAndEndDateAndIdNot(LocalDate startDate, LocalDate endDate, String id);
 }

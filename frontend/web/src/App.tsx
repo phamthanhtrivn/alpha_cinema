@@ -16,6 +16,7 @@ import OrderManagement from './pages/admin/OrderManagement';
 import PromotionManagement from './pages/admin/PromotionManagement';
 import PriceManagement from './pages/admin/PriceManagement';
 import CinemaManagement from './pages/admin/CinemaManagement';
+import HolidayManagement from './pages/admin/HolidayManagement';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             <Route path="reviews" element={<ReviewManagement />} />
             <Route path="orders" element={<OrderManagement />} />
             <Route path="promotions" element={<PromotionManagement />} />
+            <Route path="holidays" element={<HolidayManagement />} />
             <Route path="prices" element={<PriceManagement />} />
             <Route path="cinemas" element={<CinemaManagement />} />
           </Route>
