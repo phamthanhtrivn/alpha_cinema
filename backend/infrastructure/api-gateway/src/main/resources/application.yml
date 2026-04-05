@@ -44,7 +44,7 @@
           - id: user-service
             uri: lb://user-service
             predicates:
-              - Path=/api/users/**
+              - Path=/api/users/**, /api/customers/**
           # Route cho dịch vụ quản lý sản phẩm (suất chiếu, phim, combo,...)
           - id: product-service
             uri: lb://product-service

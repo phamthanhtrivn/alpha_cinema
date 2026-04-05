@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class User {
+public abstract class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
