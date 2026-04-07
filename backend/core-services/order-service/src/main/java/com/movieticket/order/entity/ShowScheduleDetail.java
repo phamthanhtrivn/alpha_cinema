@@ -1,5 +1,6 @@
 package com.movieticket.order.entity;
 
+import com.movieticket.order.enums.ShowSeatType;
 import jakarta.persistence.*;
 import lombok.*;
 

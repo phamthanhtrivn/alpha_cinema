@@ -13,11 +13,11 @@ export const ticketService = {
         const response = await apiClient.post(`/holidays`, data)
         return response.data
     },
-     updateHoliday: async (id: string, data: any) => {
+    updateHoliday: async (id: string, data: any) => {
         const response = await apiClient.put(`/holidays/${id}`, data)
         return response.data
     },
-     deleteHoliday: async (id: string) => {
+    deleteHoliday: async (id: string) => {
         const response = await apiClient.delete(`/holidays/${id}`)
         return response.data
     }
