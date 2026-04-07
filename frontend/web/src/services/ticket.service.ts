@@ -21,4 +21,22 @@ export const ticketService = {
     const response = await apiClient.delete(`/holidays/${id}`);
     return response.data;
   },
+  getAllTickets: async (params: any) => {
+    const response = await apiClient.get(`/tickets`, {
+      params,
+    });
+    return response.data;
+  },
+  createTicket: async (data: any) => {
+    const response = await apiClient.post(`/tickets`, data);
+    return response.data;
+  },
+  updateTicket: async (id: string, data: any) => {
+    const response = await apiClient.put(`/tickets/${id}`, data);
+    return response.data;
+  },
+  deleteTicket: async (id: string) => {
+    const response = await apiClient.delete(`/tickets/${id}`);
+    return response.data;
+  },
 };

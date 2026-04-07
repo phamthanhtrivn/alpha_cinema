@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TicketRepository extends JpaRepository<TicketPrice, String> {
     boolean existsBySeatTypeIdAndProjectionTypeAndDayType(String seatTypeId, ProjectionType projectionType, DayType dayType);
+    boolean existsBySeatTypeIdAndProjectionTypeAndDayTypeAndIdNot(String seatTypeId, ProjectionType projectionType, DayType dayType, String id);
 
     @Query("SELECT tp " +
             "FROM TicketPrice tp " +

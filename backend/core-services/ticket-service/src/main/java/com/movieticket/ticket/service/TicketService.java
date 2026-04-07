@@ -36,7 +36,7 @@ public class TicketService {
 
     public TicketPrice getTicketPriceById(String id) {
         return ticketRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Ticket price not found with id: " + id));
+                .orElseThrow(() -> new BusinessException("Giá vé không được tìm thấy" + id));
     }
 
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
@@ -47,7 +47,7 @@ public class TicketService {
         );
 
         if (exists) {
-            throw new BusinessException("Ticket price already exists for the given seat type, projection type, and day type");
+            throw new BusinessException("Giá vé đã tồn tại cho loại ghế, hình thức chiếu và loại ngày đã cho");
         }
 
         TicketPrice ticketPrice = new TicketPrice();
@@ -69,14 +69,15 @@ public class TicketService {
     public TicketPrice updateTicketPrice(String id, UpdateTicketPriceDto updateDto) {
         TicketPrice existingPrice = getTicketPriceById(id);
 
-        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
+        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayTypeAndIdNot(
                 updateDto.getSeatTypeId(),
                 updateDto.getProjectionType(),
-                updateDto.getDayType()
+                updateDto.getDayType(),
+                id
         );
 
         if (exists) {
-            throw new BusinessException("Another ticket price already exists for the given seat type, projection type, and day type");
+            throw new BusinessException("Một giá vé khác đã tồn tại cho loại ghế, hình thức chiếu và loại ngày đã cho");
         }
 
         existingPrice.setSeatTypeId(updateDto.getSeatTypeId());
@@ -99,7 +100,7 @@ public class TicketService {
         );
 
         if (ticketPrice == null) {
-            throw new BusinessException("No active ticket price found for the given criteria");
+            throw new BusinessException("Không có giá vé hợp lệ cho loại ghế, hình thức chiếu và loại ngày đã cho");
         }
 
         return ticketPrice;
