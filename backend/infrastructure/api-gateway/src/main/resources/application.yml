@@ -34,7 +34,7 @@
           - id: cinema-management-service
             uri: lb://cinema-management-service # lb:// nghĩa là Load Balanced (sẽ tìm service qua Eureka)
             predicates: # Điều kiện để route này được kích hoạt, ở đây là khi URL bắt đầu bằng /api/cinemas/**
-              - Path=/api/cinemas/**
+              - Path=/api/cinemas/**, /api/seat-types/**,/api/rooms/**,/api/seats/**
           # Route cho dịch vụ quản lý giá/vé
           - id: ticket-service
             uri: lb://ticket-service

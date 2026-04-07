@@ -486,14 +486,13 @@ const HolidayManagement: React.FC = () => {
         { label: "Tạm ngừng", value: false },
       ],
       placeholder: "Chọn trạng thái...",
-    },  
+    },
     {
       name: "description",
       label: "Mô tả",
       type: "textarea",
       placeholder: "Nhập mô tả...",
     },
-    
   ];
 
   const productViewFields = [
@@ -549,10 +548,10 @@ const HolidayManagement: React.FC = () => {
 
   return (
     <BaseManagementLayout
-      title="Quản lý Sản phẩm"
-      subtitle="Quản lý bắp, nước, combo và các dịch vụ đi kèm."
+      title="Quản lý Ngày lễ"
+      subtitle="Quản lý các ngày lễ và sự kiện đặc biệt."
       onAdd={() => setIsAddOpen(true)}
-      addLabel="THÊM SẢN PHẨM"
+      addLabel="THÊM NGÀY LỄ"
       totalItems={totalItems}
       currentPage={currentPage}
       pageSize={pageSize}
@@ -571,7 +570,7 @@ const HolidayManagement: React.FC = () => {
         mode="add"
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
-        title="Thêm sản phẩm"
+        title="Thêm ngày lễ"
         fields={holidayFields}
         values={form}
         onChange={handleFormChange}
@@ -585,7 +584,7 @@ const HolidayManagement: React.FC = () => {
         mode="update"
         open={isUpdateOpen}
         onOpenChange={setIsUpdateOpen}
-        title="Cập nhật sản phẩm"
+        title="Cập nhật ngày lễ"
         fields={holidayUpdateFields}
         values={updateForm}
         onChange={handleUpdateFormChange}
@@ -601,7 +600,7 @@ const HolidayManagement: React.FC = () => {
       <ViewModal
         open={isViewOpen}
         onClose={() => setIsViewOpen(false)}
-        title="Chi tiết sản phẩm"
+        title="Chi tiết ngày lễ"
         data={viewData}
         fields={productViewFields}
       />
