@@ -1,4 +1,4 @@
-package com.movieticket.user.controller;
+package com.movieticket.user.util;
 
 import com.movieticket.user.dto.UserResponse;
 import com.movieticket.user.entity.User;
@@ -19,14 +19,14 @@ import java.util.function.Function;
 import io.jsonwebtoken.Claims;
 
 @Service
-public class JwtService {
+public class JwtUtils {
     private static final long ACCESS_TOKEN_EXPIRATION = 3600000; // 1 giờ
     private static final long REFRESH_TOKEN_EXPIRATION = 604800000; // 7 ngày
 
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
 
-    public JwtService(
+    public JwtUtils(
             @Value("${rsa.private-key-path}") Resource privateKeyResource,
             @Value("${rsa.public-key-path}") Resource publicKeyResource
             ) throws Exception {
@@ -76,9 +76,15 @@ public class JwtService {
         final String email = extractEmail(token);
         return (email.equals(user.getEmail())) && !isTokenExpired(token);
     }
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
+
+    public Date extractExpiration(String token){
+        return extractClaim(token, Claims::getExpiration);
+    }
+
     public String extractRole(String token) {
         final Claims claims = extractAllClaims(token);
         return claims.get("role", String.class);
