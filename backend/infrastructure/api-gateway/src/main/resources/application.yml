@@ -48,7 +48,7 @@ spring:
         - id: product-service
           uri: lb://product-service
           predicates:
-            - Path=/api/products/**
+            - Path=/api/products/**, /api/artists/**
         # Route cho dịch vụ quản lý đơn hàng
         - id: order-service
           uri: lb://order-service
