@@ -73,8 +73,6 @@ public class ArtistService {
 
         artistMapper.updateEntityFromDto(dto, artist);
 
-        System.out.println(artist);
-
         return artistRepository.save(artist);
     }
 
