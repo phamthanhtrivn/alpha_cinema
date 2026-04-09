@@ -1,5 +1,7 @@
 package com.movieticket.user.entity;
 
+import com.movieticket.user.enums.ReviewStatus;
+import com.movieticket.user.enums.ReviewType;
 import jakarta.persistence.*;
 import lombok.*;
 

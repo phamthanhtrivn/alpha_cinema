@@ -5,3 +5,6 @@ spring:
     config:
       uri: http://localhost:8888
       fail-fast: true
+rsa:
+  private-key-path: classpath:keys/private_java.pem
+  public-key-path: classpath:keys/public.pem

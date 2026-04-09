@@ -1,5 +1,6 @@
 package com.movieticket.product.entity;
 
+import com.movieticket.product.enums.ProductType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,19 +15,17 @@ import java.util.List;
 @Builder
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     private String name;
     private double unitPrice;
 
-    @ElementCollection
-    @CollectionTable(name = "product_pictures", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "picture_url")
-    private List<String> pictures;
+    private String pictureUrl;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+    @Enumerated(EnumType.STRING)
+    private ProductType type;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

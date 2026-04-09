@@ -1,7 +1,10 @@
 package com.movieticket.user.entity;
 
+import com.movieticket.user.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,25 +14,25 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    protected String id;
 
-    private String fullName;
-    private String phone;
-    private String email;
-    private String password;
+    protected String fullName;
+    protected String phone;
+    protected String email;
+    protected String password;
 
     @Enumerated(EnumType.STRING)
-    private Gender gender;
+    protected Gender gender;
 
-    private LocalDate dateOfBirth;
-    private boolean status;
+    protected LocalDate dateOfBirth;
+    protected boolean status;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    protected LocalDateTime createdAt;
+    protected LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
