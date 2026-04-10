@@ -17,12 +17,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ArtistService {
     private final ArtistRepository artistRepository;
     private final CloudinaryUtil cloudinaryUtil;
     private final ArtistMapper artistMapper;
+
+    public Set<Artist> getArtistProxies(Set<String> ids) {
+        if (ids == null || ids.isEmpty()) return new HashSet<>();
+
+        return ids.stream()
+                .map(artistRepository::getReferenceById)
+                .collect(Collectors.toSet());
+    }
 
     public Page<Artist> searchArtists(ArtistSearchDTO dto, int page, int size) {
         Specification<Artist> spec = Specification.where(ArtistSpecification.hasName(dto.getName())

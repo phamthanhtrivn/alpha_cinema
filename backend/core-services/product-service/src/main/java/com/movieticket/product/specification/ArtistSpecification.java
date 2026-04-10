@@ -12,10 +12,10 @@ public class ArtistSpecification {
         };
     }
 
-    public static Specification<Artist> hasType(String type) {
+    public static Specification<Artist> hasType(ArtistType type) {
         return (root, query, criteriaBuilder) -> {
             if (type == null) return null;
-            return criteriaBuilder.like(criteriaBuilder.lower(root.get("type")), "%" + type + "%");
+            return criteriaBuilder.equal(root.get("type"), type);
         };
     }
 
