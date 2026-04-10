@@ -5,6 +5,24 @@ spring:
     config:
       uri: http://localhost:8888
       fail-fast: true
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 6000
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 rsa:
-  private-key-path: classpath:keys/private_java.pem
-  public-key-path: classpath:keys/public.pem
+  private-key-path: ${RSA_PRIVATE_PATH}
+  public-key-path: ${RSA_PUBLIC_PATH}

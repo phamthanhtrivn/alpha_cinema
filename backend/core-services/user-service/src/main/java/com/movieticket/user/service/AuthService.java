@@ -1,8 +1,6 @@
 package com.movieticket.user.service;
 
-import com.movieticket.user.dto.LoginRequest;
-import com.movieticket.user.dto.RegisterRequest;
-import com.movieticket.user.dto.UserResponse;
+import com.movieticket.user.dto.*;
 import com.movieticket.user.entity.Customer;
 import com.movieticket.user.entity.Employee;
 import com.movieticket.user.entity.User;
@@ -15,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -26,6 +23,7 @@ public class AuthService {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
 
     public boolean register(RegisterRequest registerRequest){
         if(customerRepository.existsByEmail(registerRequest.getEmail())){
@@ -65,5 +63,26 @@ public class AuthService {
         }
         return new UserResponse(user.getId(), user.getFullName(),user.getEmail(),role);
     };
+
+    public boolean forgetPassword(ForgotPasswordRequest request){
+        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+        if (userOptional.isEmpty()) {
+            throw new BusinessException("Email không tồn tại !");
+        }
+        return true;
+    }
+
+    public boolean resetPassword(ResetPassword resetPassword){
+        if(!customerRepository.existsByEmail(resetPassword.getEmail())){
+            throw new BusinessException("Email đã tồn tại");
+        }
+        if(!resetPassword.getPassword().equals(resetPassword.getPasswordConfirm())){
+            throw new BusinessException("PasswordConfirm không khớp");
+        }
+        User user = userRepository.findByEmail(resetPassword.getEmail()).orElse(null);
+        user.setPassword(passwordEncoder.encode(resetPassword.getPassword()));
+        userRepository.save(user);
+        return true;
+    }
 
 }

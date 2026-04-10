@@ -1,4 +1,4 @@
-package com.movieticket.user.util;
+package com.movieticket.user.utils;
 
 import com.movieticket.user.dto.UserResponse;
 import com.movieticket.user.entity.User;
@@ -7,7 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import com.movieticket.user.utils.KeyReaderUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -20,7 +20,8 @@ import io.jsonwebtoken.Claims;
 
 @Service
 public class JwtUtils {
-    private static final long ACCESS_TOKEN_EXPIRATION = 3600000; // 1 giờ
+    private static final long ACCESS_TOKEN_EXPIRATION = 900000; // 15 p
+    private static final long RESET_PASSWORD_TOKEN_EXPIRATION = 300000; // 5 p
     private static final long REFRESH_TOKEN_EXPIRATION = 604800000; // 7 ngày
 
     private final PrivateKey privateKey;
@@ -55,9 +56,25 @@ public class JwtUtils {
     public String generateRefreshToken(UserResponse user){
         return buildToken(new HashMap<>(), user.getEmail(), REFRESH_TOKEN_EXPIRATION);
     }
+    public String generateResetPasswordToken(String email){
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", "RESET_PASSWORD");
+        return buildToken(claims, email, RESET_PASSWORD_TOKEN_EXPIRATION);
+    }
     /**
      * Giải mã toàn bộ Token để lấy Claims bằng PUBLIC KEY
      */
+    public boolean isResetTokenValid(String token, String email) {
+        try {
+            final String tokenEmail = extractEmail(token);
+            final String role = extractRole(token);
+            return tokenEmail.equals(email)
+                    && role.equals("RESET_PASSWORD")
+                    && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
     private Claims extractAllClaims(String token){
         return Jwts.parserBuilder()
                 .setSigningKey(publicKey)

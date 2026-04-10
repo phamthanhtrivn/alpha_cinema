@@ -1,6 +1,4 @@
-package com.movieticket.user.util;
-
-import java.util.UUID;
+package com.movieticket.user.utils;
 
 public class IdGenerator {
 

@@ -27,7 +27,7 @@ public class RegisterRequest {
     private String email;
     @NotBlank(message = "Password không được để trống")
     private String password;
-    @NotBlank(message = "Password không được để trống")
+    @NotBlank(message = "passwordConfirm không được để trống")
     private String passwordConfirm;
 
 }
