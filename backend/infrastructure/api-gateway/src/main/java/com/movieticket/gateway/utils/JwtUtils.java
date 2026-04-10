@@ -1,7 +1,7 @@
-package com.movieticket.user.utils;
+package com.movieticket.gateway.utils;
 
-import com.movieticket.user.dto.UserResponse;
-import com.movieticket.user.entity.User;
+
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,13 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import io.jsonwebtoken.Claims;
-
 @Service
 public class JwtUtils {
-    private static final long ACCESS_TOKEN_EXPIRATION = 900000; // 15 p
-    private static final long RESET_PASSWORD_TOKEN_EXPIRATION = 300000; // 5 p
-    private static final long REFRESH_TOKEN_EXPIRATION = 604800000; // 7 ngày
 
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
@@ -37,8 +32,6 @@ public class JwtUtils {
         this.privateKey = KeyReaderUtils.getPrivateKeyFromString(pirvateKeyStr);
         this.publicKey = KeyReaderUtils.getPublicKeyFromString(publicKeyStr);
     }
-
-
     private String buildToken(Map<String,Object> claims, String subject, long expiration){
         return Jwts.builder()
                 .setClaims(claims)
@@ -48,30 +41,9 @@ public class JwtUtils {
                 .signWith(privateKey, SignatureAlgorithm.RS256)
                 .compact();
     }
-
-    public String generateAccessToken(UserResponse user){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole());
-        claims.put("userId", user.getId());
-        claims.put("email", user.getEmail());
-        return buildToken(claims, user.getEmail(), ACCESS_TOKEN_EXPIRATION);
-    }
-
-    public String generateRefreshToken(UserResponse user){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole());
-        claims.put("userId", user.getId());
-        claims.put("email", user.getEmail());
-        return buildToken(claims, user.getEmail(), REFRESH_TOKEN_EXPIRATION);
-    }
-
-    public String generateResetPasswordToken(String email){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", "RESET_PASSWORD");
-        return buildToken(claims, email, RESET_PASSWORD_TOKEN_EXPIRATION);
-    }
-
-
+    /**
+     * Giải mã toàn bộ Token để lấy Claims bằng PUBLIC KEY
+     */
     public boolean isResetTokenValid(String token, String email) {
         try {
             final String tokenEmail = extractEmail(token);
@@ -83,7 +55,6 @@ public class JwtUtils {
             return false;
         }
     }
-
     private Claims extractAllClaims(String token){
         return Jwts.parserBuilder()
                 .setSigningKey(publicKey)
@@ -91,27 +62,13 @@ public class JwtUtils {
                 .parseClaimsJws(token)
                 .getBody();
     }
-
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
-
-
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
-
-    public boolean isTokenValid(String token, User user) {
-        final String email = extractEmail(token);
-        return (email.equals(user.getEmail())) && !isTokenExpired(token);
-    }
-
-    public String extractId(String token) {
-        final Claims claims = extractAllClaims(token);
-        return claims.get("userId", String.class);
-    }
-
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);

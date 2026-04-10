@@ -75,3 +75,6 @@
       org.springframework.cloud.gateway: DEBUG
       # Đặt mức log cho Netty (thư viện HTTP client mà Gateway sử dụng) để xem chi tiết các request và response HTTP, giúp debug khi có lỗi liên quan đến giao tiếp giữa Gateway và các microservice
       reactor.netty.http.client: DEBUG
+  rsa:
+    private-key-path: ${RSA_PRIVATE_PATH}
+    public-key-path: ${RSA_PUBLIC_PATH}

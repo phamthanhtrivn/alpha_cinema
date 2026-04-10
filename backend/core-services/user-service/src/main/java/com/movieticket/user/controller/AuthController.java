@@ -12,10 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 
@@ -114,5 +111,32 @@ public class AuthController {
         }
         return ApiResponse.fail("Cập nhật password thành công thất bại !");
     }
+    @PostMapping("/refresh-token")
+    public ApiResponse<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response){
+        if (refreshToken == null || refreshToken.trim().isEmpty()) {
+            return ApiResponse.fail("Không tìm thấy Refresh Token. Vui lòng đăng nhập lại.");
+        }
+        String email = jwtUtils.extractEmail(refreshToken);
+        String role = jwtUtils.extractRole(refreshToken);
+        String userId = jwtUtils.extractId(refreshToken);
 
+        System.out.println(userId);
+
+        if(jwtUtils.isTokenExpired(refreshToken)){
+            return ApiResponse.fail("Token đã hết hạn");
+        }
+        UserResponse userResponse = new UserResponse(userId,email, role);
+
+        String newAccessToken = jwtUtils.generateAccessToken(userResponse);
+        String newRefreshToken = jwtUtils.generateRefreshToken(userResponse);
+
+        Cookie cookie = new Cookie("refreshToken", newRefreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+        LoginResponse loginResponse = new LoginResponse(newAccessToken,userResponse);
+        return ApiResponse.success(loginResponse, "Refresh token thành công");
+    }
 }
