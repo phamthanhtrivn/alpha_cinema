@@ -2,11 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
-import BaseManagementLayout from "@/components/admin/BaseManagementLayout";
-import ManagementTable from "@/components/admin/ManagementTable";
-import StatusBadge from "@/components/admin/StatusBadge";
-import TableActions from "@/components/admin/TableActions";
-import ManagementFilterBar from "@/components/admin/ManagementFilterBar";
+import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
+import ManagementTable from "@/components/employee/ManagementTable";
+import StatusBadge from "@/components/employee/StatusBadge";
+import TableActions from "@/components/employee/TableActions";
+import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Package } from "lucide-react";
 import { productService } from "@/services/product.service";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import type { ProductFilterParams, ProductType } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterSelect } from "@/components/admin/FilterSelect";
+import { FilterSelect } from "@/components/employee/FilterSelect";
 
 const ProductManagement: React.FC = () => {
   const pageSize = 5;
