@@ -1,5 +1,5 @@
 import React from 'react';
-import BaseManagementLayout from '../../components/admin/BaseManagementLayout';
+import BaseManagementLayout from '../../../components/employee/BaseManagementLayout';
 
 const ArtistManagement: React.FC = () => {
   return (

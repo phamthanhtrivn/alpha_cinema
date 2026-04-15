@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import BaseManagementLayout from '@/components/admin/BaseManagementLayout';
-import ManagementTable from '@/components/admin/ManagementTable';
-import StatusBadge from '@/components/admin/StatusBadge';
-import TableActions from '@/components/admin/TableActions';
-import ManagementFilterBar from '@/components/admin/ManagementFilterBar';
+import BaseManagementLayout from '@/components/employee/BaseManagementLayout';
+import ManagementTable from '@/components/employee/ManagementTable';
+import StatusBadge from '@/components/employee/StatusBadge';
+import TableActions from '@/components/employee/TableActions';
+import ManagementFilterBar from '@/components/employee/ManagementFilterBar';
 import { Calendar, Clock, Star, PlayCircle, Film } from 'lucide-react';
 import { TableRow, TableCell } from '@/components/ui/table';
 

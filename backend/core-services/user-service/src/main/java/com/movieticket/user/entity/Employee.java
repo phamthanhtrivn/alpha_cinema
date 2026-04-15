@@ -14,4 +14,5 @@ import lombok.*;
 public class Employee extends User {
     @Enumerated(EnumType.STRING)
     private EmployeeRole role;
+    private String cinemaId;
 }
