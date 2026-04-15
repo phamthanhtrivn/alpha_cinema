@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const CustomerLogin: React.FC = () => {
+const ClientLogin: React.FC = () => {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 bg-white py-20">
       <div className="max-w-md w-full border border-slate-100 bg-white p-12 rounded-3xl shadow-2xl shadow-slate-200/50">
@@ -37,4 +37,4 @@ const CustomerLogin: React.FC = () => {
   );
 };
 
-export default CustomerLogin;
+export default ClientLogin;

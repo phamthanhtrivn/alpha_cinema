@@ -1,21 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { UserRole } from '@/types/user';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-export type UserRole = 'GUEST' | 'CUSTOMER' | 'EMPLOYEE' | 'ADMIN';
-
 interface AuthState {
   user: any | null;
-  token: string | null;
+  accessToken: string | null;
   role: UserRole;
   isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
-  user: null,
-  token: null,
-  role: 'GUEST',
-  isAuthenticated: false,
+  user: { id: 1, name: "John Doe", email: "john.doe@example.com" },
+  accessToken: "fake-token",
+  role: 'MANAGER',
+  isAuthenticated: true,
 };
+
 
 const authSlice = createSlice({
   name: 'auth',
@@ -23,16 +24,16 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      { payload: { user, token, role } }: PayloadAction<{ user: any; token: string; role: UserRole }>
+      { payload }: PayloadAction<{ user: any; accessToken: string; role: UserRole }>
     ) => {
-      state.user = user;
-      state.token = token;
-      state.role = role;
+      state.user = payload.user;
+      state.accessToken = payload.accessToken;
+      state.role = payload.role;
       state.isAuthenticated = true;
     },
     logout: (state) => {
       state.user = null;
-      state.token = null;
+      state.accessToken = null;
       state.role = 'GUEST';
       state.isAuthenticated = false;
     },
@@ -40,4 +41,10 @@ const authSlice = createSlice({
 });
 
 export const { setCredentials, logout } = authSlice.actions;
+
+/* selectors */
+export const selectAuth = (state: any) => state.auth;
+export const selectRole = (state: any) => state.auth.role;
+export const selectIsAuthenticated = (state: any) => state.auth.isAuthenticated;
+
 export default authSlice.reducer;
