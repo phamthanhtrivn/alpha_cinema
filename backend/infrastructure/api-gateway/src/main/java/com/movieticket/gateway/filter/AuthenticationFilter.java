@@ -33,10 +33,10 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 //            "users/auth/login"
 //    );
 //
-//    public static final List<String> CustomerEndpoints = List.of(
-//            "users/auth/register",
-//            "users/auth/login"
-//    );
+    public static final List<String> CustomerEndpoints = List.of(
+            "users/auth/register",
+            "users/auth/login"
+    );
 
 
     @Override
@@ -51,23 +51,28 @@ public class AuthenticationFilter implements GlobalFilter, Order {
             }
         }
         else return chain.filter(exchange);
+        System.out.println("token : ");
 
 
         String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
+        String token = "";
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            authHeader = authHeader.substring(7); // Bỏ chữ "Bearer "
+
+            token = authHeader.substring(7); // Bỏ chữ "Bearer "
         } else {
             return this.onError(exchange, "Invalid authorization header format", HttpStatus.UNAUTHORIZED);
         }
 
         try{
             String path = request.getURI().getPath();
-            String role = jwtUtils.extractRole(authHeader);
-            boolean expire = jwtUtils.isTokenExpired(authHeader);
 
-            if(!expire){
+            boolean expire = jwtUtils.isTokenExpired(token);
+
+            if(expire){
+                System.out.println("Token hết hạn");
                 return this.onError(exchange, "Token hết hạn", HttpStatus.FORBIDDEN);
             }
+            String role = jwtUtils.extractRole(token);
 
 //            if (AdminEndpoints.contains(path) && !"ADMIN".equals(role)) {
 //                return this.onError(exchange, "Yêu cầu quyền ADMIN", HttpStatus.FORBIDDEN);

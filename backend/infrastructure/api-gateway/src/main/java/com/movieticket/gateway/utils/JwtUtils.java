@@ -41,9 +41,8 @@ public class JwtUtils {
                 .signWith(privateKey, SignatureAlgorithm.RS256)
                 .compact();
     }
-    /**
-     * Giải mã toàn bộ Token để lấy Claims bằng PUBLIC KEY
-     */
+
+
     public boolean isResetTokenValid(String token, String email) {
         try {
             final String tokenEmail = extractEmail(token);
