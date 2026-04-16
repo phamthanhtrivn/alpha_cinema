@@ -11,5 +11,4 @@ public class ForgotPasswordRequest {
     @NotBlank(message = "Email không được rỗng")
     @Email(message = "Email phải đúng định dạng")
     private String email;
-
 }

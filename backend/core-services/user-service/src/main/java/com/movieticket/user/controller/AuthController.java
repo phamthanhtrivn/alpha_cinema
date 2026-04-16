@@ -11,6 +11,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,12 +45,15 @@ public class AuthController {
         if(user != null){
             String accessToken = jwtUtils.generateAccessToken(user);
             String refreshToken = jwtUtils.generateRefreshToken(user);
-            Cookie cookie = new Cookie("refreshToken", refreshToken);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true);
-            cookie.setPath("/");
-            cookie.setMaxAge(7 * 24 * 60 * 60);
-            response.addCookie(cookie);
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .sameSite("None")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
             LoginResponse loginResponse = new LoginResponse(accessToken,user);
             return ApiResponse.success(loginResponse, "Đăng nhập thành công");
         }
@@ -65,13 +70,33 @@ public class AuthController {
             System.out.println("So giay con lai , : ============"  + remainingTime);
             jwtService.blacklistToken(accessToken, remainingTime);
         }
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("None")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
         return ApiResponse.success(null,"Đăng xuất thành công");
+    }
+    @GetMapping("/profile")
+    public ApiResponse<?> getProfile(HttpServletRequest request){
+        String authHeader = request.getHeader("Authorization");
+        if(authHeader != null && authHeader.startsWith("Bearer ")){
+            String accessToken = authHeader.substring(7);
+            if(jwtUtils.isTokenExpired(accessToken)){
+                return ApiResponse.fail("accessToken het han !");
+            }
+            String email = jwtUtils.extractEmail(accessToken);
+            String role = jwtUtils.extractRole(accessToken);
+            String userId = jwtUtils.extractId(accessToken);
+            String fullName = jwtUtils.extractFullName(accessToken);
+            UserResponse userResponse = new UserResponse(userId,email,fullName,role);
+            return ApiResponse.success(userResponse, "Lấy thông tin thành công");
+        }
+        return ApiResponse.fail("Không tìm được accessToken!");
     }
 
     @PostMapping("/forgot-password")
@@ -100,7 +125,6 @@ public class AuthController {
         String authHeader = request.getHeader("Authorization");
         if(authHeader != null && authHeader.startsWith("Bearer ")){
             String token = authHeader.substring(7);
-            System.out.println("token : " + token);
             if(!jwtUtils.isResetTokenValid(token,resetPassword.getEmail())){
                 return ApiResponse.fail("Token không hợp lệ");
             }
@@ -111,31 +135,35 @@ public class AuthController {
         }
         return ApiResponse.fail("Cập nhật password thành công thất bại !");
     }
+
     @PostMapping("/refresh-token")
     public ApiResponse<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response){
         if (refreshToken == null || refreshToken.trim().isEmpty()) {
             return ApiResponse.fail("Không tìm thấy Refresh Token. Vui lòng đăng nhập lại.");
         }
-        String email = jwtUtils.extractEmail(refreshToken);
-        String role = jwtUtils.extractRole(refreshToken);
-        String userId = jwtUtils.extractId(refreshToken);
-
-        System.out.println(userId);
-
         if(jwtUtils.isTokenExpired(refreshToken)){
             return ApiResponse.fail("Token đã hết hạn");
         }
-        UserResponse userResponse = new UserResponse(userId,email, role);
+        String email = jwtUtils.extractEmail(refreshToken);
+        String role = jwtUtils.extractRole(refreshToken);
+        String userId = jwtUtils.extractId(refreshToken);
+        String fullName = jwtUtils.extractFullName(refreshToken);
+
+        UserResponse userResponse = new UserResponse(userId,email,fullName,role);
 
         String newAccessToken = jwtUtils.generateAccessToken(userResponse);
         String newRefreshToken = jwtUtils.generateRefreshToken(userResponse);
 
-        Cookie cookie = new Cookie("refreshToken", newRefreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .sameSite("None")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
         LoginResponse loginResponse = new LoginResponse(newAccessToken,userResponse);
         return ApiResponse.success(loginResponse, "Refresh token thành công");
     }

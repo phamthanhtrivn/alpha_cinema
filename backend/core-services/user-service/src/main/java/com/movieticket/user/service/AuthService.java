@@ -61,7 +61,7 @@ public class AuthService {
         else{
             role = ((Employee) user).getRole().name();
         }
-        return new UserResponse(user.getId(),user.getEmail(),role);
+        return new UserResponse(user.getId(),user.getEmail(),user.getFullName(),role);
     };
 
     public boolean forgetPassword(ForgotPasswordRequest request){
