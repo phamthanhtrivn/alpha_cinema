@@ -2,10 +2,7 @@ package com.movieticket.user.controller;
 
 import com.movieticket.user.common.ApiResponse;
 import com.movieticket.user.dto.*;
-import com.movieticket.user.service.AuthService;
-import com.movieticket.user.service.EmailService;
-import com.movieticket.user.service.JwtService;
-import com.movieticket.user.service.OtpService;
+import com.movieticket.user.service.*;
 import com.movieticket.user.utils.JwtUtils;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +28,8 @@ public class AuthController {
     private EmailService emailService;
     @Autowired
     private OtpService otpService;
+    @Autowired
+    private GoogleAuthService googleAuthService;
 
 
     @PostMapping("/register")
@@ -137,11 +136,11 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ApiResponse<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response){
+    public ApiResponse<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
         if (refreshToken == null || refreshToken.trim().isEmpty()) {
             return ApiResponse.fail("Không tìm thấy Refresh Token. Vui lòng đăng nhập lại.");
         }
-        if(jwtUtils.isTokenExpired(refreshToken)){
+        if (jwtUtils.isTokenExpired(refreshToken)) {
             return ApiResponse.fail("Token đã hết hạn");
         }
         String email = jwtUtils.extractEmail(refreshToken);
@@ -149,7 +148,7 @@ public class AuthController {
         String userId = jwtUtils.extractId(refreshToken);
         String fullName = jwtUtils.extractFullName(refreshToken);
 
-        UserResponse userResponse = new UserResponse(userId,email,fullName,role);
+        UserResponse userResponse = new UserResponse(userId, email, fullName, role);
 
         String newAccessToken = jwtUtils.generateAccessToken(userResponse);
         String newRefreshToken = jwtUtils.generateRefreshToken(userResponse);
@@ -164,7 +163,33 @@ public class AuthController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        LoginResponse loginResponse = new LoginResponse(newAccessToken,userResponse);
+        LoginResponse loginResponse = new LoginResponse(newAccessToken, userResponse);
         return ApiResponse.success(loginResponse, "Refresh token thành công");
+    }
+
+    @PostMapping("/google-login")
+    public ApiResponse<LoginResponse> googleLogin(@RequestBody GoogleRequest googleRequest, HttpServletResponse response){
+
+        if(googleRequest.getToken() == null || googleRequest.getToken().trim().isEmpty()){
+            ApiResponse.fail("token khong co");
+        }
+        UserResponse user = googleAuthService.authenticateGoogleUser(googleRequest.getToken());
+
+        if(user != null){
+            String accessToken = jwtUtils.generateAccessToken(user);
+            String refreshToken = jwtUtils.generateRefreshToken(user);
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .sameSite("None")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            LoginResponse loginResponse = new LoginResponse(accessToken,user);
+            return ApiResponse.success(loginResponse, "Đăng nhập thành công");
+        }
+        return ApiResponse.fail("token khong hop le");
     }
 }
