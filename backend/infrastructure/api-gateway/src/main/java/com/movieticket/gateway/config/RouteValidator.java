@@ -15,7 +15,8 @@ public class RouteValidator {
             "/api/users/refresh-token",
             "/api/users/forgot-password",
             "/api/users/forgot-password/otp",
-            "/api/users/forgot-password/reset-password"
+            "/api/users/forgot-password/reset-password",
+            "/api/users/google-login"
     );
     public Predicate<ServerHttpRequest> isSecured =
             request -> openApiEndpoints

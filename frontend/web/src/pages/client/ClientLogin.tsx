@@ -1,17 +1,21 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { userService } from "../../services/user.service";
 import type LoginRequest from "@/types/loginRequest";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slices/authSlice";
+import { useGoogleLogin } from "@react-oauth/google"; 
+import { Loader2 } from "lucide-react"; 
+import ButtonGoogle from "@/components/client/ButtonGoogle";
 
 const ClientLogin: React.FC = () => {
   const [loginData, setLoginData] = useState<LoginRequest>({
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -23,36 +27,34 @@ const ClientLogin: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const handelLogin = async () => {
-      try {
-        const data = await userService.login(loginData);
-        if (data.success) {
-          toast.success("Đăng nhập thành công");
-          dispatch(
-            setCredentials({
-              user: data.data.user,
-              accessToken: data.data.accessToken,
-              role: data.data.user.role,
-            }),
-          );
-          navigate("/");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        if (error.response?.data?.message) {
-          toast.error(error.response?.data?.message);
-        }
+    setIsLoading(true);
+    try {
+      const data = await userService.login(loginData);
+      if (data.success) {
+        toast.success("Đăng nhập thành công");
+        dispatch(
+          setCredentials({
+            user: data.data.user,
+            accessToken: data.data.accessToken,
+            role: data.data.user.role,
+          })
+        );
+        navigate("/");
       }
-    };
-
-    handelLogin();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Đăng nhập thất bại");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 bg-white py-20">
       <div className="max-w-md w-full border border-slate-100 bg-white p-10 md:p-12 rounded-3xl shadow-2xl shadow-slate-200/50">
+        
         {/* Header Section */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black text-alpha-blue italic uppercase tracking-tighter mb-2">
@@ -64,7 +66,6 @@ const ClientLogin: React.FC = () => {
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            {/* Email Input */}
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
                 Email
@@ -80,7 +81,6 @@ const ClientLogin: React.FC = () => {
               />
             </div>
 
-            {/* Password Input */}
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
                 Mật khẩu
@@ -97,24 +97,36 @@ const ClientLogin: React.FC = () => {
             </div>
           </div>
 
-          {/* Utils Section */}
           <div className="flex justify-center items-center text-[10px] md:text-xs font-bold uppercase tracking-widest">
             <Link
-              to={'/forget-password'}
+              to={"/forget-password"}
               className="text-alpha-blue hover:text-alpha-orange transition-colors"
             >
               Quên mật khẩu?
             </Link>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-alpha-blue py-4 rounded-xl font-black text-white hover:bg-slate-900 transition-all transform active:scale-95 shadow-lg shadow-blue-100 uppercase tracking-widest"
+            disabled={isLoading}
+            className="w-full bg-alpha-blue py-4 rounded-xl font-black text-white hover:bg-slate-900 transition-all transform active:scale-95 shadow-lg shadow-blue-100 uppercase tracking-widest flex items-center justify-center"
           >
-            ĐĂNG NHẬP
+            {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : "ĐANG NHẬP"}
           </button>
         </form>
+
+        {/* Separator */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-100"></div>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-slate-400">
+            <span className="bg-white px-4">Hoặc</span>
+          </div>
+        </div>
+
+        {/* Google Login Button */}
+        <ButtonGoogle />
 
         {/* Footer Section */}
         <div className="mt-12 text-center text-sm font-bold text-slate-400">

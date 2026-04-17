@@ -36,4 +36,12 @@ public class Customer extends User {
         this.status = status;
         this.customerType = customerType;
     }
+
+    public Customer(String fullName, String email, String password, Boolean status, CustomerType customerType) {
+        this.fullName = fullName;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.customerType = customerType;
+    }
 }

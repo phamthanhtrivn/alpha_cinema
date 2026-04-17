@@ -22,6 +22,9 @@ spring:
           auth: true
           starttls:
             enable: true
+  google:
+    client:
+      id: ${MAIL_USERNAME}
 
 rsa:
   private-key-path: ${RSA_PRIVATE_PATH}

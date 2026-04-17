@@ -58,4 +58,10 @@ export const userService = {
     );
     return response.data;
   },
+  google_login: async (token : string)=>{
+    const response = await apiClient.post("users/google-login", { token: token }, {
+      withCredentials: true,
+    });
+    return response.data;
+  }
 };
