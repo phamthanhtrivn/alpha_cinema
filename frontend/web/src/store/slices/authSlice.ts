@@ -3,6 +3,8 @@ import type { UserRole } from '@/types/user';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+const getStoredToken = () => localStorage.getItem('accessToken');
+
 interface AuthState {
   user: any | null;
   accessToken: string | null;
@@ -11,9 +13,9 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  user: { id: 1, name: "Phạm Thành Trí", email: "[EMAIL_ADDRESS]" },
-  accessToken: "fake-token",
-  role: 'ADMIN',
+  user: null,
+  accessToken: getStoredToken(),
+  role: "GUEST",
   isAuthenticated: true,
 };
 
@@ -30,14 +32,17 @@ const authSlice = createSlice({
       state.accessToken = payload.accessToken;
       state.role = payload.role;
       state.isAuthenticated = true;
+
     },
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
       state.role = 'GUEST';
       state.isAuthenticated = false;
+  
     },
   },
+  
 });
 
 export const { setCredentials, logout } = authSlice.actions;

@@ -24,6 +24,14 @@ public class Cinema {
     private LocalDateTime updatedAt;
     private boolean status;
 
+    public Cinema(String id, String name, String address, String phone, boolean status) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.status = status;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

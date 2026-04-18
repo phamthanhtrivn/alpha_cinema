@@ -8,10 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
-@Repository
-public interface CustomerRepository extends JpaRepository<Customer, String> {
+public interface CustomerRepository extends JpaRepository<Customer,String> {
+    boolean existsByEmail(String email);
+    Customer findByEmail(String email);
 
     @Query("SELECT c " +
             "FROM Customer c " +
@@ -31,11 +31,12 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
             @Param("phone") String phone,
             @Param("gender") Gender gender,
             @Param("status") Boolean status,
-            @Param("customerType")CustomerType customerType,
+            @Param("customerType") CustomerType customerType,
             @Param("minPoints") Integer minPoints,
             @Param("maxPoints") Integer maxPoints,
             @Param("minTotalSpending") Double minTotalSpending,
             @Param("maxTotalSpending") Double maxTotalSpending,
             Pageable pageable
     );
+
 }
