@@ -20,11 +20,6 @@ public class SeatTypeController {
         return new ApiResponse<>(true,seatTypeService.getAllSeatTypes());
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<SeatType> getSeatTypeById(@PathVariable String id){
-        return new ApiResponse<>(true, seatTypeService.getSeatTypeById(id));
-    }
-
     @PostMapping("/create")
     public ApiResponse<SeatType> createSeatType(@Validated @RequestBody SeatTypeRequest request){
         return new ApiResponse<>(true, seatTypeService.createSeatType(request));

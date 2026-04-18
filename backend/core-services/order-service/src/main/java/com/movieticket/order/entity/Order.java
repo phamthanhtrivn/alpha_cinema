@@ -42,8 +42,6 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<ShowScheduleDetail> showScheduleDetails;
 
-    private String cinemaId;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

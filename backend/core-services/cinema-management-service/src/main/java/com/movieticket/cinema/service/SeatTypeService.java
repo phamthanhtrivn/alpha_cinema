@@ -25,17 +25,6 @@ public class SeatTypeService {
         return null;
     }
 
-    public SeatType getSeatTypeById(String id) {
-        try{
-            return seatTypeRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("SeatType không tông tại!"));
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
-        return null;
-    }
-
     public SeatType createSeatType(SeatTypeRequest seatTypeRequest) {
         try{
             String id = GenerateID.generateSeatTypeId();
