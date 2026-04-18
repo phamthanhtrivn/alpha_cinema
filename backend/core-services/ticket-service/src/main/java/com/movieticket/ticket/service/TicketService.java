@@ -36,7 +36,7 @@ public class TicketService {
 
     public TicketPrice getTicketPriceById(String id) {
         return ticketRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Giá vé không được tìm thấy" + id));
+                .orElseThrow(() -> new BusinessException("Ticket price not found with id: " + id));
     }
 
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
@@ -47,7 +47,7 @@ public class TicketService {
         );
 
         if (exists) {
-            throw new BusinessException("Giá vé đã tồn tại cho loại ghế, hình thức chiếu và loại ngày đã cho");
+            throw new BusinessException("Ticket price already exists for the given seat type, projection type, and day type");
         }
 
         TicketPrice ticketPrice = new TicketPrice();
@@ -69,15 +69,14 @@ public class TicketService {
     public TicketPrice updateTicketPrice(String id, UpdateTicketPriceDto updateDto) {
         TicketPrice existingPrice = getTicketPriceById(id);
 
-        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayTypeAndIdNot(
+        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
                 updateDto.getSeatTypeId(),
                 updateDto.getProjectionType(),
-                updateDto.getDayType(),
-                id
+                updateDto.getDayType()
         );
 
         if (exists) {
-            throw new BusinessException("Một giá vé khác đã tồn tại cho loại ghế, hình thức chiếu và loại ngày đã cho");
+            throw new BusinessException("Another ticket price already exists for the given seat type, projection type, and day type");
         }
 
         existingPrice.setSeatTypeId(updateDto.getSeatTypeId());
@@ -100,7 +99,7 @@ public class TicketService {
         );
 
         if (ticketPrice == null) {
-            throw new BusinessException("Không có giá vé hợp lệ cho loại ghế, hình thức chiếu và loại ngày đã cho");
+            throw new BusinessException("No active ticket price found for the given criteria");
         }
 
         return ticketPrice;

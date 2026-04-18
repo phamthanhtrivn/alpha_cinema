@@ -12,12 +12,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateProductDto {
-    @NotBlank(message = "Tên sản phẩm không được để trống")
+    @NotBlank(message = "Product name is required")
     private String name;
 
-    @NotNull(message = "Giá sản phẩm không được để trống")
-    @Min(value = 20000, message = "Giá sản phẩm phải lớn hơn hoặc bằng 20,000")
-    @Max(value = 500000, message = "Giá sản phẩm phải nhỏ hơn hoặc bằng 500,000")
+    @NotNull(message = "Price is required")
+    @Min(value = 20000, message = "Price must be at least 20,000")
+    @Max(value = 500000, message = "Price must be at most 500,000")
     private double unitPrice;
 
     private String description;

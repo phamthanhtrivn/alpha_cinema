@@ -13,17 +13,17 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateTicketPriceDto {
-    @NotBlank(message = "Seat type ID là bắt buộc")
+    @NotBlank(message = "Seat type ID is required")
     private String seatTypeId;
 
-    @NotNull(message = "Hình thức chiếu là bắt buộc")
+    @NotNull(message = "Projection type is required")
     private ProjectionType projectionType;
 
-    @NotNull(message = "Loại ngày là bắt buộc")
+    @NotNull(message = "Day type is required")
     private DayType dayType;
 
-    @NotNull(message = "Giá vé là bắt buộc")
-    @Min(value = 30000, message = "Giá vé phải ít nhất 30,000")
-    @Max(value = 500000, message = "Giá vé không được vượt quá 500,000")
+    @NotNull(message = "Price is required")
+    @Min(value = 30000, message = "Price must be at least 30,000")
+    @Max(value = 500000, message = "Price must be at most 500,000")
     private Double price;
 }

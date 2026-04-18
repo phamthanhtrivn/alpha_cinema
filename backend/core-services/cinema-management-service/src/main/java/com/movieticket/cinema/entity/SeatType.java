@@ -23,12 +23,6 @@ public class SeatType {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public SeatType(String id,String name, String description) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-    }
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

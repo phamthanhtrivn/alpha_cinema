@@ -32,17 +32,6 @@ public class Room {
     private LocalDateTime updatedAt;
     private boolean status;
 
-    public Room(String id ,Cinema cinema, int roomNumber, int capacity,ProjectionType projectionType, boolean status) {
-        this.capacity = capacity;
-        this.id = id;
-        this.cinema = cinema;
-        this.projectionType = projectionType;
-        this.roomNumber = roomNumber;
-        this.status = status;
-    }
-
-
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

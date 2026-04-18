@@ -1,6 +1,5 @@
 package com.movieticket.order.entity;
 
-import com.movieticket.order.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,6 +41,8 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<ShowScheduleDetail> showScheduleDetails;
+
+    private String cinemaId;
 
     @PrePersist
     protected void onCreate() {
