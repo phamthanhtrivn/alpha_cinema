@@ -63,7 +63,7 @@ public class HolidayService {
     public Holiday updateHoliday(String id, UpdateHolidayDto updateHolidayDto) {
         Holiday existingHoliday = getHolidayById(id);
 
-        if (holidayRepository.existsByStartDateAndEndDate(updateHolidayDto.getStartDate(), updateHolidayDto.getEndDate())) {
+        if (holidayRepository.existsByStartDateAndEndDateAndIdNot(updateHolidayDto.getStartDate(), updateHolidayDto.getEndDate(), id)) {
             throw new BusinessException("A holiday already exists for the given date range");
         }
 

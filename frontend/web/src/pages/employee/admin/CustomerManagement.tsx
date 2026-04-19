@@ -208,7 +208,7 @@ const CustomerManagement: React.FC = () => {
       {/* Gender */}
       <div className="space-y-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Gender
+          Giới tính
         </label>
         <FilterSelect
           placeholder="Tất cả giới tính"

@@ -14,14 +14,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cinemas")
 public class CinemaController {
-
     @Autowired
     private CinemaService cinemaService;
 
-    @GetMapping("/test")
-    public String test() {
-        return "Cinema service is working!";
-    }
     @GetMapping
     public ApiResponse<List<Cinema>> getAllCinemas() {
         ApiResponse<List<Cinema>> api;
@@ -34,12 +29,13 @@ public class CinemaController {
         }
         return api;
     }
-    @PostMapping("/create")
 
+    @PostMapping("/create")
     public ApiResponse<Cinema>  createCinema(@Valid @RequestBody CinemaRequest request) {
             Cinema cinema = cinemaService.createCinema(request);
             return new ApiResponse<>(true, cinema);
     }
+
     @PutMapping("/edit/{id}")
     public ApiResponse<Cinema>  editCinema(@Valid @RequestBody CinemaRequest request, @PathVariable("id") String id) {
         Cinema cinema = cinemaService.editCinema(request, id);

@@ -1,4 +1,4 @@
-package com.movieticket.user.util;
+package com.movieticket.user.utils;
 
 import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.entity.Customer;
