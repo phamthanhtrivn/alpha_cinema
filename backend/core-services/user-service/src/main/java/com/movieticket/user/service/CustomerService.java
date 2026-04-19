@@ -5,7 +5,7 @@ import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.entity.Customer;
 import com.movieticket.user.exception.BusinessException;
 import com.movieticket.user.repository.CustomerRepository;
-import com.movieticket.user.util.UserUtil;
+import com.movieticket.user.utils.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -13,7 +13,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
     @Query("SELECT e FROM Employee e " +
-            "WHERE (:cinemaId IS NULL OR e.cinemaId = :cinemaId) " +
+            "WHERE (:excludeRole IS NULL OR e.role <> :excludeRole) " +
+            "AND (:cinemaId IS NULL OR e.cinemaId = :cinemaId) " +
             "AND (:id IS NULL OR e.id = :id) " +
             "AND (:fullName IS NULL OR LOWER(e.fullName) LIKE LOWER(CONCAT('%', :fullName, '%')) ) " +
             "AND (:email IS NULL OR e.email LIKE %:email%) " +
@@ -22,6 +23,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
             "AND (:status IS NULL OR e.status = :status) " +
             "AND (:role IS NULL OR e.role = :role)")
     Page<Employee> searchAllEmployees(
+            @Param("excludeRole") EmployeeRole excludeRole,
             @Param("cinemaId") String cinemaId,
             @Param("id") String id,
             @Param("fullName") String fullName,
@@ -32,4 +34,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
             @Param("role") EmployeeRole role,
             Pageable pageable
     );
+
+    boolean existsByPhone(String phone);
+    boolean existsByEmail(String email);
+
+    boolean existsByPhoneAndIdNot(String phone, String id);
+    boolean existsByEmailAndIdNot(String email, String id);
 }

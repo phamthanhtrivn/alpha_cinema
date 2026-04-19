@@ -69,10 +69,11 @@ public class TicketService {
     public TicketPrice updateTicketPrice(String id, UpdateTicketPriceDto updateDto) {
         TicketPrice existingPrice = getTicketPriceById(id);
 
-        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
+        boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayTypeAndIdNot(
                 updateDto.getSeatTypeId(),
                 updateDto.getProjectionType(),
-                updateDto.getDayType()
+                updateDto.getDayType(),
+                id
         );
 
         if (exists) {
