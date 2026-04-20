@@ -21,8 +21,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   };
 
   return (
-    <Badge 
-      variant="outline" 
+    <Badge
+      variant="outline"
       className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${styles[type]} ${className} border h-auto shadow-none`}
     >
       {status}

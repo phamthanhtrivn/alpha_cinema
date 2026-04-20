@@ -23,16 +23,6 @@ public class AuthenticationFilter implements GlobalFilter, Order {
     @Autowired
     private JwtUtils jwtUtils;
 
-//    public static final List<String> AdminEndpoints = List.of(
-//            "users/auth/register",
-//            "users/auth/login"
-//    );
-//
-//    public static final List<String> EmployeeEndpoints = List.of(
-//            "users/auth/register",
-//            "users/auth/login"
-//    );
-//
     public static final List<String> CustomerEndpoints = List.of(
             "users/auth/register",
             "users/auth/login"
@@ -57,7 +47,6 @@ public class AuthenticationFilter implements GlobalFilter, Order {
         String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
         String token = "";
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
             token = authHeader.substring(7); // Bỏ chữ "Bearer "
         } else {
             return this.onError(exchange, "Invalid authorization header format", HttpStatus.UNAUTHORIZED);
@@ -68,10 +57,10 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 
             boolean expire = jwtUtils.isTokenExpired(token);
 
-            if(expire){
-                System.out.println("Token hết hạn");
+            if (expire) {
                 return this.onError(exchange, "Token hết hạn", HttpStatus.FORBIDDEN);
             }
+
             String role = jwtUtils.extractRole(token);
 
 //            if (AdminEndpoints.contains(path) && !"ADMIN".equals(role)) {
@@ -88,12 +77,10 @@ public class AuthenticationFilter implements GlobalFilter, Order {
         } catch (Exception e) {
             return this.onError(exchange, "Token is invalid or expired", HttpStatus.UNAUTHORIZED);
         }
-
         return chain.filter(exchange);
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String errMessage, HttpStatus httpStatus) {
-        // Log lỗi ra console để dev dễ theo dõi
         System.out.println("Gateway Security Error: " + errMessage);
         exchange.getResponse().setStatusCode(httpStatus);
         return exchange.getResponse().setComplete();

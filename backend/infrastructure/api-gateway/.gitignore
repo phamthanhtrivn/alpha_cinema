@@ -36,3 +36,4 @@ Desktop.ini
 .DS_Store
 
 src/main/resources/keys/
+.env

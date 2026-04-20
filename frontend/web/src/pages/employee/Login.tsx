@@ -11,6 +11,7 @@ const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
+    role: "EMPLOYEE",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,9 +39,12 @@ const AdminLogin: React.FC = () => {
               role: response.data.user.role,
             }),
           );
-          if(response.data.user.role == 'ADMIN') navigate('/employee/admin/dashboard');
-          if(response.data.user.role == 'MANAGER') navigate('/employee/manager/dashboard');
-          if(response.data.user.role == 'STAFF') navigate('/employee/staff/dashboard');
+          if (response.data.user.role == "ADMIN")
+            navigate("/employee/admin/dashboard");
+          if (response.data.user.role == "MANAGER")
+            navigate("/employee/manager/dashboard");
+          if (response.data.user.role == "STAFF")
+            navigate("/employee/staff/dashboard");
         }
       } catch (err) {
         toast.error("Sai email hoặc password");

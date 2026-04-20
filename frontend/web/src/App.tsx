@@ -56,24 +56,25 @@ import { useEffect } from "react";
 
 function App() {
   const dispatch = useDispatch();
-  const { accessToken} = useSelector(selectAuth);
+  const { accessToken } = useSelector(selectAuth);
 
   useEffect(() => {
     const fetchUser = async () => {
-        try {
-          const response = await userService.getProfile();
-          console.log(response);
-          if (response.success) {
-            dispatch(setCredentials({
+      try {
+        const response = await userService.getProfile();
+        console.log(response);
+        if (response.success) {
+          dispatch(
+            setCredentials({
               user: response.data,
               accessToken: accessToken,
-              role: response.data.role
-            }));
-          }
-        } catch (error) {
-          console.log(error);
+              role: response.data.role,
+            }),
+          );
         }
-
+      } catch (error) {
+        console.log(error);
+      }
     };
 
     fetchUser();
@@ -91,7 +92,7 @@ function App() {
 
           {/* CLIENT LOGIN */}
           <Route path="/login" element={<ClientLogin />} />
-   
+
           <Route path="/register" element={<ClientResgister />} />
           <Route path="/forget-password" element={<ForgetPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />

@@ -4,33 +4,33 @@ import type LoginRequest from "@/types/loginRequest";
 
 export const userService = {
   clientRegister: async (request: RegisterRequest) => {
-    const response = await apiClient.post(`users/register`, request);
+    const response = await apiClient.post(`/users/register`, request);
     return response.data;
   },
   login: async (request: LoginRequest) => {
-    const response = await apiClient.post(`users/login`, request, {
+    const response = await apiClient.post(`/users/login`, request, {
       withCredentials: true,
     });
     return response.data;
   },
   getProfile: async () => {
-    const response = await apiClient.get(`users/profile`);
+    const response = await apiClient.get(`/users/profile`);
     return response.data;
   },
   logout: async () => {
     const response = await apiClient.post(
-      `users/logout`,
+      `/users/logout`,
       {},
       { withCredentials: true },
     );
     return response.data;
   },
   forget_password: async (email: string) => {
-    const response = await apiClient.post(`users/forgot-password`, { email });
+    const response = await apiClient.post(`/users/forgot-password`, { email });
     return response.data;
   },
   forget_password_otp: async (email: string, otp: string) => {
-    const response = await apiClient.post(`users/forgot-password/otp`, {
+    const response = await apiClient.post(`/users/forgot-password/otp`, {
       email,
       otp,
     });
@@ -44,7 +44,7 @@ export const userService = {
     token: string,
   ) => {
     const response = await apiClient.post(
-      `users/forgot-password/reset-password`,
+      `/forgot-password/reset-password`,
       {
         email,
         password,
@@ -58,10 +58,14 @@ export const userService = {
     );
     return response.data;
   },
-  google_login: async (token : string)=>{
-    const response = await apiClient.post("users/google-login", { token: token }, {
-      withCredentials: true,
-    });
+  google_login: async (token: string) => {
+    const response = await apiClient.post(
+      "/users/google-login",
+      { token: token },
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
-  }
+  },
 };

@@ -69,7 +69,11 @@ public class ProductService {
     public Product updateProduct(String id, UpdateProductDto updateProductDto, MultipartFile file) {
         Product product = getProductById(id);
 
+<<<<<<< HEAD
         if (productRepository.existsByNameAndUnitPrice(updateProductDto.getName(), updateProductDto.getUnitPrice())) {
+=======
+        if (productRepository.existsByNameAndUnitPriceAndIdNot(updateProductDto.getName(), updateProductDto.getUnitPrice(), id)) {
+>>>>>>> 8dcf4ad36f4973cbda6589a0926d134dc3149b6a
             throw new BusinessException("Product with the same name and price already exists");
         }
 

@@ -1,24 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import BaseManagementLayout from '@/components/employee/BaseManagementLayout';
-import ManagementTable from '@/components/employee/ManagementTable';
-import StatusBadge from '@/components/employee/StatusBadge';
-import TableActions from '@/components/employee/TableActions';
-import ManagementFilterBar from '@/components/employee/ManagementFilterBar';
-import { Calendar, Clock, Star, PlayCircle, Film } from 'lucide-react';
-import { TableRow, TableCell } from '@/components/ui/table';
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, Star, PlayCircle, Film } from "lucide-react";
+import { TableRow, TableCell } from "@/components/ui/table";
+import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
+import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
+import ManagementTable from "@/components/employee/ManagementTable";
+import StatusBadge from "@/components/employee/StatusBadge";
+import TableActions from "@/components/employee/TableActions";
 
 const MovieManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const mockMovies = [
-    { id: 1, title: 'Mai', genre: 'Tâm lý, Tình cảm', duration: '131 phút', releaseDate: '10/02/2024', status: 'Đang chiếu', rating: '8.5', poster: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop' },
-    { id: 2, title: 'Gặp Lại Chị Bầu', genre: 'Hài, Gia đình', duration: '110 phút', releaseDate: '10/02/2024', status: 'Đang chiếu', rating: '7.9', poster: '' },
-    { id: 3, title: 'Kung Fu Panda 4', genre: 'Hoạt hình, Hành động', duration: '94 phút', releaseDate: '08/03/2024', status: 'Sắp chiếu', rating: 'TBD', poster: '' },
-    { id: 4, title: 'Dune: Hành Tinh Cát - Phần 2', genre: 'Hành động, Phiêu lưu', duration: '166 phút', releaseDate: '01/03/2024', status: 'Đang chiếu', rating: '9.1', poster: '' },
-    { id: 5, title: 'Quỷ Cẩu', genre: 'Kinh dị', duration: '92 phút', releaseDate: '29/12/2023', status: 'Ngừng chiếu', rating: '6.5', poster: '' },
+    {
+      id: 1,
+      title: "Mai",
+      genre: "Tâm lý, Tình cảm",
+      duration: "131 phút",
+      releaseDate: "10/02/2024",
+      status: "Đang chiếu",
+      rating: "8.5",
+      poster:
+        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop",
+    },
+    {
+      id: 2,
+      title: "Gặp Lại Chị Bầu",
+      genre: "Hài, Gia đình",
+      duration: "110 phút",
+      releaseDate: "10/02/2024",
+      status: "Đang chiếu",
+      rating: "7.9",
+      poster: "",
+    },
+    {
+      id: 3,
+      title: "Kung Fu Panda 4",
+      genre: "Hoạt hình, Hành động",
+      duration: "94 phút",
+      releaseDate: "08/03/2024",
+      status: "Sắp chiếu",
+      rating: "TBD",
+      poster: "",
+    },
+    {
+      id: 4,
+      title: "Dune: Hành Tinh Cát - Phần 2",
+      genre: "Hành động, Phiêu lưu",
+      duration: "166 phút",
+      releaseDate: "01/03/2024",
+      status: "Đang chiếu",
+      rating: "9.1",
+      poster: "",
+    },
+    {
+      id: 5,
+      title: "Quỷ Cẩu",
+      genre: "Kinh dị",
+      duration: "92 phút",
+      releaseDate: "29/12/2023",
+      status: "Ngừng chiếu",
+      rating: "6.5",
+      poster: "",
+    },
   ];
 
   // Simulation loading
@@ -27,8 +73,8 @@ const MovieManagement: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const filteredMovies = mockMovies.filter(movie =>
-    movie.title.toLowerCase().includes(search.toLowerCase())
+  const filteredMovies = mockMovies.filter((movie) =>
+    movie.title.toLowerCase().includes(search.toLowerCase()),
   );
 
   const FilterContent = (
@@ -44,7 +90,7 @@ const MovieManagement: React.FC = () => {
     <BaseManagementLayout
       title="Quản lý Phim"
       subtitle="Quản lý thư viện phim và lịch chiếu Alpha Cinema."
-      onAdd={() => console.log('Add movie')}
+      onAdd={() => console.log("Add movie")}
       addLabel="THÊM PHIM MỚI"
       totalItems={filteredMovies.length}
       currentPage={currentPage}
@@ -52,8 +98,6 @@ const MovieManagement: React.FC = () => {
       onPageChange={(p) => setCurrentPage(p)}
       filterContent={
         <ManagementFilterBar
-          searchValue={search}
-          onSearch={setSearch}
           onRefresh={() => {
             setLoading(true);
             setTimeout(() => setLoading(false), 500);
@@ -66,7 +110,13 @@ const MovieManagement: React.FC = () => {
       }
     >
       <ManagementTable
-        headers={['Bộ phim / Thể loại', 'Thông tin kĩ thuật', 'Ngày công chiếu', 'Trạng thái', 'Hành động']}
+        headers={[
+          "Bộ phim / Thể loại",
+          "Thông tin kĩ thuật",
+          "Ngày công chiếu",
+          "Trạng thái",
+          "Hành động",
+        ]}
         isLoading={loading}
       >
         {filteredMovies.map((movie) => (
@@ -80,13 +130,20 @@ const MovieManagement: React.FC = () => {
                 <div className="relative group/poster">
                   <div className="w-14 h-20 bg-slate-100 rounded-xl overflow-hidden shadow-sm border border-slate-200/50 group-hover:border-sky-200 transition-all group-hover:shadow-md flex items-center justify-center">
                     {movie.poster ? (
-                      <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" />
+                      <img
+                        src={movie.poster}
+                        alt={movie.title}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <Film className="text-slate-300" size={20} />
                     )}
                   </div>
                   <div className="absolute inset-0 bg-sky-600/0 group-hover/poster:bg-sky-600/10 transition-colors flex items-center justify-center rounded-xl">
-                    <PlayCircle className="text-white opacity-0 group-hover/poster:opacity-100 scale-50 group-hover/poster:scale-100 transition-all" size={24} />
+                    <PlayCircle
+                      className="text-white opacity-0 group-hover/poster:opacity-100 scale-50 group-hover/poster:scale-100 transition-all"
+                      size={24}
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col space-y-1">
@@ -95,11 +152,11 @@ const MovieManagement: React.FC = () => {
                   </span>
                   <div className="flex items-center space-x-2">
                     <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">
-                      {movie.genre.split(',')[0]}
+                      {movie.genre.split(",")[0]}
                     </span>
-                    {movie.genre.split(',').length > 1 && (
+                    {movie.genre.split(",").length > 1 && (
                       <span className="text-[10px] font-medium text-slate-400">
-                        +{movie.genre.split(',').length - 1} khác
+                        +{movie.genre.split(",").length - 1} khác
                       </span>
                     )}
                   </div>
@@ -115,11 +172,24 @@ const MovieManagement: React.FC = () => {
                   {movie.duration}
                 </div>
                 <div className="flex items-center space-x-1 pl-1">
-                  <Star size={12} className={movie.rating === 'TBD' ? "text-slate-300" : "text-amber-400 fill-amber-400"} />
-                  <span className={`text-[11px] font-black ${movie.rating === 'TBD' ? "text-slate-300 italic" : "text-slate-700"}`}>
+                  <Star
+                    size={12}
+                    className={
+                      movie.rating === "TBD"
+                        ? "text-slate-300"
+                        : "text-amber-400 fill-amber-400"
+                    }
+                  />
+                  <span
+                    className={`text-[11px] font-black ${movie.rating === "TBD" ? "text-slate-300 italic" : "text-slate-700"}`}
+                  >
                     {movie.rating}
                   </span>
-                  {movie.rating !== 'TBD' && <span className="text-[10px] text-slate-300 font-medium">/ 10</span>}
+                  {movie.rating !== "TBD" && (
+                    <span className="text-[10px] text-slate-300 font-medium">
+                      / 10
+                    </span>
+                  )}
                 </div>
               </div>
             </TableCell>
@@ -131,7 +201,9 @@ const MovieManagement: React.FC = () => {
                   <Calendar size={14} className="mr-2 text-slate-300" />
                   {movie.releaseDate}
                 </div>
-                <span className="text-[10px] text-slate-300 font-medium pl-6 uppercase tracking-widest">Toàn quốc</span>
+                <span className="text-[10px] text-slate-300 font-medium pl-6 uppercase tracking-widest">
+                  Toàn quốc
+                </span>
               </div>
             </TableCell>
 
@@ -139,16 +211,22 @@ const MovieManagement: React.FC = () => {
             <TableCell className="px-8 py-5">
               <StatusBadge
                 status={movie.status}
-                type={movie.status === 'Đang chiếu' ? 'success' : movie.status === 'Sắp chiếu' ? 'info' : 'neutral'}
+                type={
+                  movie.status === "Đang chiếu"
+                    ? "success"
+                    : movie.status === "Sắp chiếu"
+                      ? "info"
+                      : "neutral"
+                }
               />
             </TableCell>
 
             {/* Cell: Actions */}
             <TableCell className="px-8 py-5 text-right">
               <TableActions
-                onView={() => alert('View movie')}
-                onEdit={() => alert('Edit movie')}
-                onDelete={() => alert('Delete movie')}
+                onView={() => alert("View movie")}
+                onEdit={() => alert("Edit movie")}
+                onDelete={() => alert("Delete movie")}
               />
             </TableCell>
           </TableRow>

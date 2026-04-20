@@ -32,6 +32,7 @@ public class JwtUtils {
         this.privateKey = KeyReaderUtils.getPrivateKeyFromString(pirvateKeyStr);
         this.publicKey = KeyReaderUtils.getPublicKeyFromString(publicKeyStr);
     }
+
     private String buildToken(Map<String,Object> claims, String subject, long expiration){
         return Jwts.builder()
                 .setClaims(claims)
@@ -54,6 +55,7 @@ public class JwtUtils {
             return false;
         }
     }
+
     private Claims extractAllClaims(String token){
         return Jwts.parserBuilder()
                 .setSigningKey(publicKey)

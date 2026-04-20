@@ -16,9 +16,7 @@ apiClient.interceptors.request.use(
     }
     const accessToken = store.getState().auth.accessToken;
 
-    // 2. Nếu có token, đính nó vào Header Authorization
     if (accessToken) {
-      // Lưu ý: Phải có chữ 'Bearer ' phía trước theo chuẩn JWT
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
@@ -45,7 +43,7 @@ apiClient.interceptors.response.use(
 
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_API_URL}users/refresh-token`,
+          `${import.meta.env.VITE_BACKEND_API_URL}/users/refresh-token`,
           {},
           { withCredentials: true },
         );
