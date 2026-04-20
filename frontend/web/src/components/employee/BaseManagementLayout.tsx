@@ -61,7 +61,7 @@ const BaseManagementLayout: React.FC<BaseManagementLayoutProps> = ({
           </h1>
           {subtitle && (
             <p className="text-slate-500 font-medium flex items-center">
-              <span className="w-8 h-[2px] bg-sky-500 mr-3 rounded-full"></span>
+              <span className="w-8 h-0.5 bg-sky-500 mr-3 rounded-full"></span>
               {subtitle}
             </p>
           )}
@@ -138,7 +138,7 @@ const BaseManagementLayout: React.FC<BaseManagementLayoutProps> = ({
               size="sm"
               onClick={() => onPageChange?.(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="cursor-pointer h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100 cursor-pointer"
+              className="cursor-pointer h-10 w-10 p-0 rounded-xl text-slate-400 border-slate-100 hover:bg-white hover:text-sky-600 hover:border-sky-200 transition-all disabled:opacity-30 disabled:hover:border-slate-100"
             >
               <ChevronRight size={18} />
             </Button>

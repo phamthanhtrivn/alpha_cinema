@@ -40,12 +40,46 @@ import StaffDashboard from "./pages/employee/staff/StaffDashboard";
 // CLIENT
 import Home from "./pages/client/Home";
 import ClientLogin from "./pages/client/ClientLogin";
+import ForgetPassword from "./pages/client/ForgotPassword";
+import ClientResgister from "./pages/client/ClientResgister";
 import Profile from "./pages/client/customer/Profile";
+import VerifyOtp from "./pages/client/VerifyOtp";
+import ResetPassword from "./pages/client/ResetPassword";
 
 // REDIRECT
 import RoleRedirect from "./routes/RoleRedirect";
 
+import { useDispatch, useSelector } from "react-redux";
+import { selectAuth, setCredentials } from "./store/slices/authSlice";
+import { userService } from "./services/user.service";
+import { useEffect } from "react";
+
 function App() {
+  const dispatch = useDispatch();
+  const { accessToken } = useSelector(selectAuth);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await userService.getProfile();
+        console.log(response);
+        if (response.success) {
+          dispatch(
+            setCredentials({
+              user: response.data,
+              accessToken: accessToken,
+              role: response.data.role,
+            }),
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -58,6 +92,11 @@ function App() {
 
           {/* CLIENT LOGIN */}
           <Route path="/login" element={<ClientLogin />} />
+
+          <Route path="/register" element={<ClientResgister />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* CUSTOMER ONLY */}
           <Route

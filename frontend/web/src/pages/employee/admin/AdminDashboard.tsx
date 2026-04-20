@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const AdminDashboard: React.FC = () => {
   return (
@@ -9,9 +9,14 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-24 border border-gray-200 bg-white rounded-lg p-4 shadow-sm flex flex-col justify-center">
-            <span className="text-gray-400 text-xs uppercase font-bold tracking-widest">Stats {i}</span>
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="h-24 border border-gray-200 bg-white rounded-lg p-4 shadow-sm flex flex-col justify-center"
+          >
+            <span className="text-gray-400 text-xs uppercase font-bold tracking-widest">
+              Stats {i}
+            </span>
             <span className="text-xl font-bold text-gray-900 mt-1">N/A</span>
           </div>
         ))}
