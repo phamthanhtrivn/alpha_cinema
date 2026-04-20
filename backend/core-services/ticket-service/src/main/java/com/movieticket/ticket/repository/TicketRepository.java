@@ -14,6 +14,11 @@ import org.springframework.stereotype.Repository;
 public interface TicketRepository extends JpaRepository<TicketPrice, String> {
     boolean existsBySeatTypeIdAndProjectionTypeAndDayType(String seatTypeId, ProjectionType projectionType, DayType dayType);
 
+<<<<<<< HEAD
+=======
+    boolean existsBySeatTypeIdAndProjectionTypeAndDayTypeAndIdNot(String seatTypeId, ProjectionType projectionType, DayType dayType, String id);
+
+>>>>>>> 8dcf4ad36f4973cbda6589a0926d134dc3149b6a
     @Query("SELECT tp " +
             "FROM TicketPrice tp " +
             "WHERE (:id IS NULL OR tp.id = :id) " +

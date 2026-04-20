@@ -41,11 +41,10 @@ const ManagementFilterBar: React.FC<ManagementFilterBarProps> = ({
 
           <Button
             onClick={toggleAdvanced}
-            className={`h-12 px-6 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm cursor-pointer ${
-              showAdvanced || isFilterActive
+            className={`h-12 px-6 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm cursor-pointer ${showAdvanced || isFilterActive
                 ? "bg-sky-50 text-sky-600 border border-sky-100 hover:bg-sky-100 shadow-sky-100/20"
                 : "bg-white/50 text-slate-500 border border-slate-100 hover:bg-white hover:text-sky-600"
-            }`}
+              }`}
           >
             <Filter
               className={`mr-2 h-4 w-4 ${showAdvanced ? "animate-pulse" : ""}`}
