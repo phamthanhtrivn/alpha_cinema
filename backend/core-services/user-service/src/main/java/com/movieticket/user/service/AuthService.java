@@ -39,6 +39,7 @@ public class AuthService {
 
     public UserResponse login(LoginRequest loginRequest){
         Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+        String roleRequest = loginRequest.getRole();
 
         if (userOptional.isEmpty()) {
             throw new BusinessException("Sai email hoặc mật khẩu!");
@@ -61,6 +62,14 @@ public class AuthService {
         else{
             role = ((Employee) user).getRole().name();
         }
+        String roleCheck = role.equals("CUSTOMER") ? "CUSTOMER" : "EMPLOYEE";
+
+
+        if(!roleRequest.equals(roleCheck)){
+            throw new BusinessException("Sai email hoặc mật khẩu!");
+        }
+
+
         return new UserResponse(user.getId(),user.getEmail(),user.getFullName(), role);
     };
 

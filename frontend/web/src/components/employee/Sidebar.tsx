@@ -185,7 +185,6 @@ const Sidebar: React.FC = () => {
   const handleLogout = () => {
     const handle = async () => {
       const data = await userService.logout();
-
       if (data.success) {
         toast.success("Đăng xuất thành công");
         dispatch(logout());
@@ -194,7 +193,6 @@ const Sidebar: React.FC = () => {
     };
     handle();
   };
-
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col h-screen shadow-xl">
       {/* LOGO */}
@@ -205,8 +203,7 @@ const Sidebar: React.FC = () => {
         >
           <Film />
           <span>
-            ALPHA{" "}
-            <span className="text-gray-400 text-sm italic">ADMIN</span>
+            ALPHA <span className="text-gray-400 text-sm italic">ADMIN</span>
           </span>
         </Link>
       </div>
@@ -221,15 +218,14 @@ const Sidebar: React.FC = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                    isActive
                       ? "bg-sky-600 text-white shadow"
                       : "text-gray-400 hover:bg-slate-800 hover:text-white"
-                    }`}
+                  }`}
                 >
                   {item.icon}
-                  <span className="text-sm font-medium">
-                    {item.label}
-                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </li>
             );

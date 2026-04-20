@@ -11,6 +11,7 @@ const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
+    role: "EMPLOYEE",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

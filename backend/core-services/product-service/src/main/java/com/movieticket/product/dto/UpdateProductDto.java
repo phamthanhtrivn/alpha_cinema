@@ -21,10 +21,12 @@ public class UpdateProductDto {
     @NotNull(message = "Giá sản phẩm là bắt buộc")
     @Min(value = 20000, message = "Giá sản phẩm phải ít nhất 20,000")
     @Max(value = 500000, message = "Giá sản phẩm không được vượt quá 500,000")
-    private double unitPrice;
+    private Double unitPrice;
 
     private String description;
+
     @NotNull(message = "Loại sản phẩm là bắt buộc")
     private ProductType type;
+    
     private boolean status;
 }

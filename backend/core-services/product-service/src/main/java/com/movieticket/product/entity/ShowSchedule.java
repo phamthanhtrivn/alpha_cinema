@@ -37,6 +37,8 @@ public class ShowSchedule {
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
+  private String cinemaId;
+
   @PrePersist
   protected void onCreate() {
     createdAt = LocalDateTime.now();

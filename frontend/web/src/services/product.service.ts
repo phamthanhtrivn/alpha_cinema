@@ -19,5 +19,5 @@ export const productService = {
   updateProduct: async (id: string, data: FormData) => {
     const response = await apiClient.put(`/products/${id}`, data);
     return response.data;
-  }
+  },
 };

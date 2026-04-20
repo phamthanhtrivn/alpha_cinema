@@ -32,16 +32,16 @@ public class HolidayService {
 
     public Holiday getHolidayById(String id) {
         return holidayRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Holiday not found with id: " + id));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy ngày lễ với id: " + id));
     }
 
     public Holiday createHoliday(CreateHolidayDto createHolidayDto) {
         if (holidayRepository.existsByStartDateAndEndDate(createHolidayDto.getStartDate(), createHolidayDto.getEndDate())) {
-            throw new BusinessException("A holiday already exists for the given date range");
+            throw new BusinessException("Ngày lễ đã tồn tại");
         }
 
         if (createHolidayDto.getStartDate().isAfter(createHolidayDto.getEndDate())) {
-            throw new BusinessException("Start date cannot be after end date");
+            throw new BusinessException("Ngày bắt đầu không được sau ngày kết thúc");
         }
 
         Holiday holiday = new Holiday();
@@ -64,11 +64,11 @@ public class HolidayService {
         Holiday existingHoliday = getHolidayById(id);
 
         if (holidayRepository.existsByStartDateAndEndDateAndIdNot(updateHolidayDto.getStartDate(), updateHolidayDto.getEndDate(), id)) {
-            throw new BusinessException("A holiday already exists for the given date range");
+            throw new BusinessException("Ngày lễ đã tồn tại");
         }
 
         if (updateHolidayDto.getStartDate().isAfter(updateHolidayDto.getEndDate())) {
-            throw new BusinessException("Start date cannot be after end date");
+            throw new BusinessException("Ngày bắt đầu không được sau ngày kết thúc");
         }
 
         existingHoliday.setName(updateHolidayDto.getName());
