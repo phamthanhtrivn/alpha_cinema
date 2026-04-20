@@ -43,13 +43,12 @@ apiClient.interceptors.response.use(
 
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_API_URL}users/refresh-token`,
+          `${import.meta.env.VITE_BACKEND_API_URL}/users/refresh-token`,
           {},
           { withCredentials: true },
         );
 
         const data = response.data.data;
-
 
         store.dispatch(
           setCredentials({
