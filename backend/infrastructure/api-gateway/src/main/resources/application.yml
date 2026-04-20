@@ -38,12 +38,12 @@
           - id: ticket-service
             uri: lb://ticket-service
             predicates:
-              - Path=/api/tickets/**
+              - Path=/api/tickets/**, /api/holidays/**
           # Route cho dịch vụ quản lý người dùng
           - id: user-service
             uri: lb://user-service
             predicates:
-              - Path=/api/users/**
+              - Path=/api/users/**, /api/customers/**, /api/employees/**
           # Route cho dịch vụ quản lý sản phẩm (suất chiếu, phim, combo,...)
           - id: product-service
             uri: lb://product-service

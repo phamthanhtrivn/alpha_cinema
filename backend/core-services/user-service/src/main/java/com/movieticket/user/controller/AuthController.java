@@ -41,7 +41,8 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<?> login(@Validated @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         UserResponse user = authService.login(loginRequest);
-        if(user != null){
+
+        if(user != null) {
             String accessToken = jwtUtils.generateAccessToken(user);
             String refreshToken = jwtUtils.generateRefreshToken(user);
             ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)

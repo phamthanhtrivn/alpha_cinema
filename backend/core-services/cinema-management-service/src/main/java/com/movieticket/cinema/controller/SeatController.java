@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/seat")
+@RequestMapping("/api/seats")
 public class SeatController {
     @Autowired
     private SeatService seatService;

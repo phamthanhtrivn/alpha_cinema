@@ -5,7 +5,6 @@ import type LoginRequest from "@/types/loginRequest";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slices/authSlice";
-import { useGoogleLogin } from "@react-oauth/google"; 
 import { Loader2 } from "lucide-react"; 
 import ButtonGoogle from "@/components/client/ButtonGoogle";
 
@@ -13,6 +12,7 @@ const ClientLogin: React.FC = () => {
   const [loginData, setLoginData] = useState<LoginRequest>({
     email: "",
     password: "",
+    role : "CUSTOMER",
   });
   const [isLoading, setIsLoading] = useState(false);
 

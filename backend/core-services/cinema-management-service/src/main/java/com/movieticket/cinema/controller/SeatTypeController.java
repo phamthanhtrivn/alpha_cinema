@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 @RestController
-@RequestMapping("/api/seat-type")
+@RequestMapping("/api/seat-types")
 public class SeatTypeController {
     @Autowired
     private SeatTypeService seatTypeService;
