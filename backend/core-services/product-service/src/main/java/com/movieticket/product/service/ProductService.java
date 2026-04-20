@@ -39,11 +39,11 @@ public class ProductService {
 
     public Product createProduct(CreateProductDto createProductDto, MultipartFile file) {
         if (productRepository.existsByNameAndUnitPrice(createProductDto.getName(), createProductDto.getUnitPrice())) {
-            throw new BusinessException("Product with the same name and price already exists");
+            throw new BusinessException("Sản phẩm đã tồn tại");
         }
 
         if (file == null || file.isEmpty()) {
-            throw new BusinessException("Product image is required");
+            throw new BusinessException("Ảnh sản phẩm không được để trống");
         }
 
         String pictureUrl = cloudinaryUtil.uploadImage(file);
@@ -70,7 +70,7 @@ public class ProductService {
         Product product = getProductById(id);
 
         if (productRepository.existsByNameAndUnitPriceAndIdNot(updateProductDto.getName(), updateProductDto.getUnitPrice(), id)) {
-            throw new BusinessException("Product with the same name and price already exists");
+            throw new BusinessException("Sản phẩm đã tồn tại");
         }
 
         if (file != null && !file.isEmpty()) {
