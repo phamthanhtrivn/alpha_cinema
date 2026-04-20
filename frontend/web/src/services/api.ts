@@ -50,7 +50,6 @@ apiClient.interceptors.response.use(
 
         const data = response.data.data;
 
-
         store.dispatch(
           setCredentials({
             user: data.user,

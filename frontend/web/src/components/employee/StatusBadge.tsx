@@ -30,4 +30,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   );
 };
 
+<<<<<<< HEAD
 export default StatusBadge;
+=======
+export default StatusBadge;
+>>>>>>> PhamThanhTri

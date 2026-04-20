@@ -1,6 +1,6 @@
-import React from 'react';
-import { Edit, Trash2, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Edit, Trash2, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TableActionsProps {
   onEdit?: () => void;
@@ -13,10 +13,12 @@ const TableActions: React.FC<TableActionsProps> = ({
   onEdit,
   onDelete,
   onView,
-  className = ''
+  className = "",
 }) => {
   return (
-    <div className={`flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ${className}`}>
+    <div
+      className={`flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ${className}`}
+    >
       {onView && (
         <Button
           variant="ghost"
