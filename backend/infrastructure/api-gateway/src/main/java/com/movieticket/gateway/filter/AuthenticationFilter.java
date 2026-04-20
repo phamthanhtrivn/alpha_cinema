@@ -28,26 +28,23 @@ public class AuthenticationFilter implements GlobalFilter, Order {
             "users/auth/login"
     );
 
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-
-
 
         if(routeValidator.isSecured.test(request)){
             if(!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)){
                 return this.onError(exchange, "Missing authorization header", HttpStatus.UNAUTHORIZED);
             }
         }
-        else return chain.filter(exchange);
-        System.out.println("token : ");
-
+        else {
+            return chain.filter(exchange);
+        }
 
         String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
         String token = "";
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // Bỏ chữ "Bearer "
+            token = authHeader.substring(7);
         } else {
             return this.onError(exchange, "Invalid authorization header format", HttpStatus.UNAUTHORIZED);
         }
@@ -73,11 +70,18 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 //                return this.onError(exchange, "Yêu cầu quyền EMPLOYEE", HttpStatus.FORBIDDEN);
 //            }
 
+            String userId = jwtUtils.extractUserId(token);
 
+            ServerHttpRequest mutatedRequest = request.mutate()
+                    .header("X-User-Id", userId)
+                    .build();
+
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+
+            return chain.filter(mutatedExchange);
         } catch (Exception e) {
             return this.onError(exchange, "Token is invalid or expired", HttpStatus.UNAUTHORIZED);
         }
-        return chain.filter(exchange);
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String errMessage, HttpStatus httpStatus) {

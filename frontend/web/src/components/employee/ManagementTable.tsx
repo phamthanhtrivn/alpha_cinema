@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Table,
   TableBody,
@@ -6,9 +6,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Inbox } from 'lucide-react';
-import { Skeleton } from '../ui/skeleton';
+} from "@/components/ui/table";
+import { Inbox } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
 
 interface ManagementTableProps {
   headers: string[];
@@ -19,7 +19,7 @@ interface ManagementTableProps {
 const ManagementTable: React.FC<ManagementTableProps> = ({
   headers,
   children,
-  isLoading = false
+  isLoading = false,
 }) => {
   const rowCount = React.Children.count(children);
 
@@ -31,7 +31,7 @@ const ManagementTable: React.FC<ManagementTableProps> = ({
             {headers.map((header, index) => (
               <TableHead
                 key={index}
-                className={`px-8 py-5 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] h-auto ${index === headers.length - 1 ? 'text-right' : ''}`}
+                className={`px-8 py-5 text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] h-auto ${index === headers.length - 1 ? "text-right" : ""}`}
               >
                 {header}
               </TableHead>
@@ -57,8 +57,12 @@ const ManagementTable: React.FC<ManagementTableProps> = ({
                     <Inbox className="text-slate-200" size={32} />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Không có dữ liệu</p>
-                    <p className="text-slate-300 text-xs italic">Thử thay đổi bộ lọc hoặc thêm mới.</p>
+                    <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
+                      Không có dữ liệu
+                    </p>
+                    <p className="text-slate-300 text-xs italic">
+                      Thử thay đổi bộ lọc hoặc thêm mới.
+                    </p>
                   </div>
                 </div>
               </TableCell>
