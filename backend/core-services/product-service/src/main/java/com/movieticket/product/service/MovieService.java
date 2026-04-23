@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,15 +40,25 @@ public class MovieService {
         return movieRepository.findById(id).orElseThrow(() -> new BusinessException("Không tìm thấy phim"));
     }
 
-    public Page<Movie> searchMovies(MovieSearchDTO dto, int page, int size) {
-        Specification<Movie> spec = Specification.where(MovieSpecification.hasTitle(dto.getTitle())
-                        .and(MovieSpecification.hasReleaseStatus(dto.getReleaseStatus())))
-                .and(MovieSpecification.hasAgeType(dto.getAgeTypeId()))
+    @Transactional(readOnly = true)
+    public Page<MovieSummaryDTO> searchMovies(MovieSearchDTO dto, int page, int size) {
+        Specification<Movie> spec = Specification.where(MovieSpecification.hasTitle(dto.getTitle()))
+                .and(MovieSpecification.hasReleaseStatus(dto.getReleaseStatus()))
                 .and(MovieSpecification.hasNationality(dto.getNationality()))
-                .and(MovieSpecification.hasReleaseYear(dto.getReleaseYear()));
+                .and(MovieSpecification.hasAgeType(dto.getAgeTypeId()))
+                .and(MovieSpecification.hasReleaseYear(dto.getReleaseYear()))
+                .and(MovieSpecification.hasGenre(dto.getGenre()))
+                .and(MovieSpecification.hasArtist(dto.getArtistId()))
+                .and(MovieSpecification.hasProjectionType(dto.getProjectionType()))
+                .and(MovieSpecification.hasTranslationType(dto.getTranslationType()));
 
         Pageable pageable = PageRequest.of(page, size);
-        return movieRepository.findAll(spec, pageable);
+        Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
+        return moviePage.map(movieMapper::toResponseAdmin);
+    }
+
+    public List<AgeType> getAllAgeType() {
+        return ageTypeRepository.findAll();
     }
 
     @Transactional

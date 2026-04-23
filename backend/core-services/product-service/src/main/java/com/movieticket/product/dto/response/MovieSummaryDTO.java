@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -23,6 +24,7 @@ public class MovieSummaryDTO {
 
     private int releaseYear;
     private String nationality;
-
+    private Set<String> genre;
+    private int avgRating;
     private ReleaseStatus releaseStatus;
 }

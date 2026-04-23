@@ -5,6 +5,7 @@ import com.movieticket.product.dto.request.ArtistCreateDTO;
 import com.movieticket.product.dto.request.MovieCreateDTO;
 import com.movieticket.product.dto.request.MovieSearchDTO;
 import com.movieticket.product.dto.response.MovieSummaryDTO;
+import com.movieticket.product.entity.AgeType;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
 import com.movieticket.product.enums.ReleaseStatus;
@@ -17,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/movies")
 @RequiredArgsConstructor
@@ -25,13 +28,22 @@ public class MovieController {
     private final MovieService movieService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<Movie>>> searchMovies(@RequestParam(defaultValue = "0") int page,
-                                                                 @RequestParam(defaultValue = "10") int size,
-                                                                 @ModelAttribute MovieSearchDTO dto) {
-        Page<Movie> movies = movieService.searchMovies(dto, page, size);
+    public ResponseEntity<ApiResponse<Page<MovieSummaryDTO>>> searchMovies(@RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                           @ModelAttribute MovieSearchDTO dto) {
+        Page<MovieSummaryDTO> movies = movieService.searchMovies(dto, page, size);
 
-        ApiResponse<Page<Movie>> pageApiResponse = ApiResponse.success(movies, "Tìm kiếm thành công!");
+        ApiResponse<Page<MovieSummaryDTO>> pageApiResponse = ApiResponse.success(movies, "Tìm kiếm thành công!");
         return ResponseEntity.ok(pageApiResponse);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Movie>> findById(@PathVariable String id) {
+        Movie movie = movieService.getById(id);
+
+
+        ApiResponse<Movie> movieRes = ApiResponse.success(movie, "Tìm kiếm thành công!");
+        return ResponseEntity.ok(movieRes);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -52,9 +64,9 @@ public class MovieController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<Void>> updateMovieStatus(
             @PathVariable String id,
-            @RequestParam ReleaseStatus status ) {
+            @RequestParam ReleaseStatus status) {
 
-        movieService.updateReleaseStatus(id,status);
+        movieService.updateReleaseStatus(id, status);
 
         ApiResponse<Void> response = ApiResponse.success(null, "Cập nhật trạng thái phim thành công");
         return ResponseEntity.ok(response);
@@ -64,6 +76,13 @@ public class MovieController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         movieService.deleteMovie(id);
         ApiResponse<Void> response = ApiResponse.success(null, "Xóa phim thành công");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/age-type")
+    public ResponseEntity<ApiResponse<List<AgeType>>> getAgeType() {
+        List<AgeType> ageTypes = movieService.getAllAgeType();
+        ApiResponse<List<AgeType>> response = ApiResponse.success(ageTypes, "");
         return ResponseEntity.ok(response);
     }
 }

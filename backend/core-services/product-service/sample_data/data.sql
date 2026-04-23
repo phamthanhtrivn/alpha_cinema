@@ -4,6 +4,7 @@ CREATE DATABASE alpha_product_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
+
 INSERT INTO alpha_product_db.artists (`id`, `full_name`, `bio`, `date_of_birth`, `nationality`, `avatar_url`, `type`, `created_at`)
 VALUES
     (UUID(), 'Tom Hanks', 'Nam diễn viên kỳ cựu của Hollywood, nổi tiếng với Forrest Gump và Cast Away.', '1956-07-09', 'USA', 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1774067653/tom_hanks_xc4myu.jpg', 'ACTOR', NOW()),
@@ -103,4 +104,36 @@ INSERT INTO movie_translations (movie_id, translation_type) VALUES
 
 select * from alpha_product_db.movies;
 
-select * from age_types;
+select * from alpha_product_db.age_types;
+
+select * from alpha_product_db.movie_genres;
+
+select * from alpha_user_db.users;
+
+-- Nghệ sĩ Quốc tế
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949994/tom_hanks_zehdnb.jpg' WHERE full_name = 'Tom Hanks'; [cite: 22]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949996/leo_dicaprio_datn1w.webp' WHERE full_name = 'Leonardo DiCaprio'; [cite: 8]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949996/scarlett_j_b4djya.jpg' WHERE full_name = 'Scarlett Johansson'; [cite: 11]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949997/margot_robbie_csylnp.jpg' WHERE full_name = 'Margot Robbie'; [cite: 7]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949995/cillian_m_tuvs6d.jpg' WHERE full_name = 'Cillian Murphy'; [cite: 15]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949994/song_kh_nwdyd6.jpg' WHERE full_name = 'Song Kang-ho'; [cite: 23]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949995/gal_gadot_m5uxfs.jpg' WHERE full_name = 'Gal Gadot'; [cite: 12]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949996/lan_ngoc_qysyzu.jpg' WHERE full_name = 'Ninh Dương Lan Ngọc'; [cite: 9]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949994/tran_thanh_p002ux.jpg' WHERE full_name = 'Trấn Thành'; [cite: 21]
+UPDATE alpha_product_db.artists SET avatar_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776949997/ngo_thanh_van_o76arq.jpg' WHERE full_name = 'Ngô Thanh Vân'; [cite: 4]
+
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dcwauocnz/image/upload/v1776920817/alpha-cinema/e1c450e7-f8e6-4992-b183-f831c65ee042_avengers_endgame.jpg' WHERE title = 'Avengers: Endgame';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954237/lat-mat-7_f6sixe.jpg' WHERE title = 'Lật Mặt 7: Một Điều Ước';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954238/mai_ljq3qw.jpg' WHERE title = 'Mai';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/Oppenheimer_gulogd.jpg' WHERE title = 'Oppenheimer';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/inceptionjfif_q63nbm.jpg' WHERE title = 'Inception';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/Wonder_Woman_zozou6.jpg' WHERE title = 'Wonder Woman';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954237/parasite_cdqhug.jpg' WHERE title = 'Parasite (Ký Sinh Trùng)';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954237/Cua_lai_vo_bau_rnlutj.jpg' WHERE title = 'Cua Lại Vợ Bầu';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954237/Hai_Phuong_bxedul.jpg' WHERE title = 'Hai Phượng';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/dune2_lt4bkd.jpg' WHERE title = 'Dune: Part Two';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/black_widow_kyoovy.jpg' WHERE title = 'Black Widow';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/barbie_yynz8h.jpg' WHERE title = 'Barbie';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776955158/forrest_gump_hqijan.jpg' WHERE title = 'Forrest Gump';
+UPDATE alpha_product_db.movies SET thumbnail_url = 'https://res.cloudinary.com/dzcwbvlk4/image/upload/v1776954236/dune2_lt4bkd.jpg' WHERE title = 'Dune: Hành Tinh Cát - Phần 2';
+

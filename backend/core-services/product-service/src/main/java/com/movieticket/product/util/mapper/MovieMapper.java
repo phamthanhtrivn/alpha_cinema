@@ -16,6 +16,7 @@ public interface MovieMapper {
     Movie toEntity(MovieCreateDTO dto);
 
     @Mapping(source = "ageType.name", target = "ageType")
+    @Mapping(source = "genre", target = "genre")
     MovieSummaryDTO toResponseAdmin(Movie entity);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

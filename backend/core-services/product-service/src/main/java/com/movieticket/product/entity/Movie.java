@@ -5,6 +5,7 @@ import com.movieticket.product.enums.ReleaseStatus;
 import com.movieticket.product.enums.TranslationType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,6 +60,7 @@ public class Movie {
     @ElementCollection
     @CollectionTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"))
     @Column(name = "genre")
+    @BatchSize(size = 20) // gom 20 movie lại để truy vấn thể loại của nó cùng 1 lượt
     private Set<String> genre;
 
     @ManyToMany
