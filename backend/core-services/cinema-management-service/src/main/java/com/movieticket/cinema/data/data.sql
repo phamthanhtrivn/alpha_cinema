@@ -1,4 +1,5 @@
 
+use alpha_cinema_db;
 INSERT INTO alpha_cinema_db.cinemas (id, name, address, phone, created_at, updated_at, status) VALUES
    ('C001', 'CGV Vincom', 'Vincom Plaza HCM', '0900000001', '2026-03-12 10:00:00', '2026-03-12 10:00:00', true),
    ('C002', 'Lotte Cinema', 'Lotte Mart District 7', '0900000002', '2026-03-12 10:00:00', '2026-03-12 10:00:00', true);
