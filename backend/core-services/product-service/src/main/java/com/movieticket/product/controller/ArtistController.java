@@ -4,6 +4,7 @@ import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.CreateProductDto;
 import com.movieticket.product.dto.request.ArtistCreateDTO;
 import com.movieticket.product.dto.request.ArtistSearchDTO;
+import com.movieticket.product.dto.response.ArtistResDTO;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.service.ArtistService;
 import jakarta.validation.Valid;
@@ -24,12 +25,12 @@ public class ArtistController {
     private final ArtistService artistService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<Artist>>> searchAritst(@RequestParam(defaultValue = "0") int page,
-                                                                  @RequestParam(defaultValue = "10") int size,
-                                                                  @ModelAttribute ArtistSearchDTO dto) {
-        Page<Artist> artists = artistService.searchArtists(dto, page, size);
+    public ResponseEntity<ApiResponse<Page<ArtistResDTO>>> searchAritst(@RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "10") int size,
+                                                                        @ModelAttribute ArtistSearchDTO dto) {
+        Page<ArtistResDTO> artists = artistService.searchArtists(dto, page, size);
 
-        ApiResponse<Page<Artist>> pageApiResponse = ApiResponse.success(artists, "Tìm kiếm thành công!");
+        ApiResponse<Page<ArtistResDTO>> pageApiResponse = ApiResponse.success(artists, "Tìm kiếm thành công!");
         return ResponseEntity.ok(pageApiResponse);
     }
 
@@ -64,5 +65,4 @@ public class ArtistController {
         ApiResponse<Void> response = ApiResponse.success(null, "Xóa nghệ sĩ thành công");
         return ResponseEntity.ok(response);
     }
-
 }

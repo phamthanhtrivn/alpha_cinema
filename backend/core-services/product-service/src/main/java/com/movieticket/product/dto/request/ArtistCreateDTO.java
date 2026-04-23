@@ -20,7 +20,10 @@ public class ArtistCreateDTO {
     private String fullName;
     private String bio;
     private LocalDate dateOfBirth;
+
+    @NotBlank(message = "Quốc gia không được để trống")
     private String nationality;
 
+    @NotBlank(message = "Hãy chọn vai trò chính của nghệ sĩ")
     private ArtistType type;
 }

@@ -2,6 +2,7 @@ package com.movieticket.product.service;
 
 import com.movieticket.product.dto.request.ArtistCreateDTO;
 import com.movieticket.product.dto.request.ArtistSearchDTO;
+import com.movieticket.product.dto.response.ArtistResDTO;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.exception.BusinessException;
 import com.movieticket.product.repository.ArtistRepository;
@@ -36,13 +37,15 @@ public class ArtistService {
                 .collect(Collectors.toSet());
     }
 
-    public Page<Artist> searchArtists(ArtistSearchDTO dto, int page, int size) {
+    public Page<ArtistResDTO> searchArtists(ArtistSearchDTO dto, int page, int size) {
         Specification<Artist> spec = Specification.where(ArtistSpecification.hasName(dto.getName())
                         .and(ArtistSpecification.hasCountry(dto.getNationality())))
                 .and(ArtistSpecification.hasType(dto.getType()));
 
         Pageable pageable = PageRequest.of(page, size);
-        return artistRepository.findAll(spec, pageable);
+
+        Page<Artist> artistPage = artistRepository.findAll(spec, pageable);
+        return artistPage.map(artistMapper::toResDTO);
     }
 
     @Transactional
