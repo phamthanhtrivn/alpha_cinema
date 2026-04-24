@@ -5,6 +5,9 @@ import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.repository.CinemaRepository;
 import com.movieticket.cinema.util.GenerateID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -16,13 +19,20 @@ public class CinemaService {
     private CinemaRepository cinemaRepository;
 
     public List<Cinema> getAllCinemas(){
-        try{
-            return cinemaRepository.findAll();
-        }
-        catch(Exception e){
-            System.out.println(e.getMessage());
-        }
-        return null;
+        List<Cinema> cinemas = cinemaRepository.findAll();
+        return cinemas;
+    }
+
+    public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+
+        return cinemaRepository.filterCinemas(
+                name != null && !name.isEmpty() ? name : null,
+                address != null && !address.isEmpty() ? address : null,
+                phone != null && !phone.isEmpty() ? phone : null,
+                status,
+                pageable
+        );
     }
 
     public Cinema createCinema(CinemaRequest request){

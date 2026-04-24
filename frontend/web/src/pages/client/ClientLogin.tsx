@@ -5,7 +5,7 @@ import type LoginRequest from "@/types/loginRequest";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slices/authSlice";
-import { Loader2 } from "lucide-react"; 
+import { Loader2 } from "lucide-react";
 import ButtonGoogle from "@/components/client/ButtonGoogle";
 
 const ClientLogin: React.FC = () => {

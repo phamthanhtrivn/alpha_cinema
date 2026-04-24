@@ -1,8 +1,9 @@
-import type { ProductFilterParams } from "@/types/product";
+
 import { apiClient } from "./api";
+import type { ProductFilterParams } from "@/types/product";
 
 export const productService = {
-  getAllProduct: async (params: ProductFilterParams) => {
+  getAllProduct: async (params?: ProductFilterParams) => {
     const response = await apiClient.get(`/products`, {
       params,
     });
@@ -19,5 +20,5 @@ export const productService = {
   updateProduct: async (id: string, data: FormData) => {
     const response = await apiClient.put(`/products/${id}`, data);
     return response.data;
-  }
+  },
 };

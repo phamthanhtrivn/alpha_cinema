@@ -12,12 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
     boolean existsByNameAndUnitPrice(String name, double unitPrice);
-<<<<<<< HEAD
-=======
 
     boolean existsByNameAndUnitPriceAndIdNot(String name, double unitPrice, String id);
 
->>>>>>> 8dcf4ad36f4973cbda6589a0926d134dc3149b6a
     @Query("SELECT p " +
             "FROM Product p " +
             "WHERE (:id IS NULL OR p.id = :id)" +

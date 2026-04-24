@@ -203,8 +203,7 @@ const Sidebar: React.FC = () => {
         >
           <Film />
           <span>
-            ALPHA{" "}
-            <span className="text-gray-400 text-sm italic">ADMIN</span>
+            ALPHA <span className="text-gray-400 text-sm italic">ADMIN</span>
           </span>
         </Link>
       </div>
@@ -225,9 +224,7 @@ const Sidebar: React.FC = () => {
                     }`}
                 >
                   {item.icon}
-                  <span className="text-sm font-medium">
-                    {item.label}
-                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               </li>
             );
