@@ -1,6 +1,6 @@
 package com.movieticket.ticket.event.producer;
 
-import com.movieticket.ticket.dto.TicketPriceEventDto;
+import com.movieticket.ticket.event.model.TicketPriceEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ public class TicketEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void send(TicketPriceEventDto event) {
+    public void send(TicketPriceEvent event) {
         kafkaTemplate.send(TOPIC, event.getTicketPriceId(), event);
     }
 }

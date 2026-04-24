@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CreateShowScheduleDetailRequest {
+public class CreateShowScheduleDetailRequestDto {
     private String showScheduleId;
-    private List<SeatRequest> seats;
+    private List<SeatRequestDto> seats;
 }

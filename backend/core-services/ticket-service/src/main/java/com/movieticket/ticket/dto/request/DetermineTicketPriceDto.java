@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.dto.request;
 
 import com.movieticket.ticket.enums.ProjectionType;
 import jakarta.validation.constraints.NotBlank;
@@ -15,10 +15,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DetermineTicketPriceDto {
-    @NotBlank(message = "Seat type ID is required")
+    @NotBlank(message = "Loại ghế không được để trống")
     private String seatTypeId;
-    @NotNull(message = "Projection type is required")
+    @NotNull(message = "Loại suất chiếu không được để trống")
     private ProjectionType projectionType;
-    @NotNull(message = "Show time is required")
+    @NotNull(message = "Thời gian chiếu không được để trống")
     private LocalDateTime showTime;
 }

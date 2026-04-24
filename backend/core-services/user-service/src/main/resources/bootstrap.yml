@@ -1,31 +1,7 @@
 spring:
   application:
-    name: user-service
+    name: ${APP_NAME}
   cloud:
     config:
-      uri: http://localhost:8888
+      uri: ${CONFIG_SERVER_URL}
       fail-fast: true
-  data:
-    redis:
-      host: localhost
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
-      timeout: 6000
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-  google:
-    client:
-      id: ${MAIL_USERNAME}
-
-rsa:
-  private-key-path: ${RSA_PRIVATE_PATH}
-  public-key-path: ${RSA_PUBLIC_PATH}

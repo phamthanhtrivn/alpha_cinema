@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -36,6 +38,13 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable String id) {
         Product product = productService.getProductById(id);
         ApiResponse<Product> response = ApiResponse.success(product, "Product retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<List<Product>>> getProductsByIds(@RequestBody List<String> ids) {
+        List<Product> products = productService.getProductsByIds(ids);
+        ApiResponse<List<Product>> response = ApiResponse.success(products, "Products retrieved successfully");
         return ResponseEntity.ok(response);
     }
 

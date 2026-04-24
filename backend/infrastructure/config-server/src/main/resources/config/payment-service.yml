@@ -18,6 +18,20 @@ spring:
         format_sql: true
         # Dùng MySQLDialect để Hibernate biết cách sinh SQL phù hợp với MySQL
         dialect: org.hibernate.dialect.MySQLDialect
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
 
 eureka:
   client:
@@ -26,3 +40,22 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+# VNPay (sandbox)
+vnpay:
+  tmnCode: ${VNPAY_TMN_CODE}
+  hashSecret: ${VNPAY_HASH_SECRET}
+  paymentUrl: ${VNPAY_PAYMENT_URL}
+  returnUrl: ${PAYMENT_SERVICE_URL}/api/payments/vn-pay-callback
+  version: ${VNPAY_VERSION}
+  command: ${VNPAY_COMMAND}
+  orderType: ${VNPAY_ORDER_TYPE}
+
+# Momo (sandbox)
+momo:
+  partner-code: ${MOMO_PARTNER_CODE}
+  access-key: ${MOMO_ACCESS_KEY}
+  secret-key: ${MOMO_SECRET_KEY}
+  end-point: ${MOMO_END_POINT}
+  return-url: ${PAYMENT_SERVICE_URL}/api/payments/momo-pay-callback
+  request-type: ${MOMO_REQUEST_TYPE}
