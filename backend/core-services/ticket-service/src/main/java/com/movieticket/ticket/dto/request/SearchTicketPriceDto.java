@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.dto.request;
 
 import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.enums.ProjectionType;

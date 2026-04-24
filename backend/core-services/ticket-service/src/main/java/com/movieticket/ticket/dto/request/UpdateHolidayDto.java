@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.dto.request;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
@@ -15,15 +15,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateHolidayDto {
-    @NotBlank(message = "Holiday name is required")
+    @NotBlank(message = "Ngày lễ không được để trống")
     private String name;
 
-    @NotNull(message = "Start date is required")
-    @FutureOrPresent(message = "Start date must be today or in the future")
+    @NotNull(message = "Ngày bắt đầu không được để trống")
+    @FutureOrPresent(message = "Ngày bắt đầu phải là ngày hôm nay hoặc trong tương lai")
     private LocalDate startDate;
 
-    @NotNull(message = "End date is required")
-    @FutureOrPresent(message = "End date must be today or in the future")
+    @NotNull(message = "Ngày kết thúc không được để trống")
+    @FutureOrPresent(message = "Ngày kết thúc phải là ngày hôm nay hoặc trong tương lai")
     private LocalDate endDate;
 
     private String description;

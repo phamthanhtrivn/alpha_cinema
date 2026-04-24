@@ -14,6 +14,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -35,6 +41,34 @@ public class ProductService {
     public Product getProductById(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Product not found with id: " + id));
+    }
+
+    public List<Product> getProductsByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> distinctIds = ids.stream()
+                .filter(id -> id != null && !id.isBlank())
+                .map(String::trim)
+                .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), List::copyOf));
+
+        if (distinctIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Product> productsById = productRepository.findAllById(distinctIds).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        for (String id : distinctIds) {
+            if (!productsById.containsKey(id)) {
+                throw new BusinessException("Product not found with id: " + id);
+            }
+        }
+
+        return distinctIds.stream()
+                .map(productsById::get)
+                .toList();
     }
 
     public Product createProduct(CreateProductDto createProductDto, MultipartFile file) {

@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.event.model;
 
 import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.enums.ProjectionType;
@@ -6,7 +6,7 @@ import lombok.*;
 
 @Data
 @Builder
-public class TicketPriceEventDto {
+public class TicketPriceEvent {
     private String ticketPriceId;
     private String seatTypeId;
     private ProjectionType projectionType;

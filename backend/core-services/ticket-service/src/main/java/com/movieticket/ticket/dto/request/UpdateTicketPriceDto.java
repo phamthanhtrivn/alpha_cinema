@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.dto.request;
 
 import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.enums.ProjectionType;
@@ -16,18 +16,18 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateTicketPriceDto {
-    @NotBlank(message = "Seat type ID is required")
+    @NotBlank(message = "Loại ghế không được để trống")
     private String seatTypeId;
 
-    @NotNull(message = "Projection type is required")
+    @NotNull(message = "Loại suất chiếu không được để trống")
     private ProjectionType projectionType;
 
-    @NotNull(message = "Day type is required")
+    @NotNull(message = "Loại ngày không được để trống")
     private DayType dayType;
 
-    @NotNull(message = "Price is required")
-    @Min(value = 30000, message = "Price must be at least 30,000")
-    @Max(value = 500000, message = "Price must be at most 500,000")
+    @NotNull(message = "Giá vé không được để trống")
+    @Min(value = 30000, message = "Giá vé phải từ 30,000 trở lên")
+    @Max(value = 500000, message = "Giá vé phải từ 500,000 trở xuống")
     private Double price;
 
     private boolean status;

@@ -1,6 +1,7 @@
-package com.movieticket.order.event.listener;
+package com.movieticket.order.event.consumer;
 
-import com.movieticket.order.dto.TicketPriceEventDto;
+import com.movieticket.order.event.model.TicketPriceEvent;
+import com.movieticket.order.model.cache.TicketPriceCache;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,12 +15,12 @@ public class TicketPriceEventListener {
     private final RedisTemplate<String, Object> redisTemplate;
 
     @KafkaListener(topics = TOPIC, groupId = "order-service")
-    public void consume(TicketPriceEventDto event) {
-
+    public void consume(TicketPriceEvent event) {
         String key = "ticket:price:" + event.getTicketPriceId();
 
         if (!event.isStatus()) {
-            redisTemplate.delete(event.getTicketPriceId());
+            redisTemplate.delete(key);
+            return;
         }
 
         TicketPriceCache cache = new TicketPriceCache(
@@ -33,5 +34,4 @@ public class TicketPriceEventListener {
 
         redisTemplate.opsForValue().set(key, cache);
     }
-
 }

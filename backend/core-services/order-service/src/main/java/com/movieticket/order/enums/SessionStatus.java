@@ -1,4 +1,6 @@
 package com.movieticket.order.enums;
 
-public class SESSION_STATUS {
+public enum SessionStatus {
+    SESSION_CREATED,
+    SESSION_UPDATED,
 }

@@ -1,1 +1,49 @@
-version: '3.8'
+services:
+  redis:
+    image: redis:7
+    container_name: alpha-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    restart: always
+    volumes:
+      - alpha_redis_data:/data
+    networks:
+      - alpha_network
+
+  kafka:
+    image: apache/kafka:4.0.2
+    container_name: alpha-kafka
+    ports:
+      - "${KAFKA_PORT}:9092"
+    environment:
+      # 🔥 KRaft mode (bắt buộc)
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+
+      # 🔥 quorum controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@alpha-kafka:9093
+
+      # 🔥 listeners
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      # 🔥 protocol map
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # 🔥 internal broker
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+    volumes:
+      - alpha_kafka_data:/var/lib/kafka/data
+    networks:
+      - alpha_network
+
+volumes:
+  alpha_redis_data:
+  alpha_kafka_data:
+
+networks:
+  alpha_network:
+    driver: bridge

@@ -1,18 +1,16 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.order.dto;
 
-import com.movieticket.ticket.enums.DayType;
-import com.movieticket.ticket.enums.EventType;
-import com.movieticket.ticket.enums.ProjectionType;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder
 public class TicketPriceEventDto {
     private String ticketPriceId;
     private String seatTypeId;
-    private ProjectionType projectionType;
-    private DayType dayType;
+    private String projectionType;
+    private String dayType;
     private Double price;
     private boolean status;
-    private EventType action; // "CREATE", "UPDATE"
+    private String action; // "CREATE", "UPDATE"
 }

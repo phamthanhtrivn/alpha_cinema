@@ -1,4 +1,4 @@
-package com.movieticket.ticket.dto;
+package com.movieticket.ticket.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
