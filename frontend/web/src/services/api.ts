@@ -55,6 +55,7 @@ apiClient.interceptors.response.use(
             user: data.user,
             accessToken: data.accessToken,
             role: data.user.role,
+            cinemaId: data.user.cinemaId,
           }),
         );
 
