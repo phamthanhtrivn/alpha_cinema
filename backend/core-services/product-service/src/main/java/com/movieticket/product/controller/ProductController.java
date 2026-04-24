@@ -66,5 +66,4 @@ public class ProductController {
         ApiResponse<Product> response = ApiResponse.success(updatedProduct, "Product updated successfully");
         return ResponseEntity.ok(response);
     }
-
 }

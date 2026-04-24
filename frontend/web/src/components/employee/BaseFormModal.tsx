@@ -13,10 +13,70 @@ import {
 import { Loader2 } from "lucide-react";
 import { formatDateTimeLocal } from "@/utils/formatTime";
 
+const MultiSelectField = ({ options, values, onChange, placeholder }: any) => {
+  const unselectedOptions = options.filter((opt: any) => !values.includes(opt.value));
+
+  return (
+    <div className={`relative min-h-12 w-full pl-3 py-2.5 rounded-2xl border border-slate-100 bg-white/50 flex flex-wrap items-center gap-2 focus-within:ring-4 focus-within:ring-sky-500/10 focus-within:border-sky-500 transition-all font-medium shadow-sm ${values.length === 0 ? 'pr-3' : 'pr-10'}`}>
+      {/* Selected Tags */}
+      {values.map((val: any) => {
+        const opt = options.find((o: any) => o.value === val);
+        return (
+          <span
+            key={val}
+            className="px-2.5 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-700 flex items-center gap-1 shadow-sm"
+          >
+            {opt?.label || val}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onChange(values.filter((v: any) => v !== val));
+              }}
+              className="text-sky-500 hover:text-red-500 ml-1 font-bold cursor-pointer"
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+
+      {/* Select Dropdown */}
+      {unselectedOptions.length > 0 && (
+        <select
+          className={`bg-transparent text-slate-700 outline-none cursor-pointer text-sm ${values.length === 0 ? 'w-full px-0' : 'absolute right-2 top-[14px] w-6'}`}
+          onChange={(e) => {
+            if (!e.target.value) return;
+            if (!values.includes(e.target.value)) {
+              onChange([...values, e.target.value]);
+            }
+            e.target.value = ""; // reset after selection
+          }}
+          defaultValue=""
+        >
+          <option value="" disabled className="text-slate-400">
+            {values.length === 0 ? (placeholder || "Chọn mục...") : ""}
+          </option>
+          {unselectedOptions.map((opt: any) => (
+            <option
+              key={opt.value}
+              value={opt.value}
+              className="text-slate-700"
+            >
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+};
+
 export type FieldType =
   | "text"
   | "number"
   | "select"
+  | "multi-select"
   | "textarea"
   | "file"
   | "date"
@@ -113,6 +173,23 @@ const BaseFormModal: React.FC<Props> = ({
               if (val === "false") parsed = false;
               onChange(field.name, parsed);
             }}
+          />
+        );
+      }
+
+      // MULTI-SELECT
+      case "multi-select": {
+        const normalizedOptions = (field.options || []).map((opt: any) =>
+          typeof opt === "string" ? { label: opt, value: opt } : opt,
+        );
+        const currentValues: any[] = Array.isArray(values[field.name]) ? values[field.name] : [];
+
+        return (
+          <MultiSelectField
+            options={normalizedOptions}
+            values={currentValues}
+            onChange={(newValues: any) => onChange(field.name, newValues)}
+            placeholder={field.placeholder}
           />
         );
       }
