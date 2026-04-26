@@ -2,7 +2,9 @@ package com.movieticket.cinema.service;
 
 
 import com.movieticket.cinema.dto.RoomRequest;
+import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
+import com.movieticket.cinema.entity.ProjectionType;
 import com.movieticket.cinema.entity.Room;
 import com.movieticket.cinema.repository.CinemaRepository;
 import com.movieticket.cinema.repository.RoomRepository;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomService {
@@ -22,17 +25,16 @@ public class RoomService {
     @Autowired
     private SeatRepository seatRepository;
 
-    public List<Room> getAllRooms(){
-        try{
+    public List<Room> getAllRooms() {
+        try {
             return roomRepository.findAll();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    public Room createRoom(RoomRequest request){
+    public Room createRoom(RoomRequest request) {
         Cinema cinema = CinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> new RuntimeException("Cinema khong tim thay"));
 
@@ -50,12 +52,12 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
-    public Room updateRoom(RoomRequest request,String id){
+    public Room updateRoom(RoomRequest request, String id) {
         Cinema cinema = CinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> new RuntimeException("Cinema khong tim thay"));
         Room room = roomRepository.findById(id).orElseThrow(() -> new RuntimeException("Room khong tim thay"));
         int cnt = seatRepository.countByRoom_Id(room.getId());
-        if(cnt > request.getCatatity()){
+        if (cnt > request.getCatatity()) {
             throw new RuntimeException("Catatity nhỏ lớn số ghế hiện có");
         }
         room.setCinema(cinema);
@@ -66,5 +68,23 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    //Lấy danh sách các phòng theo cinema,
+    //2 trường id, name để người quản lý chọn
+    public List<SelectionDTO> getRoomOptions(String cinemaId, List<ProjectionType> projections) {
+        List<Object[]> rawResults = roomRepository.findRawRoomOptions(cinemaId, projections);
 
+        return rawResults.stream().map(row -> {
+            String id = (String) row[0];
+            Integer roomNumber = (Integer) row[1];
+            ProjectionType type = (ProjectionType) row[2];
+
+            String label = String.format("Phòng %d (%s)", roomNumber, type.toJson());
+
+            return new SelectionDTO(id, label);
+        }).collect(Collectors.toList());
+    }
+
+    public Room findById(String id) {
+        return roomRepository.findById(id).orElse(null);
+    }
 }
