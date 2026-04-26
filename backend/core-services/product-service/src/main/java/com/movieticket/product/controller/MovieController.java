@@ -5,6 +5,7 @@ import com.movieticket.product.dto.request.ArtistCreateDTO;
 import com.movieticket.product.dto.request.MovieCreateDTO;
 import com.movieticket.product.dto.request.MovieSearchDTO;
 import com.movieticket.product.dto.response.MovieSummaryDTO;
+import com.movieticket.product.dto.response.SelectionDTO;
 import com.movieticket.product.entity.AgeType;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
@@ -35,6 +36,15 @@ public class MovieController {
 
         ApiResponse<Page<MovieSummaryDTO>> pageApiResponse = ApiResponse.success(movies, "Tìm kiếm thành công!");
         return ResponseEntity.ok(pageApiResponse);
+    }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<ApiResponse<List<SelectionDTO>>> suggest(
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam String title
+    ) {
+        ApiResponse<List<SelectionDTO>> response = ApiResponse.success(movieService.getMovieSuggestions(title, size), "");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

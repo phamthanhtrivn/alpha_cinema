@@ -72,11 +72,84 @@ const MultiSelectField = ({ options, values, onChange, placeholder }: any) => {
   );
 };
 
+const AutocompleteField = ({ value, onChange, placeholder, fetchOptions, initialLabel }: any) => {
+  const [query, setQuery] = React.useState("");
+  const [options, setOptions] = React.useState<any[]>([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedLabel, setSelectedLabel] = React.useState(initialLabel || "");
+
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query) {
+        const res = await fetchOptions(query);
+        setOptions(res || []);
+      } else {
+        setOptions([]);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query, fetchOptions]);
+
+  // Sync selectedLabel when initialLabel changes (edit mode)
+  React.useEffect(() => {
+    if (initialLabel) {
+      setSelectedLabel(initialLabel);
+    }
+  }, [initialLabel]);
+
+  // if value is reset
+  React.useEffect(() => {
+    if (!value) {
+      setSelectedLabel("");
+      setQuery("");
+    }
+  }, [value]);
+
+  return (
+    <div className="relative">
+      <Input
+        placeholder={placeholder}
+        value={isOpen ? query : selectedLabel || query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setIsOpen(true);
+          if (!e.target.value) {
+            onChange("");
+            setSelectedLabel("");
+          }
+        }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+      />
+      {isOpen && options.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-100 rounded-xl shadow-lg z-50 p-1 max-h-48 overflow-y-auto">
+          {options.map((opt: any) => (
+            <div
+              key={opt.value}
+              className="px-3 py-2 hover:bg-sky-50 cursor-pointer text-xs font-bold text-slate-600 rounded-lg transition-colors"
+              onClick={() => {
+                onChange(opt.value);
+                setSelectedLabel(opt.label);
+                setQuery("");
+                setIsOpen(false);
+              }}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export type FieldType =
   | "text"
   | "number"
   | "select"
   | "multi-select"
+  | "autocomplete"
   | "textarea"
   | "file"
   | "date"
@@ -90,6 +163,8 @@ export interface FieldConfig {
   type: FieldType;
   placeholder?: string;
   options?: string[] | { label: string; value: any }[];
+  fetchOptions?: (query: string) => Promise<{ label: string; value: any }[]>;
+  initialLabel?: string;
   preview?: boolean;
   disabled?: boolean;
   hidden?: boolean;
@@ -150,9 +225,10 @@ const BaseFormModal: React.FC<Props> = ({
         return (
           <Input
             type="datetime-local"
-            value={formatDateTimeLocal(values[field.name])}
-            disabled
-            className="h-12 rounded-2xl border-slate-100 bg-white/50"
+            value={values[field.name] ? formatDateTimeLocal(values[field.name]) : ""}
+            disabled={field.disabled}
+            onChange={(e) => onChange(field.name, e.target.value)}
+            className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
           />
         );
 
@@ -193,6 +269,18 @@ const BaseFormModal: React.FC<Props> = ({
           />
         );
       }
+
+      // AUTOCOMPLETE
+      case "autocomplete":
+        return (
+          <AutocompleteField
+            value={values[field.name]}
+            onChange={(val: any) => onChange(field.name, val)}
+            placeholder={field.placeholder}
+            fetchOptions={field.fetchOptions}
+            initialLabel={field.initialLabel}
+          />
+        );
 
       // TEXTAREA
       case "textarea":

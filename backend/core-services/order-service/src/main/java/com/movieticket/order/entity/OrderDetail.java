@@ -20,7 +20,6 @@ public class OrderDetail {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    private String comboId;
     private String productId;
     private int quantity;
     private double price;

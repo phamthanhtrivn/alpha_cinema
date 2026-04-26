@@ -35,4 +35,8 @@ export const movieService = {
     const response = await apiClient.get(`/movies/age-type`);
     return response.data;
   },
+  suggestMovies: async (title: string, size: number = 5) => {
+    const response = await apiClient.get(`/movies/suggestions`, { params: { title, size } });
+    return response.data;
+  },
 };

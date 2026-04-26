@@ -15,6 +15,14 @@ import { artistsService } from "@/services/artist.service";
 import { Input } from "@/components/ui/input";
 import { FilterSelect } from "@/components/employee/FilterSelect";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Info, User, Globe, MapPin, Tag } from "lucide-react";
 
 const MovieManagement: React.FC = () => {
   const pageSize = 10;
@@ -22,7 +30,9 @@ const MovieManagement: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<any>(null);
+  const [viewMovie, setViewMovie] = useState<any>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [form, setForm] = useState({
@@ -276,6 +286,16 @@ const MovieManagement: React.FC = () => {
     }
   };
 
+  const handleView = async (movie: any) => {
+    try {
+      const res = await movieService.getMovieById(movie.id);
+      setViewMovie(res.data);
+      setIsViewOpen(true);
+    } catch (e) {
+      toast.error("Không thể tải thông tin chi tiết phim!");
+    }
+  };
+
   const handleUpdateFormChange = (name: string, value: any) => {
     setUpdateForm((prev) => ({
       ...prev,
@@ -466,6 +486,182 @@ const MovieManagement: React.FC = () => {
         loading={loadingSubmit}
       />
 
+      {/* View Detail Modal */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-none shadow-2xl bg-white">
+          {viewMovie && (
+            <div className="flex flex-col">
+              {/* Header/Hero Section */}
+              <div className="relative h-64 md:h-80 w-full overflow-hidden">
+                {viewMovie.thumbnailUrl ? (
+                  <img
+                    src={viewMovie.thumbnailUrl}
+                    alt={viewMovie.title}
+                    className="w-full h-full object-cover blur-sm brightness-50 scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-900" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col md:flex-row items-end gap-6">
+                  <div className="w-32 h-48 md:w-44 md:h-64 rounded-2xl overflow-hidden shadow-2xl border-4 border-white flex-shrink-0 bg-slate-100">
+                    {viewMovie.thumbnailUrl ? (
+                      <img src={viewMovie.thumbnailUrl} alt={viewMovie.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Film size={40} className="text-slate-300" /></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col space-y-3 pb-2">
+                    <div className="flex items-center gap-3">
+                      <StatusBadge
+                        status={viewMovie.releaseStatus}
+                        type={
+                          viewMovie.releaseStatus === ReleaseStatus.NOW_SHOWING
+                            ? "success"
+                            : viewMovie.releaseStatus === ReleaseStatus.UPCOMING
+                              ? "info"
+                              : "neutral"
+                        }
+                      />
+                      <span className="bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                        <Star size={10} className="fill-white" /> {viewMovie.avgRating > 0 ? viewMovie.avgRating.toFixed(1) : "TBD"}
+                      </span>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight uppercase italic">{viewMovie.title}</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {viewMovie.genre?.map((g: string) => (
+                        <span key={g} className="px-3 py-1 rounded-full bg-sky-50 text-sky-600 text-[10px] font-bold border border-sky-100 uppercase tracking-wider">
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div className="md:col-span-2 space-y-8">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sky-600">
+                      <Info size={18} />
+                      <h3 className="font-black text-xs uppercase tracking-widest">Nội dung phim</h3>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed text-sm font-medium">
+                      {viewMovie.description || "Chưa có mô tả cho phim này."}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-sky-600">
+                        <User size={18} />
+                        <h3 className="font-black text-xs uppercase tracking-widest">Đạo diễn</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {viewMovie.directors?.map((d: any) => (
+                          <span key={d.id} className="text-sm font-bold text-slate-700 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors cursor-default">
+                            {d.fullName || d.name}
+                          </span>
+                        )) || "N/A"}
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-sky-600">
+                        <User size={18} />
+                        <h3 className="font-black text-xs uppercase tracking-widest">Diễn viên</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {viewMovie.actors?.map((a: any) => (
+                          <span key={a.id} className="text-sm font-bold text-slate-700 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors cursor-default">
+                            {a.fullName || a.name}
+                          </span>
+                        )) || "N/A"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sky-600">
+                      <Tag size={18} />
+                      <h3 className="font-black text-xs uppercase tracking-widest">Trailer</h3>
+                    </div>
+                    {viewMovie.trailerUrl ? (
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={viewMovie.trailerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm font-bold text-sky-600 hover:text-sky-700 transition-colors group"
+                        >
+                          <PlayCircle size={20} className="group-hover:scale-110 transition-transform" />
+                          Xem trailer trên Youtube
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-400 italic">Chưa có trailer.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="bg-slate-50 rounded-3xl p-6 space-y-6 border border-slate-100">
+                    <h3 className="font-black text-xs uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-4">Thông tin chi tiết</h3>
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-bold flex items-center gap-2"><Clock size={14} className="text-sky-400" /> Thời lượng</span>
+                        <span className="text-slate-800 font-black tracking-tight">{viewMovie.duration} phút</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-bold flex items-center gap-2"><Calendar size={14} className="text-rose-400" /> Công chiếu</span>
+                        <span className="text-slate-800 font-black tracking-tight">{viewMovie.premiereDate ? new Date(viewMovie.premiereDate).toLocaleDateString("vi-VN") : "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-bold flex items-center gap-2"><Globe size={14} className="text-emerald-400" /> Quốc gia</span>
+                        <span className="text-slate-800 font-black tracking-tight">{viewMovie.nationality || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-bold flex items-center gap-2"><Info size={14} className="text-purple-400" /> Độ tuổi</span>
+                        <span className="text-slate-800 font-black tracking-tight underline decoration-purple-400 decoration-2 underline-offset-4">{viewMovie.ageType?.name || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-bold flex items-center gap-2"><MapPin size={14} className="text-orange-400" /> Nhà sản xuất</span>
+                        <span className="text-slate-800 font-black tracking-tight text-right max-w-[120px] truncate">{viewMovie.producer || "N/A"}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-slate-200">
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kỹ thuật chiếu</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {viewMovie.supportedProjection?.map((p: string) => (
+                          <span key={p} className="text-[10px] font-black bg-slate-200 text-slate-600 px-3 py-1 rounded-lg">
+                            {p}
+                          </span>
+                        ))}
+                        {viewMovie.supportedTranslation?.map((t: string) => (
+                          <span key={t} className="text-[10px] font-black bg-slate-800 text-white px-3 py-1 rounded-lg">
+                            {ALL_TRANSLATION.find(x => x.value === t)?.label || t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full h-12 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all active:scale-95"
+                    onClick={() => setIsViewOpen(false)}
+                  >
+                    Đóng cửa sổ
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <ManagementTable
         headers={[
           "Bộ phim / Thể loại",
@@ -586,7 +782,7 @@ const MovieManagement: React.FC = () => {
             {/* Cell: Actions */}
             <TableCell className="px-8 py-5 text-right">
               <TableActions
-                onView={() => alert("View movie")}
+                onView={() => handleView(movie)}
                 onEdit={() => handleEdit(movie)}
                 onDelete={() => alert("Delete movie")}
               />
