@@ -3,6 +3,7 @@ package com.movieticket.product.service;
 import com.movieticket.product.dto.request.MovieCreateDTO;
 import com.movieticket.product.dto.request.MovieSearchDTO;
 import com.movieticket.product.dto.response.MovieSummaryDTO;
+import com.movieticket.product.dto.response.SelectionDTO;
 import com.movieticket.product.entity.AgeType;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
@@ -59,6 +60,13 @@ public class MovieService {
 
     public List<AgeType> getAllAgeType() {
         return ageTypeRepository.findAll();
+    }
+
+    public List<SelectionDTO> getMovieSuggestions(String query, int size) {
+
+        Pageable pageable = PageRequest.of(0, size);
+
+        return movieRepository.findMovieSuggestions(query, pageable);
     }
 
     @Transactional
