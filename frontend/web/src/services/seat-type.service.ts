@@ -5,8 +5,19 @@ export const seatTypeService = {
     const response = await apiClient.get(`/seat-types`);
     return response.data;
   },
-  getSeatTypeById: async (id: string) => {
-    const response = await apiClient.get(`/seat-types/${id}`);
+  getAllSeatTypesAndPage : async (params : any) => {
+    const response = await apiClient.get(`/seat-types/page`, {params});
+    return response.data;
+  },
+  createSeatType: async (data: { name: string; description: string }) => {
+    const response = await apiClient.post(`/seat-types/create`, data);
+    return response.data;
+  },
+  updateSeatType: async (
+    id: string,
+    data: { name: string; description: string },
+  ) => {
+    const response = await apiClient.put(`/seat-types/edit/${id}`, data);
     return response.data;
   },
 };

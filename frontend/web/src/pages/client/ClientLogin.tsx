@@ -39,6 +39,7 @@ const ClientLogin: React.FC = () => {
             user: data.data.user,
             accessToken: data.data.accessToken,
             role: data.data.user.role,
+            cinemaId: data.data.user.cinemaId,
           })
         );
         navigate("/");

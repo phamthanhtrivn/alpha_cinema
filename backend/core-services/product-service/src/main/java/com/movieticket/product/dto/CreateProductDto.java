@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateProductDto {
-    @NotBlank(message = "Product name is required")
+    @NotBlank(message = "Tên sản phẩm không được để trống")
     private String name;
 
     @NotNull(message = "Giá sản phẩm là bắt buộc")
@@ -21,6 +21,7 @@ public class CreateProductDto {
     private Double unitPrice;
 
     private String description;
-    @NotNull(message = "Product type is required")
+    
+    @NotNull(message = "Loại sản phẩm là bắt buộc")
     private ProductType type;
 }

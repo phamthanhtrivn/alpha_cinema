@@ -9,7 +9,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface RoomRepository extends JpaRepository<Room,String> {
+import java.util.List;
+
+public interface RoomRepository extends JpaRepository<Room, String> {
+    @Query("SELECT r.id as id, r.roomNumber as roomNumber, r.projectionType as projectionType " +
+            "FROM Room r " +
+            "WHERE r.cinema.id = :cinemaId " +
+            "AND r.status = true " +
+            "AND (:projections IS NULL OR r.projectionType IN :projections)")
+    List<Object[]> findRawRoomOptions(
+            @Param("cinemaId") String cinemaId,
+            @Param("projections") List<ProjectionType> projections
+    );
+
     @Query("""
         SELECT r FROM Room r
         WHERE (:cinemaId IS NULL OR r.cinema.id = :cinemaId)

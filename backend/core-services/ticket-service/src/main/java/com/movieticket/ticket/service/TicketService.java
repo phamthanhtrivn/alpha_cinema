@@ -36,7 +36,7 @@ public class TicketService {
 
     public TicketPrice getTicketPriceById(String id) {
         return ticketRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Ticket price not found with id: " + id));
+                .orElseThrow(() -> new BusinessException("Không tìm thấy giá vé với id: " + id));
     }
 
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
@@ -47,7 +47,7 @@ public class TicketService {
         );
 
         if (exists) {
-            throw new BusinessException("Ticket price already exists for the given seat type, projection type, and day type");
+            throw new BusinessException("Giá vé đã tồn tại");
         }
 
         TicketPrice ticketPrice = new TicketPrice();

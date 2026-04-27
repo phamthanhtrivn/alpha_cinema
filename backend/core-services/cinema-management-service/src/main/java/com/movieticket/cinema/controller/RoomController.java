@@ -1,6 +1,14 @@
 package com.movieticket.cinema.controller;
 
 import com.movieticket.cinema.api_response.ApiResponse;
+import com.movieticket.cinema.dto.RoomDetailDTO;
+import com.movieticket.cinema.dto.RoomRequest;
+import com.movieticket.cinema.dto.SelectionDTO;
+import com.movieticket.cinema.entity.ProjectionType;
+import com.movieticket.cinema.entity.Room;
+import com.movieticket.cinema.service.RoomService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import com.movieticket.cinema.dto.RoomRequest;
 import com.movieticket.cinema.entity.Room;
 import com.movieticket.cinema.service.RoomService;
@@ -46,7 +54,7 @@ public class RoomController {
 
 
     @PostMapping("/create")
-    public ApiResponse<Room> createRoom(@Validated @RequestBody RoomRequest request){
+    public ApiResponse<Room>createRoom(@Validated @RequestBody RoomRequest request){
         System.out.println(request.toString());
         try{
             return new ApiResponse<>(true, roomService.createRoom(request));

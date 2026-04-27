@@ -6,6 +6,9 @@ import com.movieticket.cinema.entity.SeatType;
 import com.movieticket.cinema.repository.SeatTypeRepository;
 import com.movieticket.cinema.util.GenerateID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +27,18 @@ public class SeatTypeService {
         }
         return null;
     }
+
+    public Page<SeatType> getAllSeatTypesAndPage(String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (name != null && !name.trim().isEmpty()) {
+            return seatTypeRepository.findByNameContainingIgnoreCase(name.trim(), pageable);
+        }
+
+        return seatTypeRepository.findAll(pageable);
+    }
+
+
 
     public SeatType createSeatType(SeatTypeRequest seatTypeRequest) {
         try{

@@ -2,6 +2,7 @@ package com.movieticket.cinema.service;
 
 
 import com.movieticket.cinema.dto.RoomRequest;
+import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.entity.ProjectionType;
 import com.movieticket.cinema.entity.Room;
@@ -10,6 +11,10 @@ import com.movieticket.cinema.repository.RoomRepository;
 import com.movieticket.cinema.repository.SeatRepository;
 import com.movieticket.cinema.util.GenerateID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -90,5 +95,23 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    //Lấy danh sách các phòng theo cinema,
+    //2 trường id, name để người quản lý chọn
+    public List<SelectionDTO> getRoomOptions(String cinemaId, List<ProjectionType> projections) {
+        List<Object[]> rawResults = roomRepository.findRawRoomOptions(cinemaId, projections);
 
+        return rawResults.stream().map(row -> {
+            String id = (String) row[0];
+            Integer roomNumber = (Integer) row[1];
+            ProjectionType type = (ProjectionType) row[2];
+
+            String label = String.format("Phòng %d (%s)", roomNumber, type.toJson());
+
+            return new SelectionDTO(id, label);
+        }).collect(Collectors.toList());
+    }
+
+    public Room findById(String id) {
+        return roomRepository.findById(id).orElse(null);
+    }
 }

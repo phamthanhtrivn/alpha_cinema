@@ -44,7 +44,6 @@ public class AuthController {
         if(user != null) {
             String accessToken = jwtUtils.generateAccessToken(user);
             String refreshToken = jwtUtils.generateRefreshToken(user);
-
             ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                     .httpOnly(true)
                     .secure(true)
