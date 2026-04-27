@@ -37,6 +37,7 @@ const AdminLogin: React.FC = () => {
               user: response.data.user,
               accessToken: response.data.accessToken,
               role: response.data.user.role,
+              cinemaId: response.data.user.cinemaId,
             }),
           );
           if (response.data.user.role == "ADMIN")

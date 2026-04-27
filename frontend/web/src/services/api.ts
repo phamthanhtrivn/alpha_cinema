@@ -30,7 +30,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log("LỖI NHẬN ĐƯỢC:", error.response?.status, error.message);
+    console.log("LỖI NHẬN ĐƯỢC:", error);
     const originalRequest = error.config;
 
     if (originalRequest.url?.includes("users/refresh")) {
@@ -55,6 +55,7 @@ apiClient.interceptors.response.use(
             user: data.user,
             accessToken: data.accessToken,
             role: data.user.role,
+            cinemaId: data.user.cinemaId,
           }),
         );
 

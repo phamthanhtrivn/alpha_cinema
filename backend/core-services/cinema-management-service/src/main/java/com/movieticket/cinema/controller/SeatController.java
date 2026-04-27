@@ -26,10 +26,10 @@ public class SeatController {
         }
     }
 
-    @PostMapping("/create")
+    @PostMapping("/createAndUpdate")
     public ApiResponse<List<Seat>> createSeat(@Validated @RequestBody SeatRequest seatRequest){
         try{
-            return new ApiResponse<>(true, seatService.createSeats(seatRequest));
+            return new ApiResponse<>(true, seatService.createAndEditSeats(seatRequest));
         } catch (ExecutionException e) {
             return new ApiResponse<>(false, e.getMessage());
         }

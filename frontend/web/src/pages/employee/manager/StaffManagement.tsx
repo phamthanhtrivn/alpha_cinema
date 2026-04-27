@@ -353,7 +353,7 @@ const StaffManagement: React.FC = () => {
           value={
             filters.gender
               ? genderOptions.find((item) => item.value === filters.gender)
-                ?.label
+                  ?.label
               : "Tất cả"
           }
           onChange={(label) => {

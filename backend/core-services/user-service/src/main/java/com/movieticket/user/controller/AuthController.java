@@ -4,7 +4,6 @@ import com.movieticket.user.common.ApiResponse;
 import com.movieticket.user.dto.*;
 import com.movieticket.user.service.*;
 import com.movieticket.user.utils.JwtUtils;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,7 +92,8 @@ public class AuthController {
             String role = jwtUtils.extractRole(accessToken);
             String userId = jwtUtils.extractId(accessToken);
             String fullName = jwtUtils.extractFullName(accessToken);
-            UserResponse userResponse = new UserResponse(userId,email,fullName,role);
+            String cinemaId = jwtUtils.extractCinemaId(accessToken);
+            UserResponse userResponse = new UserResponse(userId,email,fullName,role,cinemaId);
             return ApiResponse.success(userResponse, "Lấy thông tin thành công");
         }
         return ApiResponse.fail("Không tìm được accessToken!");
@@ -148,8 +148,9 @@ public class AuthController {
         String role = jwtUtils.extractRole(refreshToken);
         String userId = jwtUtils.extractId(refreshToken);
         String fullName = jwtUtils.extractFullName(refreshToken);
+        String cinemaId = jwtUtils.extractCinemaId(refreshToken);
 
-        UserResponse userResponse = new UserResponse(userId, email, fullName, role);
+        UserResponse userResponse = new UserResponse(userId, email, fullName, role,cinemaId);
 
         String newAccessToken = jwtUtils.generateAccessToken(userResponse);
         String newRefreshToken = jwtUtils.generateRefreshToken(userResponse);

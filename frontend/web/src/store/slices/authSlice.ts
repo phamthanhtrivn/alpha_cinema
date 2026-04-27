@@ -9,6 +9,7 @@ interface AuthState {
   user: any | null;
   accessToken: string | null;
   role: UserRole;
+  cinemaId: string | null;
   isAuthenticated: boolean;
 }
 
@@ -16,6 +17,7 @@ const initialState: AuthState = {
   user: null,
   accessToken: getStoredToken(),
   role: "GUEST",
+  cinemaId: '',
   isAuthenticated: true,
 };
 
@@ -26,11 +28,12 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      { payload }: PayloadAction<{ user: any; accessToken: string; role: UserRole }>
+      { payload }: PayloadAction<{ user: any; accessToken: string; role: UserRole; cinemaId: string }>
     ) => {
       state.user = payload.user;
       state.accessToken = payload.accessToken;
       state.role = payload.role;
+      state.cinemaId = payload.cinemaId;
       state.isAuthenticated = true;
 
     },
@@ -38,6 +41,7 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       state.role = 'GUEST';
+      state.cinemaId = '';
       state.isAuthenticated = false;
   
     },

@@ -55,6 +55,7 @@ public class JwtUtils {
         claims.put("userId", user.getId());
         claims.put("fullName", user.getFullName());
         claims.put("email", user.getEmail());
+        claims.put("cinemaId", user.getCinemaId());
         return buildToken(claims, user.getEmail(), ACCESS_TOKEN_EXPIRATION);
     }
 
@@ -64,6 +65,7 @@ public class JwtUtils {
         claims.put("userId", user.getId());
         claims.put("fullName", user.getFullName());
         claims.put("email", user.getEmail());
+        claims.put("cinemaId", user.getCinemaId());
         return buildToken(claims, user.getEmail(), REFRESH_TOKEN_EXPIRATION);
     }
 
@@ -117,6 +119,11 @@ public class JwtUtils {
     public String extractFullName(String token) {
         final Claims claims = extractAllClaims(token);
         return claims.get("fullName", String.class);
+    }
+
+    public String extractCinemaId(String token) {
+        final Claims claims = extractAllClaims(token);
+        return claims.get("cinemaId", String.class);
     }
 
 
