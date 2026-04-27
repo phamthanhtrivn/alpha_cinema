@@ -12,7 +12,10 @@ import org.hibernate.sql.exec.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SeatService {
@@ -27,24 +30,38 @@ public class SeatService {
         return seatRepository.findByRoom_Id(id);
     }
 
-    public List<Seat> createSeats(SeatRequest seatRequest) {
+    public List<Seat> createAndEditSeats(SeatRequest seatRequest) {
         Room room = roomRepository.findById(seatRequest.getRoomId())
                 .orElseThrow(() -> new ExecutionException("Room khong ton tai"));
         SeatType seatType = seatTypeRepository.findById(seatRequest.getSeatTypeId())
                 .orElseThrow(() -> new ExecutionException("Seat type khong ton tai"));
 
-        List<Seat> seats = seatRequest.getSeatItems()
-                .stream()
-                .map(item -> Seat.builder()
-                        .id(GenerateID.generateSeatId())
-                        .room(room)
-                        .seatType(seatType)
-                        .rowName(item.getRowName())
-                        .columnName(item.getColumnName())
-                        .status(seatRequest.isStatus())
-                        .build()
-                ).toList();
-        return seatRepository.saveAll(seats);
+        List<Seat> existingSeatsInDb = seatRepository.findByRoomId(room.getId());
+
+        Map<String, Seat> existingSeatMap = existingSeatsInDb.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getRowName() + "-" + s.getColumnName(),
+                        s -> s
+                ));
+
+        List<Seat> seatsToSave = seatRequest.getSeatItems().stream()
+                .map(item -> {
+                    String key = item.getRowName() + "-" + item.getColumnName();
+                    Seat seat = existingSeatMap.getOrDefault(key, new Seat());
+
+                    if (seat.getId() == null) {
+                        seat.setId(GenerateID.generateSeatId());
+                    }
+
+                    seat.setRowName(item.getRowName());
+                    seat.setColumnName(item.getColumnName());
+                    seat.setStatus(seatRequest.isStatus());
+                    seat.setRoom(room);
+                    seat.setSeatType(seatType);
+
+                    return seat;
+                }).toList();
+        return seatRepository.saveAll(seatsToSave);
     }
 
 

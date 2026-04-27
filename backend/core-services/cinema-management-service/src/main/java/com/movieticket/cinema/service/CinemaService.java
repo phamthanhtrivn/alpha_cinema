@@ -6,6 +6,9 @@ import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.repository.CinemaRepository;
 import com.movieticket.cinema.util.GenerateID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -54,6 +57,18 @@ public class CinemaService {
 
     public Cinema findById(String id) {
         return cinemaRepository.findById(id).orElse(null);
+    }
+
+        public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+
+        return cinemaRepository.filterCinemas(
+                name != null && !name.isEmpty() ? name : null,
+                address != null && !address.isEmpty() ? address : null,
+                phone != null && !phone.isEmpty() ? phone : null,
+                status,
+                pageable
+        );
     }
 
     //Hà Thanh Tuấn viêt, hàm này để lấy dữ liệu đổ vào select,

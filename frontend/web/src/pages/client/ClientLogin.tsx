@@ -12,7 +12,7 @@ const ClientLogin: React.FC = () => {
   const [loginData, setLoginData] = useState<LoginRequest>({
     email: "",
     password: "",
-    role: "CUSTOMER",
+    role : "CUSTOMER",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,7 +39,8 @@ const ClientLogin: React.FC = () => {
             user: data.data.user,
             accessToken: data.data.accessToken,
             role: data.data.user.role,
-          }),
+            cinemaId: data.data.user.cinemaId,
+          })
         );
         navigate("/");
       }
@@ -50,9 +51,11 @@ const ClientLogin: React.FC = () => {
     }
   };
 
+
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 bg-white py-20">
       <div className="max-w-md w-full border border-slate-100 bg-white p-10 md:p-12 rounded-3xl shadow-2xl shadow-slate-200/50">
+        
         {/* Header Section */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black text-alpha-blue italic uppercase tracking-tighter mb-2">
@@ -109,11 +112,7 @@ const ClientLogin: React.FC = () => {
             disabled={isLoading}
             className="w-full bg-alpha-blue py-4 rounded-xl font-black text-white hover:bg-slate-900 transition-all transform active:scale-95 shadow-lg shadow-blue-100 uppercase tracking-widest flex items-center justify-center"
           >
-            {isLoading ? (
-              <Loader2 className="animate-spin mr-2" size={20} />
-            ) : (
-              "ĐANG NHẬP"
-            )}
+            {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : "ĐANG NHẬP"}
           </button>
         </form>
 
