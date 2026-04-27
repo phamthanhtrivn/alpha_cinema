@@ -9,8 +9,10 @@ import java.util.Map;
 @Setter
 public class BusinessException extends RuntimeException {
 
+
     public BusinessException(String message) {
         super(message);
     }
+
 
 }
