@@ -24,3 +24,20 @@ export interface ShowScheduleSearchDTO {
     page?: number;
     size?: number;
 }
+
+export interface Showtime {
+    id: string;
+    time: string;
+}
+
+export interface FormatShowtime {
+    projection: string;
+    translation: string;
+    showtimes: Showtime[];
+}
+
+export interface CinemaShowtime {
+    cinemaId: string;
+    cinemaName: string;
+    formats: FormatShowtime[];
+}

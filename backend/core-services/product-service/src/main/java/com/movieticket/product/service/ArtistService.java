@@ -1,8 +1,8 @@
 package com.movieticket.product.service;
 
-import com.movieticket.product.dto.request.ArtistCreateDTO;
-import com.movieticket.product.dto.request.ArtistSearchDTO;
-import com.movieticket.product.dto.response.ArtistResDTO;
+import com.movieticket.product.dto.admin.request.ArtistCreateDTO;
+import com.movieticket.product.dto.admin.request.ArtistSearchDTO;
+import com.movieticket.product.dto.admin.response.ArtistResDTO;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.exception.BusinessException;
 import com.movieticket.product.repository.ArtistRepository;

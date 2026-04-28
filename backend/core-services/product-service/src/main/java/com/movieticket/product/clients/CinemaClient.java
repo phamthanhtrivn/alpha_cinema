@@ -1,14 +1,14 @@
 package com.movieticket.product.clients;
 
 import com.movieticket.product.dto.RoomDetailDTO;
-import com.movieticket.product.dto.response.CinemaServiceResponse;
-import com.movieticket.product.dto.response.SelectionDTO;
-import org.springframework.beans.factory.annotation.Value;
+import com.movieticket.product.dto.admin.response.CinemaServiceResponse;
+import com.movieticket.product.dto.admin.response.SelectionDTO;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class CinemaClient {
@@ -32,5 +32,15 @@ public class CinemaClient {
                     return response.getData();
                 })
                 .block();
+    }
+
+    public List<SelectionDTO> getCinemaSelectionsByIds(List<String> ids) {
+        return webClient.post()
+                .uri("/internal/cinemas/selections")
+                .bodyValue(ids) // Gửi list IDs vào request body
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<SelectionDTO>>() {
+                })
+                .block(); // Đợi để lấy dữ liệu về (Synchronous)
     }
 }

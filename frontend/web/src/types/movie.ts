@@ -1,3 +1,5 @@
+import type { ArtistSummary } from "./artist";
+
 export const ReleaseStatus = {
   UPCOMING: "UPCOMING",
   NOW_SHOWING: "NOW_SHOWING",
@@ -20,6 +22,37 @@ export interface MovieSummaryResponse {
   avgRating: number;
   releaseStatus: ReleaseStatusType;
   genre: string[];
+}
+
+export interface MoviePublic {
+  id: string;
+  title: string;
+  duration: number;
+  premiereDate: Date;
+  thumbnailUrl: string;
+  trailerUrl: string;
+  ageType: string;
+  avgRating: number;
+}
+
+export interface MoviePublicDetail {
+  id: string;
+  title: string;
+  duration: number;
+  description: string;
+  premiereDate: Date;
+  producer: string;
+  thumbnailUrl: string;
+  bannerUrl: string;
+  ageType: string;
+  releaseYear: number;
+  nationality: string;
+  avgRating: number;
+  releaseStatus: ReleaseStatusType;
+  genre: string[];
+  actors: ArtistSummary[];
+  directors: ArtistSummary[];
+  trailerUrl: string;
 }
 
 export const ALL_GENRES = ["Hành động", "Kinh dị", "Tình cảm", "Hài hước", "Viễn tưởng", "Phiêu lưu"];

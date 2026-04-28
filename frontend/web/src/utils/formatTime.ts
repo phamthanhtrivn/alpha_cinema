@@ -11,3 +11,7 @@ export const formatDateTimeLocal = (dateStr?: string) => {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+
+export const formatHHmm = (timeStr: string) => {
+  return timeStr.slice(0, 5);
+}

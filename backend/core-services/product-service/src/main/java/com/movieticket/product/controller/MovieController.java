@@ -1,19 +1,22 @@
 package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
-import com.movieticket.product.dto.request.ArtistCreateDTO;
-import com.movieticket.product.dto.request.MovieCreateDTO;
-import com.movieticket.product.dto.request.MovieSearchDTO;
-import com.movieticket.product.dto.response.MovieSummaryDTO;
-import com.movieticket.product.dto.response.SelectionDTO;
+import com.movieticket.product.dto.admin.request.MovieCreateDTO;
+import com.movieticket.product.dto.admin.request.MovieSearchDTO;
+import com.movieticket.product.dto.admin.response.MovieSummaryDTO;
+import com.movieticket.product.dto.admin.response.SelectionDTO;
+import com.movieticket.product.dto.client.MovieDetailPublicDTO;
+import com.movieticket.product.dto.client.MoviePublicDTO;
 import com.movieticket.product.entity.AgeType;
-import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
 import com.movieticket.product.enums.ReleaseStatus;
 import com.movieticket.product.service.MovieService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +31,7 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
-    @GetMapping
+    @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Page<MovieSummaryDTO>>> searchMovies(@RequestParam(defaultValue = "0") int page,
                                                                            @RequestParam(defaultValue = "10") int size,
                                                                            @ModelAttribute MovieSearchDTO dto) {
@@ -38,7 +41,7 @@ public class MovieController {
         return ResponseEntity.ok(pageApiResponse);
     }
 
-    @GetMapping("/suggestions")
+    @GetMapping("/admin/suggestions")
     public ResponseEntity<ApiResponse<List<SelectionDTO>>> suggest(
             @RequestParam(defaultValue = "5") int size,
             @RequestParam String title
@@ -47,7 +50,7 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Movie>> findById(@PathVariable String id) {
         Movie movie = movieService.getById(id);
 
@@ -63,7 +66,7 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.success(savedMovie, "Thêm phim mới thành công"));
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/admin/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MovieSummaryDTO>> updateMovie(@PathVariable String id,
                                                                     @Valid @RequestPart("movie") MovieCreateDTO dto,
                                                                     @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
@@ -71,7 +74,7 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.success(savedMovie, "Cập nhật phim thành công"));
     }
 
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/admin/{id}/status")
     public ResponseEntity<ApiResponse<Void>> updateMovieStatus(
             @PathVariable String id,
             @RequestParam ReleaseStatus status) {
@@ -82,17 +85,35 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         movieService.deleteMovie(id);
         ApiResponse<Void> response = ApiResponse.success(null, "Xóa phim thành công");
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/age-type")
+    @GetMapping("/admin/age-type")
     public ResponseEntity<ApiResponse<List<AgeType>>> getAgeType() {
         List<AgeType> ageTypes = movieService.getAllAgeType();
         ApiResponse<List<AgeType>> response = ApiResponse.success(ageTypes, "");
+        return ResponseEntity.ok(response);
+    }
+
+    //Api của khách hàng gọi
+
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<Page<MoviePublicDTO>>> searchMovies(
+            @ModelAttribute MovieSearchDTO dto,
+            @PageableDefault(size = 10, sort = "premiereDate", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<MoviePublicDTO> page = movieService.clientSearchMovie(dto, pageable);
+        ApiResponse<Page<MoviePublicDTO>> response = ApiResponse.success(page, "");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ApiResponse<MovieDetailPublicDTO>> getMovieDetail(@PathVariable String id) {
+        MovieDetailPublicDTO movie = movieService.clientGetDetailMovie(id);
+        ApiResponse<MovieDetailPublicDTO> response = ApiResponse.success(movie, "");
         return ResponseEntity.ok(response);
     }
 }

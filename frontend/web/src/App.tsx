@@ -39,6 +39,7 @@ import StaffDashboard from "./pages/employee/staff/StaffDashboard";
 
 // CLIENT
 import Home from "./pages/client/Home";
+import MovieDetail from "./pages/client/MovieDetail";
 import ClientLogin from "./pages/client/ClientLogin";
 import ForgetPassword from "./pages/client/ForgotPassword";
 import ClientResgister from "./pages/client/ClientResgister";
@@ -53,6 +54,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectAuth, setCredentials } from "./store/slices/authSlice";
 import { userService } from "./services/user.service";
 import { useEffect } from "react";
+import { Booking } from "./pages/client/customer/Booking";
 
 function App() {
   const dispatch = useDispatch();
@@ -88,6 +90,7 @@ function App() {
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
             <Route path="/" element={<Home />} />
+            <Route path="/movie/:id" element={<MovieDetail />} />
           </Route>
 
           {/* CLIENT LOGIN */}
@@ -105,6 +108,7 @@ function App() {
             }
           >
             <Route path="/profile" element={<Profile />} />
+            <Route path="/booking" element={<Booking />} />
           </Route>
         </Route>
 

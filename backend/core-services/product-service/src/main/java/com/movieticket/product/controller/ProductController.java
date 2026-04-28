@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductController {
     private final ProductService productService;
 
-    @GetMapping
+    @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Page<Product>>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -32,14 +32,14 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable String id) {
         Product product = productService.getProductById(id);
         ApiResponse<Product> response = ApiResponse.success(product, "Product retrieved successfully");
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/admin" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Product>> createProduct(
             @Valid @RequestPart("product")CreateProductDto createProductDto,
             @RequestPart("imageFile") MultipartFile imageFile
@@ -49,14 +49,14 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);
         ApiResponse<Void> response = ApiResponse.success(null, "Product deleted successfully");
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Product>> updateProduct(
             @PathVariable String id,
             @Valid @RequestPart("product") UpdateProductDto updateProductDto,

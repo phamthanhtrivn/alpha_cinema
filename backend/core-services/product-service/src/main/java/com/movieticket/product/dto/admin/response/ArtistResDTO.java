@@ -1,4 +1,4 @@
-package com.movieticket.product.dto.response;
+package com.movieticket.product.dto.admin.response;
 
 import jakarta.persistence.Column;
 import lombok.Getter;
