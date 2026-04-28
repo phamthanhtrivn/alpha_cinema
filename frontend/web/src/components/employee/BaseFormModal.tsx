@@ -168,6 +168,8 @@ export interface FieldConfig {
   preview?: boolean;
   disabled?: boolean;
   hidden?: boolean;
+  min?: number;
+  max?: number;
 }
 
 interface Props {
@@ -210,6 +212,8 @@ const BaseFormModal: React.FC<Props> = ({
             type={field.type}
             placeholder={field.placeholder}
             value={values[field.name] ?? ""}
+            min={field.min}
+            max={field.max}
             onChange={(e) => {
               let value: any = e.target.value;
               if (field.type === "number") {
