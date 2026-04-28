@@ -19,9 +19,10 @@ public class CinemaService {
     @Autowired
     private CinemaRepository cinemaRepository;
 
-    public List<Cinema> getAllCinemas() {
+    public List<Cinema> getAllCinemas(String cinemaHeaderId) {
         try {
-            return cinemaRepository.findAll();
+            if(cinemaHeaderId == null) return cinemaRepository.findAll();
+            else return cinemaRepository.findById(cinemaHeaderId).stream().toList();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

@@ -50,7 +50,7 @@ public class SeatService {
                     Seat seat = existingSeatMap.getOrDefault(key, new Seat());
 
                     if (seat.getId() == null) {
-                        seat.setId(GenerateID.generateSeatId());
+                        seat.setId(GenerateID.generateSeatId(seatRequest.getRoomId()));
                     }
 
                     seat.setRowName(item.getRowName());

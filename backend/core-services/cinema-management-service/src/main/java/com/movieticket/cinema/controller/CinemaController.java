@@ -27,10 +27,11 @@ public class CinemaController {
     private CinemaService cinemaService;
 
     @GetMapping
-    public ApiResponse<List<Cinema>> getAllCinemas() {
+    public ApiResponse<List<Cinema>> getAllCinemas(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId) {
         ApiResponse<List<Cinema>> api;
         try {
-            List<Cinema> cinemas = cinemaService.getAllCinemas();
+            String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
+            List<Cinema> cinemas = cinemaService.getAllCinemas(cinemaHeaderId);
             api = new ApiResponse<>(true, cinemas);
         } catch (Exception e) {
             api = new ApiResponse<>(false, e.getMessage());

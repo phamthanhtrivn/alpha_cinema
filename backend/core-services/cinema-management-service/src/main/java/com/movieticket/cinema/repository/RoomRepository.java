@@ -25,11 +25,13 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     @Query("""
         SELECT r FROM Room r
         WHERE (:cinemaId IS NULL OR r.cinema.id = :cinemaId)
+        AND (:cinemaHeaderId IS NULL OR r.cinema.id = :cinemaHeaderId)
         AND (:roomNumber IS NULL OR r.roomNumber = :roomNumber)
         AND (:projectionType IS NULL OR r.projectionType = :projectionType)
         AND (:status IS NULL OR r.status = :status)
     """)
     Page<Room> filterCinemas(
+            @Param("cinemaHeaderId") String cinemaHeaderId,
             @Param("cinemaId") String cinemaId,
             @Param("roomNumber") Integer roomNumber,
             @Param("projectionType") ProjectionType projectionType,
@@ -38,5 +40,7 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     );
 
     Room findByCinema_IdAndRoomNumber(String cinemaId, Integer roomNumber);
+
+    List<Room> findByCinemaId(String cinemaId);
 
 }

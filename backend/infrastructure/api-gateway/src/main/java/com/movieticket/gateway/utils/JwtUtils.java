@@ -88,4 +88,9 @@ public class JwtUtils {
         final Claims claims = extractAllClaims(token);
         return claims.get("userId", String.class);
     }
+
+    public String extractCinemaId(String token) {
+        final Claims claims = extractAllClaims(token);
+        return claims.get("cinemaId", String.class);
+    }
 }

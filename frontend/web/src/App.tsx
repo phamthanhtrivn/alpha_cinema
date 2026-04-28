@@ -53,6 +53,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectAuth, setCredentials } from "./store/slices/authSlice";
 import { userService } from "./services/user.service";
 import { useEffect } from "react";
+import { store } from "./store";
 
 function App() {
   const dispatch = useDispatch();
@@ -64,11 +65,14 @@ function App() {
         const response = await userService.getProfile();
         console.log(response);
         if (response.success) {
+          // Lấy token mới nhất từ store (có thể đã được Interceptor cập nhật)
+          const latestToken = store.getState().auth.accessToken || accessToken;
           dispatch(
             setCredentials({
               user: response.data,
-              accessToken: accessToken,
+              accessToken: latestToken as string,
               role: response.data.role,
+              cinemaId: response.data.cinemaId || null,
             }),
           );
         }

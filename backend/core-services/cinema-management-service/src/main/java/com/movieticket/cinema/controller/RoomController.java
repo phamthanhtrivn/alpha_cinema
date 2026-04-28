@@ -1,14 +1,6 @@
 package com.movieticket.cinema.controller;
 
 import com.movieticket.cinema.api_response.ApiResponse;
-import com.movieticket.cinema.dto.RoomDetailDTO;
-import com.movieticket.cinema.dto.RoomRequest;
-import com.movieticket.cinema.dto.SelectionDTO;
-import com.movieticket.cinema.entity.ProjectionType;
-import com.movieticket.cinema.entity.Room;
-import com.movieticket.cinema.service.RoomService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import com.movieticket.cinema.dto.RoomRequest;
 import com.movieticket.cinema.entity.Room;
 import com.movieticket.cinema.service.RoomService;
@@ -25,9 +17,12 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
     @GetMapping
-    public ApiResponse<List<Room>> getAllRooms(){
+    public ApiResponse<List<Room>> getAllRooms(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId){
+
         try{
-            return new ApiResponse<>(true, roomService.getAllRooms());
+            System.out.println("Received header X-Cinema-Id: " + cinemaHeaderId);
+            String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
+            return new ApiResponse<>(true, roomService.getAllRooms(cinemaIdFromHeader));
         }
         catch (Exception e){
             System.out.println(e);
@@ -41,10 +36,13 @@ public class RoomController {
             @RequestParam(required = false) String projectionType,
             @RequestParam(required = false) Boolean status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "5") int size,
+            @RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId
     ){
         try{
-            return new ApiResponse<>(true, roomService.getAllRoomsAndPage(cinemaId, roomNumber, projectionType, status, page, size));
+            System.out.println("Received header X-Cinema-Id: " + cinemaHeaderId);
+            String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
+            return new ApiResponse<>(true, roomService.getAllRoomsAndPage(cinemaId, roomNumber, projectionType, status, page, size, cinemaIdFromHeader));
         }
         catch (Exception e){
             System.out.println(e);

@@ -35,8 +35,6 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose } : any) => {
     };
   }, [rawData]);
 
-  console.log("rowsObj", rowsObj);
-  console.log("uniqueSeatTypes", uniqueSeatTypes);
 
   // ==========================================
   // 2. CẤP MÀU GHẾ

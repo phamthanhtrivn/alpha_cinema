@@ -71,9 +71,11 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 //            }
 
             String userId = jwtUtils.extractUserId(token);
+            String cinemaId = jwtUtils.extractCinemaId(token);
 
             ServerHttpRequest mutatedRequest = request.mutate()
                     .header("X-User-Id", userId)
+                    .header("X-Cinema-Id", cinemaId)
                     .build();
 
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
