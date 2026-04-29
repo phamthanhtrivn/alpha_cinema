@@ -27,4 +27,8 @@ public interface ShowScheduleDetailRepository extends JpaRepository<ShowSchedule
     );
 
     void deleteByOrder_Id(String orderId);
+    @Query("SELECT d.seatId, d.showSeatType FROM ShowScheduleDetail d " +
+            "WHERE d.showScheduleId = :showScheduleId " +
+            "AND d.order.status != 'CANCELLED'")
+    List<Object[]> findBookedSeatsInternal(@Param("showScheduleId") String showScheduleId);
 }

@@ -1,9 +1,9 @@
 package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
-import com.movieticket.product.dto.request.ArtistCreateDTO;
-import com.movieticket.product.dto.request.ArtistSearchDTO;
-import com.movieticket.product.dto.response.ArtistResDTO;
+import com.movieticket.product.dto.admin.request.ArtistCreateDTO;
+import com.movieticket.product.dto.admin.request.ArtistSearchDTO;
+import com.movieticket.product.dto.admin.response.ArtistResDTO;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.service.ArtistService;
 import jakarta.validation.Valid;
@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ArtistController {
     private final ArtistService artistService;
 
-    @GetMapping
+    @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Page<ArtistResDTO>>> searchAritst(@RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "10") int size,
                                                                         @ModelAttribute ArtistSearchDTO dto) {
@@ -33,21 +33,21 @@ public class ArtistController {
         return ResponseEntity.ok(pageApiResponse);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/admin",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Artist>> createArtist(@Valid @RequestPart("artist") ArtistCreateDTO dto,
                                                             @RequestPart("imageFile") MultipartFile imageFile) {
         Artist savedArtist = artistService.createArtist(dto, imageFile);
         return ResponseEntity.ok(ApiResponse.success(savedArtist, "Tạo nghệ sĩ mới thành công"));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Artist>> getById(@PathVariable String id) {
         Artist artist = artistService.getById(id);
 
         return ResponseEntity.ok(ApiResponse.success(artist, ""));
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/admin/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Artist>> updateArtist(
             @PathVariable String id,
             @Valid @RequestPart("artist")  ArtistCreateDTO dto,
@@ -58,7 +58,7 @@ public class ArtistController {
         return ResponseEntity.ok(ApiResponse.success(updatedArtist, "Cập nhật nghệ sĩ thành công"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         artistService.delete(id);
         ApiResponse<Void> response = ApiResponse.success(null, "Xóa nghệ sĩ thành công");

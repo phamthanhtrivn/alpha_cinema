@@ -43,7 +43,6 @@ const RoomManagement: React.FC = () => {
     projectionType: undefined,
     status: undefined,
   });
-  
   const [isOpenView, setIsOpenView] = useState(false);
   const [isOpenEdit, setIsOpenEdit] = useState(false);
   const [seatData, setSeatData] = useState<any>([]);
@@ -224,9 +223,9 @@ const RoomManagement: React.FC = () => {
   );
 
   const handleSeatAction = async (room: Room, mode: 'view' | 'edit') => {
-    try{
+    try {
       const res = await seatService.getSeatByRoomId(room.id);
-      if(res?.success || res?.data){
+      if (res?.success || res?.data) {
         setSeatData(res.data);
         setSelectedRoom(room);
         if (mode === 'view') setIsOpenView(true);
@@ -238,7 +237,7 @@ const RoomManagement: React.FC = () => {
         else setIsOpenEdit(true);
       }
     }
-    catch(error){
+    catch (error) {
       console.log(error);
       setSeatData([]);
       setSelectedRoom(room);
@@ -247,7 +246,6 @@ const RoomManagement: React.FC = () => {
     }
   }
 
-  
 
 
   return (
@@ -269,16 +267,16 @@ const RoomManagement: React.FC = () => {
       }
     >
 
-      
-      <CinemaRoomPreviewModal 
+
+      <CinemaRoomPreviewModal
         rawData={seatData}
         isOpen={isOpenView}
-        onClose={()=>{setIsOpenView(false)}}
+        onClose={() => { setIsOpenView(false) }}
       />
-      
-      <CinemaSeatEditModal 
+
+      <CinemaSeatEditModal
         isOpen={isOpenEdit}
-        onClose={()=>{setIsOpenEdit(false)}}
+        onClose={() => { setIsOpenEdit(false) }}
         roomId={selectedRoom?.id}
         capacity={selectedRoom?.capacity}
         existingSeats={seatData}
@@ -350,8 +348,8 @@ const RoomManagement: React.FC = () => {
             {/* Actions */}
             <TableCell className="px-6 py-4 text-right">
               <TableActions
-                onView={()=>{handleSeatAction(room, 'view')}}
-                onEdit={()=>{handleSeatAction(room, 'edit')}}
+                onView={() => { handleSeatAction(room, 'view') }}
+                onEdit={() => { handleSeatAction(room, 'edit') }}
               />
             </TableCell>
           </TableRow>

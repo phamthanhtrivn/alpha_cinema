@@ -1,11 +1,12 @@
 package com.movieticket.product.service;
 
-import com.movieticket.product.dto.request.MovieCreateDTO;
-import com.movieticket.product.dto.request.MovieSearchDTO;
-import com.movieticket.product.dto.response.MovieSummaryDTO;
-import com.movieticket.product.dto.response.SelectionDTO;
+import com.movieticket.product.dto.admin.request.MovieCreateDTO;
+import com.movieticket.product.dto.admin.request.MovieSearchDTO;
+import com.movieticket.product.dto.admin.response.MovieSummaryDTO;
+import com.movieticket.product.dto.admin.response.SelectionDTO;
+import com.movieticket.product.dto.client.MovieDetailPublicDTO;
+import com.movieticket.product.dto.client.MoviePublicDTO;
 import com.movieticket.product.entity.AgeType;
-import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
 import com.movieticket.product.enums.ReleaseStatus;
 import com.movieticket.product.exception.BusinessException;
@@ -24,8 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +57,21 @@ public class MovieService {
         return moviePage.map(movieMapper::toResponseAdmin);
     }
 
+    public Page<MoviePublicDTO> clientSearchMovie(MovieSearchDTO dto, Pageable pageable) {
+        Specification<Movie> spec = Specification.where(MovieSpecification.hasTitle(dto.getTitle()))
+                .and(MovieSpecification.hasReleaseStatus(dto.getReleaseStatus()));
+
+        Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
+        return moviePage.map(movieMapper::toResponsePublic);
+    }
+
+    @Transactional(readOnly = true)
+    public MovieDetailPublicDTO clientGetDetailMovie(String id) {
+        Movie movie = this.getById(id);
+
+        return movieMapper.toMovieDetailPublic(movie);
+    }
+
     public List<AgeType> getAllAgeType() {
         return ageTypeRepository.findAll();
     }
@@ -71,13 +85,7 @@ public class MovieService {
 
     @Transactional
     public MovieSummaryDTO createMovie(MovieCreateDTO dto, MultipartFile thumbnail) {
-        String thumbnailUrl = null;
-        if (thumbnail != null && !thumbnail.isEmpty()) {
-            thumbnailUrl = cloudinaryUtil.uploadImage(thumbnail);
-        }
-
         Movie movie = movieMapper.toEntity(dto);
-        movie.setThumbnailUrl(thumbnailUrl);
 
         if (dto.getAgeTypeId() != null) {
             AgeType proxyAgeType = ageTypeRepository.getReferenceById(dto.getAgeTypeId());
@@ -91,6 +99,12 @@ public class MovieService {
         if (dto.getDirectorIds() != null) {
             movie.setDirectors(artistService.getArtistProxies(dto.getDirectorIds()));
         }
+
+        String thumbnailUrl = null;
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            thumbnailUrl = cloudinaryUtil.uploadImage(thumbnail);
+        }
+        movie.setThumbnailUrl(thumbnailUrl);
 
         return movieMapper.toResponseAdmin(movieRepository.save(movie));
     }

@@ -1,6 +1,7 @@
 package com.movieticket.cinema.service;
 
 import com.movieticket.cinema.dto.CinemaRequest;
+import com.movieticket.cinema.dto.SeatResponseToProduct;
 import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.repository.CinemaRepository;
@@ -11,7 +12,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CinemaService {
@@ -84,4 +89,13 @@ public class CinemaService {
                 .map(c -> new SelectionDTO(c.getId(), c.getName()))
                 .toList();
     }
+
+    public List<SelectionDTO> getCinemaSelectionsByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) return Collections.emptyList();
+
+        return cinemaRepository.findAllProjectedByIdIn(ids).stream()
+                .map(v -> new SelectionDTO(v.getId(), v.getName()))
+                .collect(Collectors.toList());
+    }
 }
+

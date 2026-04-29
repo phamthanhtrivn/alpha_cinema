@@ -2,11 +2,11 @@ import { apiClient } from "./api";
 
 export const artistsService = {
     getArtists: async (params?: any) => {
-        const response = await apiClient.get(`/artists`, { params });
+        const response = await apiClient.get(`/artists/admin`, { params });
         return response.data;
     },
     getArtistById: async (id: string) => {
-        const response = await apiClient.get(`/artists/${id}`);
+        const response = await apiClient.get(`/artists/admin/${id}`);
         return response.data;
     },
     createArtist: async (data: any, imageFile?: File) => {
@@ -15,7 +15,7 @@ export const artistsService = {
         if (imageFile) {
             formData.append("imageFile", imageFile);
         }
-        const response = await apiClient.post(`/artists`, formData, {
+        const response = await apiClient.post(`/artists/admin`, formData, {
             headers: { "Content-Type": "multipart/form-data" }
         });
         return response.data;
@@ -26,13 +26,13 @@ export const artistsService = {
         if (imageFile) {
             formData.append("imageFile", imageFile);
         }
-        const response = await apiClient.put(`/artists/${id}`, formData, {
+        const response = await apiClient.put(`/artists/admin/${id}`, formData, {
             headers: { "Content-Type": "multipart/form-data" }
         });
         return response.data;
     },
     deleteArtist: async (id: string) => {
-        const response = await apiClient.delete(`/artists/${id}`);
+        const response = await apiClient.delete(`/artists/admin/${id}`);
         return response.data;
     }
 };
