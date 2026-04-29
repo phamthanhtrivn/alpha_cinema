@@ -1,7 +1,6 @@
 package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
-import com.movieticket.product.dto.CreateProductDto;
 import com.movieticket.product.dto.request.ArtistCreateDTO;
 import com.movieticket.product.dto.request.ArtistSearchDTO;
 import com.movieticket.product.dto.response.ArtistResDTO;

@@ -16,8 +16,10 @@ public class RouteValidator {
             "/api/users/forgot-password",
             "/api/users/forgot-password/otp",
             "/api/users/forgot-password/reset-password",
-            "/api/users/google-login"
+            "/api/users/google-login",
+            "/api/payments/vn-pay-callback"
     );
+    
     public Predicate<ServerHttpRequest> isSecured =
             request -> openApiEndpoints
                     .stream()

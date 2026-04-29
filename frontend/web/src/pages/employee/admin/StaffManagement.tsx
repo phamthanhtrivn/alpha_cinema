@@ -19,7 +19,7 @@ import BaseFormModal, {
   type FieldConfig,
 } from "@/components/employee/BaseFormModal";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { cinemaService } from "@/services/cinema.service";
+import { cinemaService } from "../../../services/cinema.service";
 
 const StaffManagement: React.FC = () => {
   const pageSize = 5;
@@ -348,7 +348,7 @@ const StaffManagement: React.FC = () => {
           value={
             filters.gender
               ? genderOptions.find((item) => item.value === filters.gender)
-                ?.label
+                  ?.label
               : "Tất cả"
           }
           onChange={(label) => {
@@ -375,7 +375,7 @@ const StaffManagement: React.FC = () => {
           value={
             filters.role
               ? employeeRoleOptions.find((item) => item.value === filters.role)
-                ?.label
+                  ?.label
               : "Tất cả"
           }
           onChange={(label) => {
@@ -638,8 +638,9 @@ const StaffManagement: React.FC = () => {
       label: "Trạng thái",
       render: (val: boolean) => (
         <span
-          className={`px-2 py-1 rounded text-xs font-medium ${val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-            }`}
+          className={`px-2 py-1 rounded text-xs font-medium ${
+            val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+          }`}
         >
           {val ? "Hoạt động" : "Bị khóa"}
         </span>
@@ -741,10 +742,11 @@ const StaffManagement: React.FC = () => {
 
             <TableCell className="px-6 py-4">
               <span
-                className={`px-2 py-0.5 text-xs font-bold rounded-full ${employee.role === "MANAGER"
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-blue-100 text-blue-700"
-                  }`}
+                className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                  employee.role === "MANAGER"
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
               >
                 {employee.role === "MANAGER" ? "Quản lý" : "Nhân viên"}
               </span>

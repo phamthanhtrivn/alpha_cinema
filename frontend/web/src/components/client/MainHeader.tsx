@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, User, Menu, LogOut, UserCircle, History } from "lucide-react";
 import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
-import { logout, selectAuth } from "@/store/slices/authSlice";
-import { userService } from "@/services/user.service";
+import { logout, selectAuth } from "../../store/slices/authSlice";
+import { userService } from "../../services/user.service";
 import {toast} from "react-toastify";
 
 const MainHeader: React.FC = () => {

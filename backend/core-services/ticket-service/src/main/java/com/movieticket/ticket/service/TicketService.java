@@ -1,19 +1,27 @@
 package com.movieticket.ticket.service;
 
-import com.movieticket.ticket.dto.CreateTicketPriceDto;
-import com.movieticket.ticket.dto.DetermineTicketPriceDto;
-import com.movieticket.ticket.dto.SearchTicketPriceDto;
-import com.movieticket.ticket.dto.UpdateTicketPriceDto;
+import com.movieticket.ticket.dto.request.CreateTicketPriceDto;
+import com.movieticket.ticket.dto.request.DetermineTicketPriceDto;
+import com.movieticket.ticket.dto.request.SearchTicketPriceDto;
+import com.movieticket.ticket.dto.request.UpdateTicketPriceDto;
+import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.enums.DayType;
 import com.movieticket.ticket.exception.BusinessException;
 import com.movieticket.ticket.repository.TicketRepository;
 import com.movieticket.ticket.util.DayTypeResolver;
 import com.movieticket.ticket.util.IdGenerator;
+import com.movieticket.ticket.util.TicketUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +47,34 @@ public class TicketService {
                 .orElseThrow(() -> new BusinessException("Không tìm thấy giá vé với id: " + id));
     }
 
+    public List<TicketPrice> getTicketPricesByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> distinctIds = ids.stream()
+                .filter(id -> id != null && !id.isBlank())
+                .map(String::trim)
+                .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), List::copyOf));
+
+        if (distinctIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, TicketPrice> ticketPricesById = ticketRepository.findAllById(distinctIds).stream()
+                .collect(Collectors.toMap(TicketPrice::getId, Function.identity()));
+
+        for (String id : distinctIds) {
+            if (!ticketPricesById.containsKey(id)) {
+                throw new BusinessException("Không tìm thấy giá vé với id: " + id);
+            }
+        }
+
+        return distinctIds.stream()
+                .map(ticketPricesById::get)
+                .toList();
+    }
+
     public TicketPrice createTicketPrice(CreateTicketPriceDto createTicketPriceDto) {
         boolean exists = ticketRepository.existsBySeatTypeIdAndProjectionTypeAndDayType(
                 createTicketPriceDto.getSeatTypeId(),
@@ -58,7 +94,9 @@ public class TicketService {
         ticketPrice.setPrice(createTicketPriceDto.getPrice());
         ticketPrice.setStatus(true);
 
-        return ticketRepository.save(ticketPrice);
+        TicketPrice savedTicketPrice = ticketRepository.save(ticketPrice);
+
+        return savedTicketPrice;
     }
 
     public void deleteTicketPrice(String id) {
@@ -89,7 +127,7 @@ public class TicketService {
         return ticketRepository.save(existingPrice);
     }
 
-    public TicketPrice resolveTicketPrice(DetermineTicketPriceDto determineDto) {
+    public TicketResponseDto resolveTicketPrice(DetermineTicketPriceDto determineDto) {
         DayType dayType = dayTypeResolver.resolveDayType(determineDto.getShowTime());
 
         TicketPrice ticketPrice = ticketRepository.findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(
@@ -103,6 +141,6 @@ public class TicketService {
             throw new BusinessException("No active ticket price found for the given criteria");
         }
 
-        return ticketPrice;
+        return TicketUtil.toTicketResponseDto(ticketPrice);
     }
 }

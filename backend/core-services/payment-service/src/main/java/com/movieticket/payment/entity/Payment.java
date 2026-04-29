@@ -16,6 +16,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(nullable = false, unique = true)
     private String orderId;
     private double amount;
     private String currency;

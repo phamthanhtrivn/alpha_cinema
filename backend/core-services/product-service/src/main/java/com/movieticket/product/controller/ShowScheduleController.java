@@ -4,8 +4,10 @@ import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.request.ShowScheduleSearchDTO;
 import com.movieticket.product.dto.request.ShowScheduleUpdateDTO;
+import com.movieticket.product.dto.response.ShowScheduleLookupDto;
 import com.movieticket.product.dto.response.ShowScheduleResDTO;
 import com.movieticket.product.entity.ShowSchedule;
+import com.movieticket.product.service.ShowScheduleLookupService;
 import com.movieticket.product.service.ShowScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ShowScheduleController {
     private final ShowScheduleService showScheduleService;
+    private final ShowScheduleLookupService showScheduleLookupService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ShowScheduleLookupDto>> getShowScheduleById(@PathVariable String id) {
+        ShowScheduleLookupDto showSchedule = showScheduleLookupService.getShowScheduleById(id);
+        ApiResponse<ShowScheduleLookupDto> response = ApiResponse.success(showSchedule, "Show schedule retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<ShowScheduleResDTO>>> search(

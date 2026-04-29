@@ -1,7 +1,7 @@
 package com.movieticket.product.service;
 
 import com.movieticket.product.clients.CinemaClient;
-import com.movieticket.product.dto.RoomDetailDTO;
+import com.movieticket.product.dto.response.RoomDetailDTO;
 import com.movieticket.product.dto.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.request.ShowScheduleSearchDTO;
 import com.movieticket.product.dto.request.ShowScheduleUpdateDTO;

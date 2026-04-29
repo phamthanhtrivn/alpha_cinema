@@ -6,7 +6,6 @@ import com.movieticket.cinema.dto.RoomRequest;
 import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.ProjectionType;
 import com.movieticket.cinema.entity.Room;
-import com.movieticket.cinema.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import com.movieticket.cinema.dto.RoomRequest;
@@ -24,6 +23,7 @@ import java.util.List;
 public class RoomController {
     @Autowired
     private RoomService roomService;
+    
     @GetMapping
     public ApiResponse<List<Room>> getAllRooms(){
         try{
@@ -76,6 +76,15 @@ public class RoomController {
            return new ApiResponse<>(false, e.getMessage());
         }
         catch (Exception e){
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<Room> getRoomById(@PathVariable String id) {
+        try {
+            return new ApiResponse<>(true, roomService.getRoomById(id));
+        } catch (Exception e) {
             return new ApiResponse<>(false, e.getMessage());
         }
     }

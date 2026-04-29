@@ -10,7 +10,12 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ticket_prices")
+@Table(
+        name = "ticket_prices",
+        uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"seatTypeId", "projectionType", "dayType"})
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
