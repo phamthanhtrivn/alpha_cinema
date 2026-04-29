@@ -1,6 +1,7 @@
 package com.movieticket.gateway.filter;
 
 import com.movieticket.gateway.config.RouteValidator;
+import com.movieticket.gateway.utils.IpUtils;
 import com.movieticket.gateway.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -71,9 +72,15 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 //            }
 
             String userId = jwtUtils.extractUserId(token);
+            String clientIp = IpUtils.resolveClientIp(request);
 
             ServerHttpRequest mutatedRequest = request.mutate()
-                    .header("X-User-Id", userId)
+                    .headers(headers -> {
+                        headers.remove("X-User-Id");
+                        headers.remove("X-User-IP");
+                        headers.add("X-User-Id", userId);
+                        headers.add("X-User-IP", clientIp);
+                    })
                     .build();
 
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();

@@ -34,6 +34,11 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/info")
+    public ResponseEntity<CustomerResponseDto> getCustomerInfo(@PathVariable String id) {
+        return ResponseEntity.ok(customerService.getCustomerById(id));
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<CustomerResponseDto>> updateCustomerStatus(
             @PathVariable String id,

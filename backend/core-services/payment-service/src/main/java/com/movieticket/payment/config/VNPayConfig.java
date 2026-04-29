@@ -29,14 +29,14 @@ public class VNPayConfig {
     @Value("${vnpay.orderType}")
     private String orderType;
 
-    public Map<String, String> getVNPayConfig(String bookingId) {
+    public Map<String, String> getVNPayConfig(String orderId) {
         Map<String, String> vnpParamsMap = new HashMap<>();
         vnpParamsMap.put("vnp_Version", this.vnp_Version);
         vnpParamsMap.put("vnp_Command", this.vnp_Command);
         vnpParamsMap.put("vnp_TmnCode", this.vnp_TmnCode);
         vnpParamsMap.put("vnp_CurrCode", "VND");
-        vnpParamsMap.put("vnp_TxnRef",  bookingId);
-        vnpParamsMap.put("vnp_OrderInfo", "Thanh toan don hang:" +  bookingId);
+        vnpParamsMap.put("vnp_TxnRef",  orderId);
+        vnpParamsMap.put("vnp_OrderInfo", "Thanh toan don hang:" +  orderId);
         vnpParamsMap.put("vnp_OrderType", this.orderType);
         vnpParamsMap.put("vnp_Locale", "vn");
         vnpParamsMap.put("vnp_ReturnUrl", this.vnp_ReturnUrl);
@@ -44,7 +44,7 @@ public class VNPayConfig {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnpCreateDate = formatter.format(calendar.getTime());
         vnpParamsMap.put("vnp_CreateDate", vnpCreateDate);
-        calendar.add(Calendar.MINUTE, 15);
+        calendar.add(Calendar.MINUTE, 5);
         String vnp_ExpireDate = formatter.format(calendar.getTime());
         vnpParamsMap.put("vnp_ExpireDate", vnp_ExpireDate);
         return vnpParamsMap;

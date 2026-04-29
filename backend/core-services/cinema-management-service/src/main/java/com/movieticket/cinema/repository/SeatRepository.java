@@ -9,4 +9,5 @@ import java.util.List;
 public interface SeatRepository extends JpaRepository<Seat, String> {
     int countByRoom_Id(String roomId);
     List<Seat> findByRoom_Id(String roomId);
+    List<Seat> findByIdIn(List<String> ids);
 }

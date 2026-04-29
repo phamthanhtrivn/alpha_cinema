@@ -7,6 +7,8 @@ import lombok.Data;
 @Builder
 public class CheckoutProductItemResponse {
     private String productId;
+    private String productName;
+    private String productImageUrl;
     private int quantity;
     private double unitPrice;
     private double subtotal;
