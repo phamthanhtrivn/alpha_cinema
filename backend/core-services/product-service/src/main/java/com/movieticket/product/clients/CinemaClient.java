@@ -1,14 +1,10 @@
 package com.movieticket.product.clients;
 
-import com.movieticket.product.dto.RoomDetailDTO;
+import com.movieticket.product.dto.response.RoomDetailDTO;
 import com.movieticket.product.dto.response.CinemaServiceResponse;
-import com.movieticket.product.dto.response.SelectionDTO;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 @Component
 public class CinemaClient {

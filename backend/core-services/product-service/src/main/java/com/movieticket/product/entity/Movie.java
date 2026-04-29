@@ -20,6 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Movie {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -34,6 +35,7 @@ public class Movie {
 
     private String trailerUrl;
     private String thumbnailUrl;
+    private String bannerUrl;
 
     @ElementCollection
     @CollectionTable(name = "movie_projections", joinColumns = @JoinColumn(name = "movie_id"))

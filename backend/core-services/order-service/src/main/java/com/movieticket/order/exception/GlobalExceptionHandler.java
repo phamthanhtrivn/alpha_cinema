@@ -1,6 +1,7 @@
 package com.movieticket.order.exception;
 
 import com.movieticket.order.common.ApiResponse;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

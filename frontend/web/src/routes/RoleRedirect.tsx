@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { selectRole, selectIsAuthenticated } from "@/store/slices/authSlice";
+import { selectRole, selectIsAuthenticated } from "../store/slices/authSlice";
 
 const RoleRedirect = () => {
   const role = useSelector(selectRole);

@@ -3,7 +3,6 @@ package com.movieticket.user.controller;
 import com.movieticket.user.common.ApiResponse;
 import com.movieticket.user.dto.request.SearchCustomerDto;
 import com.movieticket.user.dto.response.CustomerResponseDto;
-import com.movieticket.user.entity.Customer;
 import com.movieticket.user.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +25,18 @@ public class CustomerController {
         Page<CustomerResponseDto> customers = customerService.getAllCustomers(searchCustomerDto, PageRequest.of(page, size));
         ApiResponse<Page<CustomerResponseDto>> response = ApiResponse.success(customers, "Customers retrieved successfully");
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CustomerResponseDto>> getCustomerById(@PathVariable String id) {
+        CustomerResponseDto customer = customerService.getCustomerById(id);
+        ApiResponse<CustomerResponseDto> response = ApiResponse.success(customer, "Customer retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/info")
+    public ResponseEntity<CustomerResponseDto> getCustomerInfo(@PathVariable String id) {
+        return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
     @PutMapping("/{id}/status")

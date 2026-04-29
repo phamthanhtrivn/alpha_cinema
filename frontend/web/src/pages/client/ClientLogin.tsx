@@ -4,9 +4,9 @@ import { userService } from "../../services/user.service";
 import type LoginRequest from "@/types/loginRequest";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "@/store/slices/authSlice";
+import { setCredentials } from "../../store/slices/authSlice";
 import { Loader2 } from "lucide-react";
-import ButtonGoogle from "@/components/client/ButtonGoogle";
+import ButtonGoogle from "../../components/client/ButtonGoogle";
 
 const ClientLogin: React.FC = () => {
   const [loginData, setLoginData] = useState<LoginRequest>({

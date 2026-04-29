@@ -1,7 +1,7 @@
 spring:
   application:
-    name: cinema-management-service
+    name: ${APP_NAME}
   cloud:
     config:
-      uri: http://localhost:8888 # Cấu hình của service này nằm ở config-server chạy ở port 8888
-      fail-fast: true # Nếu không kết nối được với config-server ở port 8888 thì service này sẽ dừng
+      uri: ${CONFIG_SERVER_URL}
+      fail-fast: true

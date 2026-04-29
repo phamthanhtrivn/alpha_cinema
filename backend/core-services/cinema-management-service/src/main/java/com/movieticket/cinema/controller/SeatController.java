@@ -1,6 +1,7 @@
 package com.movieticket.cinema.controller;
 
 import com.movieticket.cinema.api_response.ApiResponse;
+import com.movieticket.cinema.dto.SeatLookupDto;
 import com.movieticket.cinema.dto.SeatRequest;
 import com.movieticket.cinema.entity.Seat;
 import com.movieticket.cinema.service.SeatService;
@@ -31,6 +32,15 @@ public class SeatController {
         try{
             return new ApiResponse<>(true, seatService.createAndEditSeats(seatRequest));
         } catch (ExecutionException e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
+
+    @PostMapping("/batch")
+    public ApiResponse<List<SeatLookupDto>> getSeatsByIds(@RequestBody List<String> ids){
+        try {
+            return new ApiResponse<>(true, seatService.getSeatsByIds(ids));
+        } catch (Exception e) {
             return new ApiResponse<>(false, e.getMessage());
         }
     }
