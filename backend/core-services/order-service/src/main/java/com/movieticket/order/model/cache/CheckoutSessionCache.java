@@ -18,9 +18,21 @@ import java.util.List;
 public class CheckoutSessionCache {
     private String sessionId;
     private String cinemaId;
+    private String cinemaName;
+    private String cinemaAddress;
+    private String roomId;
+    private Integer roomNumber;
     private String customerId;
+    private String customerName;
+    private String customerEmail;
     private String orderId;
     private String showScheduleId;
+    private String movieId;
+    private String movieTitle;
+    private LocalDateTime showStartTime;
+    private LocalDateTime showEndTime;
+    private String projectionType;
+    private String translationType;
     @Builder.Default
     private List<SeatRequestDto> seats = new ArrayList<>();
     @Builder.Default

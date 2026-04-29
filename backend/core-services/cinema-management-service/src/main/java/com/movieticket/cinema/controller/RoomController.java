@@ -38,6 +38,15 @@ public class RoomController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<Room> getRoomById(@PathVariable String id) {
+        try {
+            return new ApiResponse<>(true, roomService.getRoomById(id));
+        } catch (Exception e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
+
     @PutMapping("/edit/{id}")
     public ApiResponse<Room> editRoom(@Validated @RequestBody RoomRequest request, @PathVariable String id){
         try{

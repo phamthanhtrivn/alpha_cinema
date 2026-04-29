@@ -16,4 +16,10 @@ public class SeatRequestDto {
 
     @Min(value = 0, message = "Giá vé phải lớn hơn hoặc bằng 0")
     private Double finalPrice;
+
+    private String rowName;
+
+    private String columnName;
+
+    private String seatNumber;
 }

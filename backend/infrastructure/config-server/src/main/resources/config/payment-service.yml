@@ -24,14 +24,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.add.type.headers: false
-    consumer:
-      group-id: payment-service
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
+       spring.json.add.type.headers: false
 
 eureka:
   client:
@@ -46,16 +39,11 @@ vnpay:
   tmnCode: ${VNPAY_TMN_CODE}
   hashSecret: ${VNPAY_HASH_SECRET}
   paymentUrl: ${VNPAY_PAYMENT_URL}
-  returnUrl: ${PAYMENT_SERVICE_URL}/api/payments/vn-pay-callback
+  returnUrl: ${BACKEND_BASE_URL}/api/payments/vn-pay-callback
   version: ${VNPAY_VERSION}
   command: ${VNPAY_COMMAND}
   orderType: ${VNPAY_ORDER_TYPE}
 
-# Momo (sandbox)
-momo:
-  partner-code: ${MOMO_PARTNER_CODE}
-  access-key: ${MOMO_ACCESS_KEY}
-  secret-key: ${MOMO_SECRET_KEY}
-  end-point: ${MOMO_END_POINT}
-  return-url: ${PAYMENT_SERVICE_URL}/api/payments/momo-pay-callback
-  request-type: ${MOMO_REQUEST_TYPE}
+payment:
+  backend-base-url: ${BACKEND_BASE_URL}
+  frontend-base-url: ${FRONTEND_BASE_URL}

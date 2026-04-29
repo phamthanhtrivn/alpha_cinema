@@ -1,22 +1,17 @@
 package com.movieticket.order.controller;
 
 import com.movieticket.order.common.ApiResponse;
+import com.movieticket.order.dto.request.ConfirmCheckoutSessionRequest;
 import com.movieticket.order.dto.request.CreateCheckoutSessionRequest;
 import com.movieticket.order.dto.request.UpdateCheckoutSessionRequest;
 import com.movieticket.order.dto.response.CheckoutConfirmResponse;
 import com.movieticket.order.dto.response.CheckoutSessionResponse;
 import com.movieticket.order.service.CheckoutSessionService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/checkouts")
@@ -49,9 +44,11 @@ public class CheckoutController {
 
     @PostMapping("/sessions/{sessionId}/confirm")
     public ResponseEntity<ApiResponse<CheckoutConfirmResponse>> confirmSession(
-            @PathVariable String sessionId
+            @PathVariable String sessionId,
+            @Valid @RequestBody ConfirmCheckoutSessionRequest request,
+            @RequestHeader(value = "X-User-IP", required = false) String userIp
     ) {
-        CheckoutConfirmResponse response = checkoutSessionService.confirmSession(sessionId);
+        CheckoutConfirmResponse response = checkoutSessionService.confirmSession(sessionId, request, userIp);
         return ResponseEntity.ok(ApiResponse.success(response, "Draft order created successfully"));
     }
 

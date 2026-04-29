@@ -30,6 +30,16 @@ public class CinemaController {
         return api;
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<Cinema> getCinemaById(@PathVariable String id) {
+        try {
+            Cinema cinema = cinemaService.getCinemaById(id);
+            return new ApiResponse<>(true, cinema);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
+
     @PostMapping("/create")
     public ApiResponse<Cinema>  createCinema(@Valid @RequestBody CinemaRequest request) {
             Cinema cinema = cinemaService.createCinema(request);

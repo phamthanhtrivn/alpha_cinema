@@ -66,5 +66,10 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    public Room getRoomById(String id) {
+        return roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room khong tim thay"));
+    }
+
 
 }

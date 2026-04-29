@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class ProductCache {
     private String productId;
     private String name;
+    private String imageUrl;
     private double unitPrice;
     private boolean status;
 }

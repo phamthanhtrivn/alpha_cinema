@@ -35,7 +35,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: "com.movieticket.order.event.model.PaymentResultEvent"
+        spring.json.use.type.headers: false
 
 eureka:
   client:
@@ -51,3 +52,12 @@ external-services:
     base-url: ${TICKET_SERVICE_BASE_URL}
   user-service:
     base-url: ${USER_SERVICE_BASE_URL}
+  payment-service:
+    base-url: ${PAYMENT_SERVICE_BASE_URL}
+  cinema-service:
+    base-url: ${CINEMA_SERVICE_BASE_URL}
+
+logging:
+  level:
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: INFO

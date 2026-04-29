@@ -51,4 +51,9 @@ public class CinemaService {
         }
         return null;
     }
+
+    public Cinema getCinemaById(String id) {
+        return cinemaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cinema khong ton tai"));
+    }
 }
