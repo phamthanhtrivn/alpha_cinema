@@ -6,7 +6,7 @@ export const artistsService = {
         return response.data;
     },
     getArtistById: async (id: string) => {
-        const response = await apiClient.get(`/artists/admin${id}`);
+        const response = await apiClient.get(`/artists/admin/${id}`);
         return response.data;
     },
     createArtist: async (data: any, imageFile?: File) => {

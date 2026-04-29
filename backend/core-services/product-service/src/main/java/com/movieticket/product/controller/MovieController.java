@@ -59,7 +59,7 @@ public class MovieController {
         return ResponseEntity.ok(movieRes);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/admin",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MovieSummaryDTO>> createMovie(@Valid @RequestPart("movie") MovieCreateDTO dto,
                                                                     @RequestPart("imageFile") MultipartFile imageFile) {
         MovieSummaryDTO savedMovie = movieService.createMovie(dto, imageFile);

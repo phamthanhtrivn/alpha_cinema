@@ -85,13 +85,7 @@ public class MovieService {
 
     @Transactional
     public MovieSummaryDTO createMovie(MovieCreateDTO dto, MultipartFile thumbnail) {
-        String thumbnailUrl = null;
-        if (thumbnail != null && !thumbnail.isEmpty()) {
-            thumbnailUrl = cloudinaryUtil.uploadImage(thumbnail);
-        }
-
         Movie movie = movieMapper.toEntity(dto);
-        movie.setThumbnailUrl(thumbnailUrl);
 
         if (dto.getAgeTypeId() != null) {
             AgeType proxyAgeType = ageTypeRepository.getReferenceById(dto.getAgeTypeId());
@@ -105,6 +99,12 @@ public class MovieService {
         if (dto.getDirectorIds() != null) {
             movie.setDirectors(artistService.getArtistProxies(dto.getDirectorIds()));
         }
+
+        String thumbnailUrl = null;
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            thumbnailUrl = cloudinaryUtil.uploadImage(thumbnail);
+        }
+        movie.setThumbnailUrl(thumbnailUrl);
 
         return movieMapper.toResponseAdmin(movieRepository.save(movie));
     }

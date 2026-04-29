@@ -33,7 +33,7 @@ public class ArtistController {
         return ResponseEntity.ok(pageApiResponse);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/admin",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Artist>> createArtist(@Valid @RequestPart("artist") ArtistCreateDTO dto,
                                                             @RequestPart("imageFile") MultipartFile imageFile) {
         Artist savedArtist = artistService.createArtist(dto, imageFile);
