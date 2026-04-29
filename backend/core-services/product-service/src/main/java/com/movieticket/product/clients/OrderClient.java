@@ -1,6 +1,5 @@
 package com.movieticket.product.clients;
 
-import com.movieticket.product.dto.RoomDetailDTO;
 import com.movieticket.product.dto.admin.response.CinemaServiceResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;

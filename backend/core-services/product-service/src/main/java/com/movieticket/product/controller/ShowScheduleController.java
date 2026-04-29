@@ -13,7 +13,6 @@ import com.movieticket.product.service.ShowScheduleLookupService;
 import com.movieticket.product.service.ShowScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,6 +21,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.movieticket.product.dto.response.ShowScheduleLookupDto;
 
 import java.time.LocalDate;
 import java.util.List;
