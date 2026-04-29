@@ -12,6 +12,19 @@ export const formatDateTimeLocal = (dateStr?: string) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-export const formatHHmm = (timeStr: string) => {
-  return timeStr.slice(0, 5);
-}
+export const formatHHmm = (dateTimeStr: string): string => {
+  const date = new Date(dateTimeStr);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+export const formatDDMMYYYY = (dateStr: string): string => {
+  const date = new Date(dateStr);
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};

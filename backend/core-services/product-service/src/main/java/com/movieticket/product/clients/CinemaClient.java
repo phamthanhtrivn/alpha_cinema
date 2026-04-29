@@ -1,6 +1,8 @@
 package com.movieticket.product.clients;
 
+import com.movieticket.product.dto.CinemaRoomInfoDTO;
 import com.movieticket.product.dto.RoomDetailDTO;
+import com.movieticket.product.dto.SeatResponseToProduct;
 import com.movieticket.product.dto.admin.response.CinemaServiceResponse;
 import com.movieticket.product.dto.admin.response.SelectionDTO;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,5 +44,27 @@ public class CinemaClient {
                 .bodyToMono(new ParameterizedTypeReference<List<SelectionDTO>>() {
                 })
                 .block(); // Đợi để lấy dữ liệu về (Synchronous)
+    }
+
+    public List<SeatResponseToProduct> getPhysicalSeats(String roomId) {
+        return this.webClient.get()
+                .uri("/internal/seats/seat-by-room/{id}", roomId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<SeatResponseToProduct>>() {
+                })
+                .block();
+    }
+
+    public CinemaRoomInfoDTO getLocationInfo(String cinemaId, String roomId) {
+        return this.webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/internal/cinemas/location-info")
+                        .queryParam("cinemaId", cinemaId)
+                        .queryParam("roomId", roomId)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<CinemaRoomInfoDTO>() {
+                })
+                .block();
     }
 }

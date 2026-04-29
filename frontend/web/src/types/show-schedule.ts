@@ -33,7 +33,7 @@ export interface Showtime {
 export interface FormatShowtime {
     projection: string;
     translation: string;
-    showtimes: Showtime[];
+    showTimes: Showtime[];
 }
 
 export interface CinemaShowtime {

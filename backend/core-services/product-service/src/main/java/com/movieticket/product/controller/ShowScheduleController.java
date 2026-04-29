@@ -5,11 +5,14 @@ import com.movieticket.product.dto.admin.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleSearchDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleUpdateDTO;
 import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
+import com.movieticket.product.dto.client.BookingLayoutDTO;
 import com.movieticket.product.dto.client.CinemaShowtimeDTO;
+import com.movieticket.product.dto.client.ShowtimeDTO;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.service.ShowScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -68,5 +71,32 @@ public class ShowScheduleController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         return ResponseEntity.ok(ApiResponse.success(showScheduleService.getMovieShowtimes(movieId, date), ""));
+    }
+
+    @GetMapping("/booking-layout/{showScheduleId}")
+    public ResponseEntity<ApiResponse<BookingLayoutDTO>> getLayout(@PathVariable String showScheduleId) {
+        BookingLayoutDTO data = showScheduleService.getBookingLayout(showScheduleId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
+    }
+
+    @GetMapping("/public/get-show-time-on-date/{movieId}")
+    public ResponseEntity<ApiResponse<List<ShowtimeDTO>>> getShowTimeOnDate(
+            @PathVariable String movieId,
+            @RequestParam String cinemaId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        List<ShowtimeDTO> data =
+                showScheduleService.getListShowTime(movieId, cinemaId, date);
+
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
+    }
+
+    @GetMapping("/public/get-available-dates/{movieId}")
+    public ResponseEntity<ApiResponse<List<LocalDate>>> getShowTimeOnDate(
+            @PathVariable String movieId
+    ) {
+        List<LocalDate> data =
+                showScheduleService.getAvailableDates(movieId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
     }
 }

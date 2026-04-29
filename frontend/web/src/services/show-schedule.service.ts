@@ -1,3 +1,4 @@
+import type { BookingLayoutDTO } from "@/types/booking";
 import { apiClient } from "./api";
 import type { CinemaShowtime, ShowScheduleSearchDTO } from "@/types/show-schedule";
 
@@ -23,4 +24,18 @@ export const showScheduleService = {
         );
         return response.data;
     },
+    getBookingLayout: async (id: string): Promise<BookingLayoutDTO> => {
+        const response = await apiClient.get(`/show-schedules/booking-layout/${id}`);
+        return response.data;
+    },
+    getMovieShowtimeOnDate: async (movieId: string, cinemaId: string, date: string): Promise<any> => {
+        const response = await apiClient.get(`/show-schedules/public/get-show-time-on-date/${movieId}`, {
+            params: { cinemaId, date }
+        });
+        return response.data;
+    },
+    getAvailableDateOnMovie: async (movieId: string): Promise<Date[]> => {
+        const response = await apiClient.get(`/show-schedules/public/get-available-dates/${movieId}`);
+        return response.data;
+    }
 };

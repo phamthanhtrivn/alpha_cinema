@@ -10,7 +10,7 @@ export interface ArtistResDTO {
 
 export interface ArtistSummary {
     id: string;
-    name: string;
+    fullName: string;
 }
 
 export const ALL_ARTIST_TYPES = [

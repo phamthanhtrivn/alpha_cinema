@@ -1,6 +1,7 @@
 package com.movieticket.cinema.service;
 
 import com.movieticket.cinema.dto.CinemaRequest;
+import com.movieticket.cinema.dto.SeatResponseToProduct;
 import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.repository.CinemaRepository;

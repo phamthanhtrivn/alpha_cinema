@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { movieService } from '../../services/movie.service';
 import { Container, Section } from '../../components/common/Layout';
@@ -11,14 +11,16 @@ import {
     Loader2,
 } from 'lucide-react';
 import TrailerModal from '@/components/client/TrailerModel';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { showScheduleService } from '@/services/show-schedule.service';
 import type { CinemaShowtime } from '@/types/show-schedule';
 import { ALL_TRANSLATION } from '@/types/movie';
-import { formatHHmm } from '@/utils/formatTime';
+import { formatDDMMYYYY, formatHHmm } from '@/utils/formatTime';
+import { cinemaService } from '@/services/cinema.service';
 
 const MovieDetail = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [isTrailerOpen, setIsTrailerOpen] = useState<boolean>(false);
 
     const {
@@ -31,35 +33,58 @@ const MovieDetail = () => {
         enabled: !!id,
     });
 
-    const generateDates = () => {
-        const dates = [];
-        const today = new Date();
+    const { data: availableDates } = useQuery<string[]>({
+        queryKey: ['available-dates', id],
+        queryFn: () => showScheduleService.getAvailableDateOnMovie(id!).then((res: any) => res.data),
+        enabled: !!id,
+    });
+
+    console.log(availableDates);
+
+    const dateTabs = useMemo(() => {
+        if (!availableDates) return [];
         const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+        const todayStr = new Date().toISOString().split('T')[0];
 
-        for (let i = 0; i < 7; i++) {
-            const nextDate = new Date(today);
-            nextDate.setDate(today.getDate() + i);
-            const dateString = nextDate.toISOString().split('T')[0]; // Định dạng YYYY-MM-DD để gửi API
-            const dayName = i === 0 ? 'Hôm Nay' : days[nextDate.getDay()];
-            const dateNum = `${String(nextDate.getDate()).padStart(2, '0')}/${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-            dates.push({ dateString, dayName, dateNum });
+        return availableDates.map(dateStr => {
+            const date = new Date(dateStr);
+            const dayName = dateStr === todayStr ? 'Hôm Nay' : days[date.getDay()];
+            const dateNum = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+            return { dateString: dateStr, dayName, dateNum };
+        });
+    }, [availableDates]);
+
+    const [selectedDate, setSelectedDate] = useState<string>('');
+
+    useEffect(() => {
+        if (dateTabs.length > 0 && !selectedDate) {
+            setSelectedDate(dateTabs[0].dateString);
         }
-        return dates;
-    };
+    }, [dateTabs, selectedDate]);
 
-    const dateTabs = generateDates();
-    const [selectedDate, setSelectedDate] = useState<string>(dateTabs[0].dateString);
+    // Cinema Filter
+    const { data: cinemaOptions } = useQuery<{ id: string, label: string }[]>({
+        queryKey: ['cinema-options'],
+        queryFn: () => cinemaService.getCinemaOptions().then((res: any) => res.data),
+    });
 
+    const [selectedCinema, setSelectedCinema] = useState<string>('Tất cả rạp');
 
     // Lấy dữ liệu Lịch chiếu theo Ngày
     const { data: showtimes, isFetching: isFetchingShowtimes } = useQuery<CinemaShowtime[]>({
         queryKey: ['movie-showtimes', id, selectedDate],
         queryFn: () => showScheduleService.getMovieShowtimes(id!, selectedDate).then((res: any) => res.data),
         enabled: !!id && !!selectedDate,
-        staleTime: 5 * 60 * 1000,  // Dữ liệu "tươi" trong 5 phút → không refetch
-        gcTime: 10 * 60 * 1000,    // Giữ cache 10 phút kể cả khi đổi ngày
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
         placeholderData: keepPreviousData,
     });
+
+    const filteredShowtimes = useMemo(() => {
+        if (!showtimes) return [];
+        if (selectedCinema === 'Tất cả rạp') return showtimes;
+        return showtimes.filter(s => s.cinemaName === selectedCinema);
+    }, [showtimes, selectedCinema]);
 
     if (isLoading) {
         return (
@@ -79,34 +104,33 @@ const MovieDetail = () => {
 
     const MovieMetadata = () => (
         <div className="space-y-4 text-sm w-full mt-4">
-            <div className="flex flex-col sm:flex-row sm:items-start">
+            <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Nhà sản xuất:</span>
                 <span className="font-medium text-slate-700">{movie.producer}</span>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start">
+            <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Thể loại:</span>
                 <div className="flex flex-wrap gap-2">
                     {movie.genre?.map(g => <span key={g} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{g}</span>)}
                 </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start">
+            <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Đạo diễn:</span>
                 <div className="flex flex-wrap gap-2">
-                    {movie.directors?.map(d => <span key={d.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{d.name}</span>)}
+                    {movie.directors?.map(d => <span key={d.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{d.fullName}</span>)}
                 </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start">
+            <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Diễn viên:</span>
                 <div className="flex flex-wrap gap-2">
-                    {movie.actors?.map(a => <span key={a.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{a.name}</span>)}
+                    {movie.actors?.map(a => <span key={a.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{a.fullName}</span>)}
                 </div>
             </div>
         </div>
     );
-
 
     return (
         <div className="bg-white min-h-screen pb-20 scrollbar-hide">
@@ -152,7 +176,7 @@ const MovieDetail = () => {
 
                                 <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
                                     <div className="flex items-center gap-1.5"><Clock size={16} color='orange' /> <span>{movie.duration} Phút</span></div>
-                                    <div className="flex items-center gap-1.5"><Calendar size={16} color='orange' /> <span>{movie.premiereDate?.toString()}</span></div>
+                                    <div className="flex items-center gap-1.5"><Calendar size={16} color='orange' /> <span>{formatDDMMYYYY(movie.premiereDate?.toString())}</span></div>
                                 </div>
 
                                 <div className="flex items-center gap-2 mb-4">
@@ -194,22 +218,22 @@ const MovieDetail = () => {
                             </div>
 
                             {/* Thanh chọn ngày & Filter */}
-                            <div className="border-b-2 border-alpha-blue mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                            <div className="border-b-2 pb-2 border-alpha-blue mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                                 {/* Scroll ngang cho Tabs ngày */}
-                                <div className="flex overflow-x-auto scrollbar-hide w-full md:w-auto">
+                                <div className="flex gap-2 scrollbar-hide w-full md:w-auto">
                                     {dateTabs.map((tab) => {
                                         const isActive = selectedDate === tab.dateString;
                                         return (
                                             <button
                                                 key={tab.dateString}
                                                 onClick={() => setSelectedDate(tab.dateString)}
-                                                className={`flex flex-col items-center justify-center min-w-[90px] px-4 py-3 cursor-pointer transition-colors ${isActive
-                                                    ? 'bg-alpha-blue text-white rounded-t-md'
+                                                className={`flex flex-col items-center rounded-md justify-center w-24 py-3 cursor-pointer transition-colors ${isActive
+                                                    ? 'bg-alpha-blue text-white'
                                                     : 'bg-white text-slate-600 hover:text-alpha-blue'
                                                     }`}
                                             >
                                                 <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dayName}</span>
-                                                <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{tab.dateNum}</span>
+                                                <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dateNum}</span>
                                             </button>
                                         );
                                     })}
@@ -217,9 +241,15 @@ const MovieDetail = () => {
 
                                 {/* Dropdown bộ lọc (Mock UI) */}
                                 <div className="flex gap-4 pb-2 w-full md:w-auto">
-                                    <select className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-alpha-blue w-full md:w-auto">
+                                    <select
+                                        className="border border-slate-300 rounded-xs px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-alpha-blue w-full md:w-auto"
+                                        value={selectedCinema}
+                                        onChange={(e) => setSelectedCinema(e.target.value)}
+                                    >
                                         <option>Tất cả rạp</option>
-                                        <option>Galaxy Tân Bình</option>
+                                        {cinemaOptions?.map(cinema => (
+                                            <option key={cinema.id} value={cinema.label}>{cinema.label}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -233,15 +263,15 @@ const MovieDetail = () => {
                                     </div>
                                 )}
 
-                                {!showtimes || showtimes.length === 0 ? (
+                                {filteredShowtimes.length === 0 ? (
                                     <div className="text-center py-10 text-slate-500 italic">
                                         Không có lịch chiếu nào vào ngày này.
                                     </div>
                                 ) : (
-                                    showtimes.map((cinema) => (
+                                    filteredShowtimes.map((cinema) => (
                                         <div key={cinema.cinemaId} className="border-b border-slate-100 pb-6 last:border-0">
                                             {/* Tên rạp */}
-                                            <h3 className="text-slate-800 font-bold text-lg mb-4">
+                                            <h3 className="text-slate-800 font-medium mb-4">
                                                 {cinema.cinemaName}
                                             </h3>
 
@@ -249,15 +279,15 @@ const MovieDetail = () => {
                                             <div className="space-y-4">
                                                 {cinema.formats.map((format, idx) => (
                                                     <div key={idx} className="flex flex-col sm:flex-row md:items-center lg:items-center sm:items-start gap-2 sm:gap-6">
-                                                        <span className="text-sm font-bold text-slate-700 w-32 shrink-0">
+                                                        <span className="text-sm text-slate-700 w-32 shrink-0">
                                                             {format.projection} {ALL_TRANSLATION.find(t => t.value === format.translation)?.label || format.translation}
                                                         </span>
                                                         <div className="flex flex-wrap gap-3">
-                                                            {format.showtimes.map((st) => (
+                                                            {format.showTimes.map((st) => (
                                                                 <button
                                                                     key={st.id}
-                                                                    className="border border-slate-200 rounded-md px-5 py-2.5 text-sm font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all bg-white shadow-sm hover:shadow-md active:scale-95"
-                                                                    onClick={() => alert(`Chuyển đến trang chọn ghế suất chiếu: ${st.id}`)}
+                                                                    className="border hover:cursor-pointer border-slate-200 rounded-md px-5 py-2.5 text-sm text-slate-700 hover:bg-alpha-blue hover:text-white transition-all bg-white active:scale-95"
+                                                                    onClick={() => navigate(`/booking/${st.id}?movieId=${id}`)}
                                                                 >
                                                                     {formatHHmm(st.time)}
                                                                 </button>

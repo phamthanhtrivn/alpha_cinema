@@ -16,8 +16,6 @@ const Home: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  console.log(movies);
-
   return (
     <div className="bg-white">
       {/* Hero Section */}
