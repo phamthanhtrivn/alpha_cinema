@@ -1,4 +1,4 @@
-package com.movieticket.product.dto.request;
+package com.movieticket.product.dto.admin.request;
 
 import com.movieticket.product.enums.TranslationType;
 import jakarta.validation.constraints.Future;

@@ -1,8 +1,10 @@
 package com.movieticket.product.util.mapper;
 
-import com.movieticket.product.dto.request.ArtistCreateDTO;
-import com.movieticket.product.dto.request.MovieCreateDTO;
-import com.movieticket.product.dto.response.MovieSummaryDTO;
+import com.movieticket.product.dto.admin.request.MovieCreateDTO;
+import com.movieticket.product.dto.admin.response.MovieSummaryDTO;
+import com.movieticket.product.dto.client.ArtistSummaryDTO;
+import com.movieticket.product.dto.client.MovieDetailPublicDTO;
+import com.movieticket.product.dto.client.MoviePublicDTO;
 import com.movieticket.product.entity.Artist;
 import com.movieticket.product.entity.Movie;
 import org.mapstruct.*;
@@ -18,6 +20,14 @@ public interface MovieMapper {
     @Mapping(source = "ageType.name", target = "ageType")
     @Mapping(source = "genre", target = "genre")
     MovieSummaryDTO toResponseAdmin(Movie entity);
+
+    @Mapping(source = "ageType.name", target = "ageType")
+    MoviePublicDTO toResponsePublic(Movie entity);
+
+    @Mapping(source = "ageType.name", target = "ageType")
+    MovieDetailPublicDTO toMovieDetailPublic(Movie entity);
+
+    ArtistSummaryDTO toArtistSummary(Artist artist);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "ageType", ignore = true)

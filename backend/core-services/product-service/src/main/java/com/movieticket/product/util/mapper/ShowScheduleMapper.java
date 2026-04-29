@@ -1,6 +1,6 @@
 package com.movieticket.product.util.mapper;
 
-import com.movieticket.product.dto.response.ShowScheduleResDTO;
+import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.entity.ShowSchedule;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

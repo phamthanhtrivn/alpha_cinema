@@ -1,7 +1,8 @@
-package com.movieticket.product.dto.request;
+package com.movieticket.product.dto.admin.request;
 
 import com.movieticket.product.enums.ArtistType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,6 @@ public class ArtistCreateDTO {
     @NotBlank(message = "Quốc gia không được để trống")
     private String nationality;
 
-    @NotBlank(message = "Hãy chọn vai trò chính của nghệ sĩ")
+    @NotNull(message = "Loại nghệ sĩ không được để trống")
     private ArtistType type;
 }

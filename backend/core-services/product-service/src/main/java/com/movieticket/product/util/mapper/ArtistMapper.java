@@ -1,7 +1,7 @@
 package com.movieticket.product.util.mapper;
 
-import com.movieticket.product.dto.request.ArtistCreateDTO;
-import com.movieticket.product.dto.response.ArtistResDTO;
+import com.movieticket.product.dto.admin.request.ArtistCreateDTO;
+import com.movieticket.product.dto.admin.response.ArtistResDTO;
 import com.movieticket.product.entity.Artist;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

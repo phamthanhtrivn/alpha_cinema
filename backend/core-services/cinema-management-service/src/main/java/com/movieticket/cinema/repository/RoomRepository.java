@@ -1,5 +1,6 @@
 package com.movieticket.cinema.repository;
 
+import com.movieticket.cinema.dto.RoomCinemaNameProjection;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.entity.ProjectionType;
 import com.movieticket.cinema.entity.Room;
@@ -23,12 +24,12 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     );
 
     @Query("""
-        SELECT r FROM Room r
-        WHERE (:cinemaId IS NULL OR r.cinema.id = :cinemaId)
-        AND (:roomNumber IS NULL OR r.roomNumber = :roomNumber)
-        AND (:projectionType IS NULL OR r.projectionType = :projectionType)
-        AND (:status IS NULL OR r.status = :status)
-    """)
+                SELECT r FROM Room r
+                WHERE (:cinemaId IS NULL OR r.cinema.id = :cinemaId)
+                AND (:roomNumber IS NULL OR r.roomNumber = :roomNumber)
+                AND (:projectionType IS NULL OR r.projectionType = :projectionType)
+                AND (:status IS NULL OR r.status = :status)
+            """)
     Page<Room> filterCinemas(
             @Param("cinemaId") String cinemaId,
             @Param("roomNumber") Integer roomNumber,
@@ -38,4 +39,9 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     );
 
     Room findByCinema_IdAndRoomNumber(String cinemaId, Integer roomNumber);
+
+    @Query("SELECT r.roomNumber as roomNumber, r.cinema.name as cinemaName " +
+            "FROM Room r " +
+            "WHERE r.id = :roomId")
+    RoomCinemaNameProjection getRoomAndCinemaName(@Param("roomId") String roomId);
 }

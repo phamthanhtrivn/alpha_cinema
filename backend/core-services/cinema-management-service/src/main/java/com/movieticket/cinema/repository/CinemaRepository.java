@@ -14,6 +14,7 @@ import java.util.List;
 @Repository
 public interface CinemaRepository extends JpaRepository<Cinema, String> {
     List<CinemaSelectionProjection> findAllProjectedBy();
+    List<CinemaSelectionProjection> findAllProjectedByIdIn(List<String> ids);
 
     @Query("""
         SELECT c FROM Cinema c

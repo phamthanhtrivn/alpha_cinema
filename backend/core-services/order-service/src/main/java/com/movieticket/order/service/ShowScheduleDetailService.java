@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -99,5 +101,14 @@ public class ShowScheduleDetailService {
 
     private String buildSeatLockKey(String showScheduleId, String seatId) {
         return "seat:lock:" + showScheduleId + ":" + seatId;
+    }
+
+    public Map<String, String> getBookedSeatMap(String showScheduleId) {
+        List<Object[]> results = showScheduleDetailRepository.findBookedSeatsInternal(showScheduleId);
+
+        return results.stream().collect(Collectors.toMap(
+                row -> (String) row[0],
+                row -> row[1].toString()
+        ));
     }
 }

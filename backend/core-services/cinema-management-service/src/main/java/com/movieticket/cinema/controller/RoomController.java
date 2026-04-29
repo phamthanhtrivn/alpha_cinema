@@ -88,4 +88,11 @@ public class RoomController {
             return new ApiResponse<>(false, e.getMessage());
         }
     }
+
+    @GetMapping("/options")
+    public ResponseEntity<ApiResponse<List<SelectionDTO>>> getRoomOptions(@RequestParam String cinemaId, @RequestParam(required = false) List<ProjectionType> projections) {
+        System.out.println(projections);
+        List<SelectionDTO> options = roomService.getRoomOptions(cinemaId, projections);
+        return ResponseEntity.ok(new ApiResponse<>(true, options));
+    }
 }

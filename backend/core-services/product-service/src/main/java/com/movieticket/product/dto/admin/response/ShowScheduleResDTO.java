@@ -1,4 +1,4 @@
-package com.movieticket.product.dto.response;
+package com.movieticket.product.dto.admin.response;
 
 import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.TranslationType;

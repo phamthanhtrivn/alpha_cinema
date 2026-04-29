@@ -1,6 +1,7 @@
 package com.movieticket.cinema.service;
 
 import com.movieticket.cinema.dto.SeatRequest;
+import com.movieticket.cinema.dto.SeatResponseToProduct;
 import com.movieticket.cinema.dto.SeatLookupDto;
 import com.movieticket.cinema.entity.Room;
 import com.movieticket.cinema.entity.Seat;
@@ -103,6 +104,20 @@ public class SeatService {
                     return seat;
                 }).toList();
         return seatRepository.saveAll(seatsToSave);
+    }
+    //Hà Thanh Tuấn
+    public List<SeatResponseToProduct> getSeatsByRoom(String roomId) {
+        List<Object[]> results = seatRepository.findAllPhysicalSeatsByRoom(roomId);
+
+        return results.stream().map(row -> SeatResponseToProduct.builder()
+                        .seatId((String) row[0])
+                        .rowName((String) row[1])
+                        .columnName((String) row[2])
+                        .seatTypeId((String) row[3])
+                        .seatType((String) row[4])
+                        .isUsable((Boolean) row[5])
+                        .build())
+                .toList();
     }
 
 }

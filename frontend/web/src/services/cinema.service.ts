@@ -7,7 +7,7 @@ export const cinemaService = {
     return response.data;
   },
   getCinemaOptions: async () => {
-    const response = await apiClient.get(`/cinemas/cinema-option`);
+    const response = await apiClient.get(`/cinemas/public/cinema-option`);
     return response.data;
   },
   getRoomOptions: async (cinemaId: string, projections?: string[]) => {

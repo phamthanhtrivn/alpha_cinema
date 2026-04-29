@@ -1,5 +1,8 @@
 package com.movieticket.cinema.service;
 
+
+import com.movieticket.cinema.dto.CinemaRoomInfoDTO;
+import com.movieticket.cinema.dto.RoomCinemaNameProjection;
 import com.movieticket.cinema.dto.RoomRequest;
 
 import com.movieticket.cinema.dto.SelectionDTO;
@@ -118,5 +121,18 @@ public class RoomService {
 
     public Room findById(String id) {
         return roomRepository.findById(id).orElse(null);
+    }
+
+    public CinemaRoomInfoDTO getCinemaAndRoomName(String roomId) {
+        RoomCinemaNameProjection projection = roomRepository.getRoomAndCinemaName(roomId);
+
+        if (projection == null) {
+            throw new RuntimeException("Không tìm thấy thông tin phòng với ID: " + roomId);
+        }
+
+        return CinemaRoomInfoDTO.builder()
+                .cinemaName(projection.getCinemaName())
+                .roomNumber(projection.getRoomNumber())
+                .build();
     }
 }

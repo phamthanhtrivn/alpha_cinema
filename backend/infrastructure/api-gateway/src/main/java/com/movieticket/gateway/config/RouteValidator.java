@@ -17,6 +17,9 @@ public class RouteValidator {
             "/api/users/forgot-password/otp",
             "/api/users/forgot-password/reset-password",
             "/api/users/google-login",
+            "api/movies/public",
+            "api/cinemas/public",
+            "api/show-schedules/public",
             "/api/payments/vn-pay-callback"
     );
     

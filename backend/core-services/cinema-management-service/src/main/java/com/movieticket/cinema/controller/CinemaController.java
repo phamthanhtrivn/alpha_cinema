@@ -52,7 +52,7 @@ public class CinemaController {
     }
 
     //Hà Tuấn viết thêms
-    @GetMapping("/cinema-option")
+    @GetMapping("/public/cinema-option")
     public ResponseEntity<ApiResponse<List<SelectionDTO>>> getForSelection() {
         List<SelectionDTO> cinemas = cinemaService.getCinemasForSelection();
         return ResponseEntity.ok(new ApiResponse<>(true, cinemas));
