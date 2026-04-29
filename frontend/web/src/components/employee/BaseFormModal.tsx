@@ -13,10 +13,143 @@ import {
 import { Loader2 } from "lucide-react";
 import { formatDateTimeLocal } from "@/utils/formatTime";
 
+const MultiSelectField = ({ options, values, onChange, placeholder }: any) => {
+  const unselectedOptions = options.filter((opt: any) => !values.includes(opt.value));
+
+  return (
+    <div className={`relative min-h-12 w-full pl-3 py-2.5 rounded-2xl border border-slate-100 bg-white/50 flex flex-wrap items-center gap-2 focus-within:ring-4 focus-within:ring-sky-500/10 focus-within:border-sky-500 transition-all font-medium shadow-sm ${values.length === 0 ? 'pr-3' : 'pr-10'}`}>
+      {/* Selected Tags */}
+      {values.map((val: any) => {
+        const opt = options.find((o: any) => o.value === val);
+        return (
+          <span
+            key={val}
+            className="px-2.5 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-700 flex items-center gap-1 shadow-sm"
+          >
+            {opt?.label || val}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onChange(values.filter((v: any) => v !== val));
+              }}
+              className="text-sky-500 hover:text-red-500 ml-1 font-bold cursor-pointer"
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+
+      {/* Select Dropdown */}
+      {unselectedOptions.length > 0 && (
+        <select
+          className={`bg-transparent text-slate-700 outline-none cursor-pointer text-sm ${values.length === 0 ? 'w-full px-0' : 'absolute right-2 top-[14px] w-6'}`}
+          onChange={(e) => {
+            if (!e.target.value) return;
+            if (!values.includes(e.target.value)) {
+              onChange([...values, e.target.value]);
+            }
+            e.target.value = ""; // reset after selection
+          }}
+          defaultValue=""
+        >
+          <option value="" disabled className="text-slate-400">
+            {values.length === 0 ? (placeholder || "Chọn mục...") : ""}
+          </option>
+          {unselectedOptions.map((opt: any) => (
+            <option
+              key={opt.value}
+              value={opt.value}
+              className="text-slate-700"
+            >
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+};
+
+const AutocompleteField = ({ value, onChange, placeholder, fetchOptions, initialLabel }: any) => {
+  const [query, setQuery] = React.useState("");
+  const [options, setOptions] = React.useState<any[]>([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedLabel, setSelectedLabel] = React.useState(initialLabel || "");
+
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query) {
+        const res = await fetchOptions(query);
+        setOptions(res || []);
+      } else {
+        setOptions([]);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query, fetchOptions]);
+
+  // Sync selectedLabel when initialLabel changes (edit mode)
+  React.useEffect(() => {
+    if (initialLabel) {
+      setSelectedLabel(initialLabel);
+    }
+  }, [initialLabel]);
+
+  // if value is reset
+  React.useEffect(() => {
+    if (!value) {
+      setSelectedLabel("");
+      setQuery("");
+    }
+  }, [value]);
+
+  return (
+    <div className="relative">
+      <Input
+        placeholder={placeholder}
+        value={isOpen ? query : selectedLabel || query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setIsOpen(true);
+          if (!e.target.value) {
+            onChange("");
+            setSelectedLabel("");
+          }
+        }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+      />
+      {isOpen && options.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-100 rounded-xl shadow-lg z-50 p-1 max-h-48 overflow-y-auto">
+          {options.map((opt: any) => (
+            <div
+              key={opt.value}
+              className="px-3 py-2 hover:bg-sky-50 cursor-pointer text-xs font-bold text-slate-600 rounded-lg transition-colors"
+              onClick={() => {
+                onChange(opt.value);
+                setSelectedLabel(opt.label);
+                setQuery("");
+                setIsOpen(false);
+              }}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export type FieldType =
   | "text"
   | "number"
   | "select"
+  | "multi-select"
+  | "autocomplete"
   | "textarea"
   | "file"
   | "date"
@@ -30,6 +163,8 @@ export interface FieldConfig {
   type: FieldType;
   placeholder?: string;
   options?: string[] | { label: string; value: any }[];
+  fetchOptions?: (query: string) => Promise<{ label: string; value: any }[]>;
+  initialLabel?: string;
   preview?: boolean;
   disabled?: boolean;
   hidden?: boolean;
@@ -90,9 +225,10 @@ const BaseFormModal: React.FC<Props> = ({
         return (
           <Input
             type="datetime-local"
-            value={formatDateTimeLocal(values[field.name])}
-            disabled
-            className="h-12 rounded-2xl border-slate-100 bg-white/50"
+            value={values[field.name] ? formatDateTimeLocal(values[field.name]) : ""}
+            disabled={field.disabled}
+            onChange={(e) => onChange(field.name, e.target.value)}
+            className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
           />
         );
 
@@ -116,6 +252,35 @@ const BaseFormModal: React.FC<Props> = ({
           />
         );
       }
+
+      // MULTI-SELECT
+      case "multi-select": {
+        const normalizedOptions = (field.options || []).map((opt: any) =>
+          typeof opt === "string" ? { label: opt, value: opt } : opt,
+        );
+        const currentValues: any[] = Array.isArray(values[field.name]) ? values[field.name] : [];
+
+        return (
+          <MultiSelectField
+            options={normalizedOptions}
+            values={currentValues}
+            onChange={(newValues: any) => onChange(field.name, newValues)}
+            placeholder={field.placeholder}
+          />
+        );
+      }
+
+      // AUTOCOMPLETE
+      case "autocomplete":
+        return (
+          <AutocompleteField
+            value={values[field.name]}
+            onChange={(val: any) => onChange(field.name, val)}
+            placeholder={field.placeholder}
+            fetchOptions={field.fetchOptions}
+            initialLabel={field.initialLabel}
+          />
+        );
 
       // TEXTAREA
       case "textarea":

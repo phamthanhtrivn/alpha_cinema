@@ -7,7 +7,6 @@ import com.movieticket.ticket.dto.request.SearchTicketPriceDto;
 import com.movieticket.ticket.dto.request.UpdateTicketPriceDto;
 import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
-import com.movieticket.ticket.service.HolidayService;
 import com.movieticket.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TicketController {
     private final TicketService ticketService;
-    private final HolidayService holidayService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<TicketPrice>>> getAllTicketPrices(

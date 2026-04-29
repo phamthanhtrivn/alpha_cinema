@@ -19,7 +19,7 @@ import BaseFormModal, {
   type FieldConfig,
 } from "@/components/employee/BaseFormModal";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { cinameService } from "@/services/cinema.service";
+import { cinemaService } from "../../../services/cinema.service";
 
 const StaffManagement: React.FC = () => {
   const pageSize = 5;
@@ -116,7 +116,7 @@ const StaffManagement: React.FC = () => {
 
   const handleFetchCinemas = async () => {
     try {
-      const res = await cinameService.getAllCinemas();
+      const res = await cinemaService.getAllCinemas();
       if (res.success) {
         setCinemas(res.data);
       } else {

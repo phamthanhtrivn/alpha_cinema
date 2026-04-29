@@ -68,9 +68,18 @@ public class AuthService {
         if(!roleRequest.equals(roleCheck)){
             throw new BusinessException("Sai email hoặc mật khẩu!");
         }
+        String cinemaId = "";
+        if(role.equals("ADMIN")){
+            cinemaId = "ALL";
+        }
+        else if(role.equals("CUSTOMER")){
+            cinemaId = "";
+        }
+        else cinemaId = ((Employee) user).getCinemaId();
 
 
-        return new UserResponse(user.getId(),user.getEmail(),user.getFullName(), role);
+
+        return new UserResponse(user.getId(),user.getEmail(),user.getFullName(), role, cinemaId);
     };
 
     public boolean forgetPassword(ForgotPasswordRequest request){

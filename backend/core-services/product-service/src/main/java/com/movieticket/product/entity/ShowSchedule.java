@@ -32,7 +32,7 @@ public class ShowSchedule {
   private LocalDateTime startTime;
   private LocalDateTime endTime;
   private int availableSeat;
-  private boolean status;
+  private boolean status = true;
 
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
