@@ -1,10 +1,7 @@
-package com.movieticket.product.dto;
+package com.movieticket.product.dto.request;
 
 import com.movieticket.product.enums.ProductType;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +11,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateProductDto {
+public class CreateProductDto {
     @NotBlank(message = "Tên sản phẩm không được để trống")
     private String name;
 
@@ -24,9 +21,7 @@ public class UpdateProductDto {
     private Double unitPrice;
 
     private String description;
-
+    
     @NotNull(message = "Loại sản phẩm là bắt buộc")
     private ProductType type;
-    
-    private boolean status;
 }

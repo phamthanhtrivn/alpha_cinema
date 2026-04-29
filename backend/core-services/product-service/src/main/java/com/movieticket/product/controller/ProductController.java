@@ -1,9 +1,9 @@
 package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
-import com.movieticket.product.dto.CreateProductDto;
-import com.movieticket.product.dto.SearchProductDto;
-import com.movieticket.product.dto.UpdateProductDto;
+import com.movieticket.product.dto.request.CreateProductDto;
+import com.movieticket.product.dto.request.SearchProductDto;
+import com.movieticket.product.dto.request.UpdateProductDto;
 import com.movieticket.product.entity.Product;
 import com.movieticket.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -75,5 +75,4 @@ public class ProductController {
         ApiResponse<Product> response = ApiResponse.success(updatedProduct, "Product updated successfully");
         return ResponseEntity.ok(response);
     }
-
 }

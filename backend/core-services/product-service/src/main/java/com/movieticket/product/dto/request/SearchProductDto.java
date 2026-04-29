@@ -1,4 +1,4 @@
-package com.movieticket.product.dto;
+package com.movieticket.product.dto.request;
 
 import com.movieticket.product.enums.ProductType;
 import lombok.AllArgsConstructor;

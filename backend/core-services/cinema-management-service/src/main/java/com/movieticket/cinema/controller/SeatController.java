@@ -27,20 +27,20 @@ public class SeatController {
         }
     }
 
+    @PostMapping("/createAndUpdate")
+    public ApiResponse<List<Seat>> createSeat(@Validated @RequestBody SeatRequest seatRequest){
+        try{
+            return new ApiResponse<>(true, seatService.createAndEditSeats(seatRequest));
+        } catch (ExecutionException e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
+
     @PostMapping("/batch")
     public ApiResponse<List<SeatLookupDto>> getSeatsByIds(@RequestBody List<String> ids){
         try {
             return new ApiResponse<>(true, seatService.getSeatsByIds(ids));
         } catch (Exception e) {
-            return new ApiResponse<>(false, e.getMessage());
-        }
-    }
-
-    @PostMapping("/create")
-    public ApiResponse<List<Seat>> createSeat(@Validated @RequestBody SeatRequest seatRequest){
-        try{
-            return new ApiResponse<>(true, seatService.createSeats(seatRequest));
-        } catch (ExecutionException e) {
             return new ApiResponse<>(false, e.getMessage());
         }
     }

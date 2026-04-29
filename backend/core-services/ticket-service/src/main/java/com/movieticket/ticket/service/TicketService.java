@@ -7,8 +7,6 @@ import com.movieticket.ticket.dto.request.UpdateTicketPriceDto;
 import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
 import com.movieticket.ticket.enums.DayType;
-import com.movieticket.ticket.event.model.TicketPriceEvent;
-import com.movieticket.ticket.event.producer.TicketEventProducer;
 import com.movieticket.ticket.exception.BusinessException;
 import com.movieticket.ticket.repository.TicketRepository;
 import com.movieticket.ticket.util.DayTypeResolver;
@@ -30,7 +28,6 @@ import java.util.stream.Collectors;
 public class TicketService {
     private final TicketRepository ticketRepository;
     private final DayTypeResolver dayTypeResolver;
-    private final TicketEventProducer producer;
 
     public Page<TicketPrice> getAllTicketPrices(SearchTicketPriceDto searchTicketPriceDto, Pageable pageable) {
         return ticketRepository.getAllPrices(
@@ -99,8 +96,6 @@ public class TicketService {
 
         TicketPrice savedTicketPrice = ticketRepository.save(ticketPrice);
 
-        producer.send(TicketUtil.toTicketPriceEventDto(savedTicketPrice));
-
         return savedTicketPrice;
     }
 
@@ -129,11 +124,7 @@ public class TicketService {
         existingPrice.setPrice(updateDto.getPrice());
         existingPrice.setStatus(updateDto.isStatus());
 
-        TicketPrice updatedPrice = ticketRepository.save(existingPrice);
-
-        producer.send(TicketUtil.toTicketPriceEventDto(updatedPrice));
-
-        return updatedPrice;
+        return ticketRepository.save(existingPrice);
     }
 
     public TicketResponseDto resolveTicketPrice(DetermineTicketPriceDto determineDto) {

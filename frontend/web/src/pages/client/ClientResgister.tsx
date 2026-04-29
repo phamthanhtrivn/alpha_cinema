@@ -5,7 +5,7 @@ import { userService } from "../../services/user.service";
 import type RegisterRequest from "@/types/registerRequest";
 import { toast } from "react-toastify";
 import { Loader2 } from "lucide-react";
-import ButtonGoogle from "@/components/client/ButtonGoogle";
+import ButtonGoogle from "../../components/client/ButtonGoogle";
 
 const ClientRegister: React.FC = () => {
   const [formData, setFormData] = useState<RegisterRequest>({
