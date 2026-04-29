@@ -75,6 +75,13 @@ public class CinemaController {
         }
     }
 
-
-
+    @GetMapping("/{id}")
+    public ApiResponse<Cinema> getCinemaById(@PathVariable String id) {
+        try {
+            Cinema cinema = cinemaService.getCinemaById(id);
+            return new ApiResponse<>(true, cinema);
+        } catch (Exception e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
 }

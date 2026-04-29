@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class CinemaService {
+
     @Autowired
     private CinemaRepository cinemaRepository;
 
@@ -59,11 +60,16 @@ public class CinemaService {
         return null;
     }
 
+    public Cinema getCinemaById(String id) {
+        return cinemaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cinema khong ton tai"));
+    }
+
     public Cinema findById(String id) {
         return cinemaRepository.findById(id).orElse(null);
     }
 
-        public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page, int size){
+    public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         return cinemaRepository.filterCinemas(

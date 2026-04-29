@@ -20,6 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Movie {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;

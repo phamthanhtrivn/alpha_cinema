@@ -18,6 +18,13 @@ spring:
         format_sql: true
         # Dùng MySQLDialect để Hibernate biết cách sinh SQL phù hợp với MySQL
         dialect: org.hibernate.dialect.MySQLDialect
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+       spring.json.add.type.headers: false
 
 eureka:
   client:
@@ -26,3 +33,17 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+# VNPay (sandbox)
+vnpay:
+  tmnCode: ${VNPAY_TMN_CODE}
+  hashSecret: ${VNPAY_HASH_SECRET}
+  paymentUrl: ${VNPAY_PAYMENT_URL}
+  returnUrl: ${BACKEND_BASE_URL}/api/payments/vn-pay-callback
+  version: ${VNPAY_VERSION}
+  command: ${VNPAY_COMMAND}
+  orderType: ${VNPAY_ORDER_TYPE}
+
+payment:
+  backend-base-url: ${BACKEND_BASE_URL}
+  frontend-base-url: ${FRONTEND_BASE_URL}

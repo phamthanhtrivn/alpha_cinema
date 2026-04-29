@@ -1,9 +1,9 @@
 package com.movieticket.ticket.controller;
 
 import com.movieticket.ticket.common.ApiResponse;
-import com.movieticket.ticket.dto.CreateHolidayDto;
-import com.movieticket.ticket.dto.SearchHolidayDto;
-import com.movieticket.ticket.dto.UpdateHolidayDto;
+import com.movieticket.ticket.dto.request.CreateHolidayDto;
+import com.movieticket.ticket.dto.request.SearchHolidayDto;
+import com.movieticket.ticket.dto.request.UpdateHolidayDto;
 import com.movieticket.ticket.entity.Holiday;
 import com.movieticket.ticket.service.HolidayService;
 import jakarta.validation.Valid;
