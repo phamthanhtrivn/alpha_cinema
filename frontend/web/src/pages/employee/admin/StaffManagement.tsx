@@ -24,6 +24,7 @@ import { cinemaService } from "../../../services/cinema.service";
 const StaffManagement: React.FC = () => {
   const pageSize = 5;
 
+  const [cinemas, setCinemas] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -34,10 +35,10 @@ const StaffManagement: React.FC = () => {
     fullName: "",
     email: "",
     phone: "",
-    gender: "MALE",
+    gender: genderOptions[1].value,
     dateOfBirth: "",
-    role: "MANAGER",
-    cinemaId: "C001",
+    role: employeeRoleOptions[1].value,
+    cinemaId: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -54,8 +55,6 @@ const StaffManagement: React.FC = () => {
     cinemaId: "",
     status: true,
   });
-
-  const [cinemas, setCinemas] = useState<any[]>([]);
 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewData, setViewData] = useState<any>(null);
@@ -156,10 +155,10 @@ const StaffManagement: React.FC = () => {
       fullName: "",
       email: "",
       phone: "",
-      gender: "MALE",
+      gender: genderOptions[1].value,
       dateOfBirth: "",
-      role: "MANAGER",
-      cinemaId: "C001",
+      role: employeeRoleOptions[1].value,
+      cinemaId: "",
     });
     setErrors({});
     setIsAddOpen(false);
