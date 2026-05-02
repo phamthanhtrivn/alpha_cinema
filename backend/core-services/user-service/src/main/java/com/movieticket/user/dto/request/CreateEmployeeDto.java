@@ -33,5 +33,6 @@ public class CreateEmployeeDto {
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")
     private LocalDate dateOfBirth;
     private EmployeeRole role;
+    @NotBlank(message = "Rạp không được để trống")
     private String cinemaId;
 }
