@@ -505,3 +505,4 @@ const CinemaManagement: React.FC = () => {
 };
 
 export default CinemaManagement;
+

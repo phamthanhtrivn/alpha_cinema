@@ -4,7 +4,6 @@ import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
 
 public class TicketUtil {
-
     public static TicketResponseDto toTicketResponseDto(TicketPrice ticketPrice) {
         TicketResponseDto dto = new TicketResponseDto();
         dto.setId(ticketPrice.getId());

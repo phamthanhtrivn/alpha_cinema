@@ -16,6 +16,7 @@ import {
   Gift,
   DollarSign,
   LogOut,
+  Play,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectRole, logout } from "@/store/slices/authSlice";
@@ -174,6 +175,12 @@ const Sidebar: React.FC = () => {
       icon: <Ticket size={18} />,
       label: "Bán vé",
       path: "/employee/staff/sell",
+      roles: ["STAFF"],
+    },
+    {
+      icon: <Play size={18} />,
+      label: "Phim",
+      path: "/employee/staff/movies",
       roles: ["STAFF"],
     },
   ];

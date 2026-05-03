@@ -35,7 +35,7 @@ const RoomManagement: React.FC = () => {
   const [addForm, setAddForm] = useState({
     cinemaId: "",
     roomNumber: "",
-    projectionType: "_2D",
+    projectionType: "2D",
     capacity: "",
     status: true,
   });
@@ -45,7 +45,7 @@ const RoomManagement: React.FC = () => {
   const [updateForm, setUpdateForm] = useState({
     cinemaId: "",
     roomNumber: "",
-    projectionType: "_2D",
+    projectionType: "2D",
     capacity: "",
     status: true,
   });
@@ -71,12 +71,18 @@ const RoomManagement: React.FC = () => {
   });
 
   const buildParams = () => {
+    const params: any = {
+      ...appliedFilters,
+      page: currentPage - 1,
+      size: pageSize,
+    };
+
+    // Map projectionType back to enum names for query params (which don't use @JsonValue)
+    if (params.projectionType === "2D") params.projectionType = "_2D";
+    if (params.projectionType === "3D") params.projectionType = "_3D";
+
     return Object.fromEntries(
-      Object.entries({
-        ...appliedFilters,
-        page: currentPage - 1,
-        size: pageSize,
-      }).filter(([_, v]) => v !== undefined && v !== ""),
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== ""),
     );
   };
 
@@ -134,21 +140,25 @@ const RoomManagement: React.FC = () => {
     try {
       setLoadingSubmit(true);
       setErrors({});
-      const res = await roomService.createRoom(addForm);
-      console.log(res);
+      const payload = {
+        ...addForm,
+        roomNumber: Number(addForm.roomNumber),
+        capacity: Number(addForm.capacity),
+      };
+      const res = await roomService.createRoom(payload);
       if (res?.success) {
         toast.success("Thêm phòng chiếu thành công");
         handleFetchRooms();
         setAddForm({
           cinemaId: "",
           roomNumber: "",
-          projectionType: "_2D",
+          projectionType: "2D",
           capacity: "",
           status: true,
         });
         setIsAddOpen(false);
       } else {
-
+        console.log("res", res);
         toast.error(res?.message || "Lỗi thêm mới!");
       }
     } catch (err: any) {
@@ -178,10 +188,11 @@ const RoomManagement: React.FC = () => {
 
   const handleEdit = (room: any) => {
     setSelectedRoom(room);
+    const pt = room.projectionType;
     setUpdateForm({
       cinemaId: room.cinema?.id || "",
       roomNumber: room.roomNumber,
-      projectionType: room.projectionType,
+      projectionType: pt || "2D",
       capacity: room.capacity,
       status: room.status,
     });
@@ -200,10 +211,17 @@ const RoomManagement: React.FC = () => {
     try {
       setLoadingSubmit(true);
       setErrors({});
+        
+      const payload = {
+        ...updateForm,
+        roomNumber: Number(updateForm.roomNumber),
+        capacity: Number(updateForm.capacity),
+        status: updateForm.status,
+      };
 
       const res = await roomService.updateRoom(
         selectedRoom.id,
-        updateForm,
+        payload,
       );
 
       if (res?.success) {
@@ -211,6 +229,7 @@ const RoomManagement: React.FC = () => {
         handleFetchRooms();
         setIsUpdateOpen(false);
       } else {
+        console.log(res);
         toast.error(res?.message || "Lỗi cập nhật!");
       }
     } catch (err: any) {
@@ -292,7 +311,7 @@ const RoomManagement: React.FC = () => {
         </label>
         <FilterSelect
           placeholder="Tất cả loại"
-          options={["Tất cả", "_2D", "_3D", "IMAX"]}
+          options={["Tất cả", "2D", "3D", "IMAX"]}
           value={filters.projectionType || "Tất cả"}
           onChange={(value) => {
             setFilters({
@@ -371,8 +390,8 @@ const RoomManagement: React.FC = () => {
       label: "Loại trình chiếu",
       type: "select",
       options: [
-        { label: "2D", value: "_2D" },
-        { label: "3D", value: "_3D" },
+        { label: "2D", value: "2D" },
+        { label: "3D", value: "3D" },
         { label: "IMAX", value: "IMAX" },
       ],
       placeholder: "Chọn loại trình chiếu...",

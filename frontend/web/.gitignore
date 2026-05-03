@@ -23,6 +23,23 @@ dist-ssr
 *.sln
 *.sw?
 
+<<<<<<< HEAD
 .vite/
 chatcontext/
 .env
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+.env
+=======
+.env
+>>>>>>> 8dcf4ad36f4973cbda6589a0926d134dc3149b6a
+=======
+
+.vite/
+
+
+chatcontext/
+.env
+>>>>>>> main
+>>>>>>> TranMinhTri
