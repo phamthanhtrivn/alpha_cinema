@@ -1,8 +1,10 @@
 package com.movieticket.order.service;
 
+import com.movieticket.order.dto.ShowScheduleDetailDTO;
 import com.movieticket.order.dto.request.CreateShowScheduleDetailRequestDto;
 import com.movieticket.order.dto.request.SeatRequestDto;
 import com.movieticket.order.entity.OrderStatus;
+import com.movieticket.order.entity.ShowScheduleDetail;
 import com.movieticket.order.exception.BusinessException;
 import com.movieticket.order.repository.ShowScheduleDetailRepository;
 import lombok.RequiredArgsConstructor;
@@ -110,5 +112,19 @@ public class ShowScheduleDetailService {
                 row -> (String) row[0],
                 row -> row[1].toString()
         ));
+    }
+
+    public List<ShowScheduleDetailDTO> getShowScheduleDetailsByShowScheduleId(String showScheduleId) {
+        List<ShowScheduleDetail> list =  showScheduleDetailRepository.findByShowScheduleId(showScheduleId);
+        return list.stream().map(
+                item -> {
+                    ShowScheduleDetailDTO dto = new ShowScheduleDetailDTO();
+                    dto.setId(item.getId());
+                    dto.setShowScheduleId(item.getShowScheduleId());
+                    dto.setSeatId(item.getSeatId());
+                    dto.setShowSeatType(item.getShowSeatType());
+                    return dto;
+                }
+        ).toList();
     }
 }

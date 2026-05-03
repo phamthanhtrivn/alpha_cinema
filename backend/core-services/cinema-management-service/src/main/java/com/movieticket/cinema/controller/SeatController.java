@@ -2,6 +2,7 @@ package com.movieticket.cinema.controller;
 
 import com.movieticket.cinema.api_response.ApiResponse;
 import com.movieticket.cinema.dto.SeatLookupDto;
+import com.movieticket.cinema.dto.SeatForShowScheduleResponse;
 import com.movieticket.cinema.dto.SeatRequest;
 import com.movieticket.cinema.entity.Seat;
 import com.movieticket.cinema.service.SeatService;
@@ -45,4 +46,18 @@ public class SeatController {
         }
     }
 
+    
+
+    @GetMapping("/showSchedule")
+    public ApiResponse<List<SeatForShowScheduleResponse>> getAllSeatsByShowSchedule(
+            @RequestParam(required = true) String showScheduleId,
+            @RequestParam(required = true) String roomId
+    ){
+        try{
+            return new ApiResponse<>(true, seatService.getAllSeatsByShowSchedule(showScheduleId, roomId));
+        } catch (ExecutionException e) {
+            return new ApiResponse<>(false, e.getMessage());
+        }
+    }
 }
+

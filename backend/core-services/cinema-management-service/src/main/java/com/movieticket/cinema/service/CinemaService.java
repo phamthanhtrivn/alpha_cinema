@@ -1,7 +1,6 @@
 package com.movieticket.cinema.service;
 
 import com.movieticket.cinema.dto.CinemaRequest;
-import com.movieticket.cinema.dto.SeatResponseToProduct;
 import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.repository.CinemaRepository;
@@ -12,21 +11,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class CinemaService {
-
     @Autowired
     private CinemaRepository cinemaRepository;
 
-    public List<Cinema> getAllCinemas() {
+    public List<Cinema> getAllCinemas(String cinemaHeaderId) {
         try {
-            return cinemaRepository.findAll();
+            if (cinemaHeaderId == null)
+                return cinemaRepository.findAll();
+            else
+                return cinemaRepository.findById(cinemaHeaderId).stream().toList();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -36,7 +35,8 @@ public class CinemaService {
     public Cinema createCinema(CinemaRequest request) {
         try {
             String id = GenerateID.generateCinemaId();
-            Cinema cinema = new Cinema(id, request.getName(), request.getAddress(), request.getPhone(), request.isStatus());
+            Cinema cinema = new Cinema(id, request.getName(), request.getAddress(), request.getPhone(),
+                    request.isStatus());
             return cinemaRepository.save(cinema);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -60,16 +60,12 @@ public class CinemaService {
         return null;
     }
 
-    public Cinema getCinemaById(String id) {
-        return cinemaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cinema khong ton tai"));
-    }
-
     public Cinema findById(String id) {
         return cinemaRepository.findById(id).orElse(null);
     }
 
-    public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page, int size) {
+    public Page<Cinema> getAllCinemasAndPage(String name, String address, String phone, Boolean status, int page,
+            int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         return cinemaRepository.filterCinemas(
@@ -77,12 +73,11 @@ public class CinemaService {
                 address != null && !address.isEmpty() ? address : null,
                 phone != null && !phone.isEmpty() ? phone : null,
                 status,
-                pageable
-        );
+                pageable);
     }
 
-    //Hà Thanh Tuấn viêt, hàm này để lấy dữ liệu đổ vào select,
-    //chỉ lấy 2 trường id và tên, cho đơ nặng
+    // Hà Thanh Tuấn viêt, hàm này để lấy dữ liệu đổ vào select,
+    // chỉ lấy 2 trường id và tên, cho đơ nặng
     public List<SelectionDTO> getCinemasForSelection() {
         return cinemaRepository.findAllProjectedBy()
                 .stream()
@@ -91,11 +86,16 @@ public class CinemaService {
     }
 
     public List<SelectionDTO> getCinemaSelectionsByIds(List<String> ids) {
-        if (ids == null || ids.isEmpty()) return Collections.emptyList();
+        if (ids == null || ids.isEmpty())
+            return Collections.emptyList();
 
         return cinemaRepository.findAllProjectedByIdIn(ids).stream()
                 .map(v -> new SelectionDTO(v.getId(), v.getName()))
                 .collect(Collectors.toList());
     }
-}
 
+    public Cinema getCinemaById(String id) {
+        return cinemaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cinema khong ton tai"));
+    }
+}

@@ -7,7 +7,6 @@ import {
 } from "../ui/dialog";
 
 const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose } : any) => {
-  console.log("rawData", rawData);
   const { rowsObj, uniqueSeatTypes } = useMemo(() => {
     if (!rawData || rawData.length === 0) return { rowsObj: {}, uniqueSeatTypes: [] };
 
@@ -35,8 +34,6 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose } : any) => {
     };
   }, [rawData]);
 
-  console.log("rowsObj", rowsObj);
-  console.log("uniqueSeatTypes", uniqueSeatTypes);
 
   // ==========================================
   // 2. CẤP MÀU GHẾ

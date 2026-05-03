@@ -37,9 +37,10 @@ public class PaymentService {
     private String frontendUrl;
 
     @Transactional
-    public InitiatePaymentResponse initiatePayment(String orderId, InitiatePaymentRequest request, HttpServletRequest httpRequest) {
+    public InitiatePaymentResponse initiatePayment(String orderId, InitiatePaymentRequest request,
+            HttpServletRequest httpRequest) {
         Payment payment = paymentRepository.findByOrderId(orderId)
-            .orElseGet(() -> createPaymentFromInitiateRequest(orderId, request));
+                .orElseGet(() -> createPaymentFromInitiateRequest(orderId, request));
 
         if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
             throw new BusinessException("Đơn hàng đã được thanh toán thành công, không thể tạo lại thanh toán");
@@ -62,8 +63,7 @@ public class PaymentService {
                     .paymentUrl(paymentUrl)
                     .message("VNPay payment url generated")
                     .build();
-        }
-        else {
+        } else {
             throw new BusinessException("Phương thức thanh toán không được hỗ trợ");
         }
     }
@@ -89,10 +89,10 @@ public class PaymentService {
         String providerTransactionId = request.getParameter("vnp_TransactionNo");
 
         boolean success = "00".equals(responseCode);
-        processPaymentResult(orderId, PaymentMethod.VNPAY, success, providerTransactionId, "VNPay responseCode=" + responseCode);
+        processPaymentResult(orderId, PaymentMethod.VNPAY, success, providerTransactionId,
+                "VNPay responseCode=" + responseCode);
         redirectToFrontend(response, orderId, success);
     }
-
 
     private String buildVnPayUrl(HttpServletRequest request, Payment payment, String bankCode) {
         return buildVnPayUrl(payment, bankCode, PaymentUtil.getIpAddress(request));
@@ -120,8 +120,7 @@ public class PaymentService {
             PaymentMethod method,
             boolean success,
             String providerTransactionId,
-            String providerResponse
-    ) {
+            String providerResponse) {
         if (orderId == null || orderId.isBlank()) {
             throw new BusinessException("Order id is required in callback");
         }
@@ -172,6 +171,22 @@ public class PaymentService {
             return;
         }
         response.sendRedirect(frontendUrl + "/payment/failed?orderId=" + encodedOrderId);
+    }
+
+    public boolean paymentByCash(String orderId, Double totalPayment) {
+        try {
+            paymentRepository.save(
+                    Payment.builder()
+                            .orderId(orderId)
+                            .amount(totalPayment)
+                            .method(PaymentMethod.CASH)
+                            .status(PaymentStatus.SUCCESS)
+                            .build());
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error processing payment: " + e.getMessage());
+            return false;
+        }
     }
 
 }

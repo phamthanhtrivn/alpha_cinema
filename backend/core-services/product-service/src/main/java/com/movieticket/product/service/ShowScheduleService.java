@@ -3,7 +3,7 @@ package com.movieticket.product.service;
 import com.movieticket.product.clients.CinemaClient;
 import com.movieticket.product.clients.OrderClient;
 import com.movieticket.product.dto.CinemaRoomInfoDTO;
-import com.movieticket.product.dto.response.RoomDetailDTO;
+import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
 import com.movieticket.product.dto.SeatResponseToProduct;
 import com.movieticket.product.dto.admin.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleSearchDTO;
@@ -15,6 +15,8 @@ import com.movieticket.product.entity.Movie;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.TranslationType;
+import com.movieticket.product.dto.RoomDetailDTO;
+import com.movieticket.product.dto.ShowScheduleDto;
 import com.movieticket.product.repository.ShowScheduleRepository;
 import com.movieticket.product.specification.ShowScheduleSpecification;
 import com.movieticket.product.util.mapper.ShowScheduleMapper;
@@ -224,5 +226,33 @@ public class ShowScheduleService {
         return rawDates.stream()
                 .map(java.sql.Date::toLocalDate)
                 .toList();
+    }
+
+     public List<MoiveAndShowScheduleReponse> getMovieAndSchedulesForPos(String cinemaId){
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfShift = LocalDate.now().plusDays(1).atTime(3, 0);
+        List<ShowSchedule> allSchedules = showScheduleRepository.findAllSchedulesWithMovieForShift(cinemaId, now, endOfShift);
+
+        Map<Movie,List<ShowSchedule>> movieScheduleMap = allSchedules.stream()
+                .collect(Collectors.groupingBy(ShowSchedule::getMovie));
+
+        return movieScheduleMap.entrySet().stream()
+                .map(entry -> MoiveAndShowScheduleReponse.builder()
+                        .movie(entry.getKey())
+                        // Map List<ShowSchedule> sang List<ShowScheduleDto>
+                        .showSchedules(entry.getValue().stream()
+                                .map(schedule -> ShowScheduleDto.builder()
+                                        .id(schedule.getId())
+                                        .projectionType(schedule.getProjectionType())
+                                        .translationType(schedule.getTranslationType())
+                                        .roomId(schedule.getRoomId())
+                                        .startTime(schedule.getStartTime())
+                                        .endTime(schedule.getEndTime())
+                                        .availableSeat(schedule.getAvailableSeat())
+                                        .status(schedule.isStatus())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
     }
 }

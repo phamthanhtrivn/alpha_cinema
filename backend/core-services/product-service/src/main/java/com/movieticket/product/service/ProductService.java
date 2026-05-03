@@ -1,8 +1,8 @@
 package com.movieticket.product.service;
 
-import com.movieticket.product.dto.request.CreateProductDto;
-import com.movieticket.product.dto.request.SearchProductDto;
-import com.movieticket.product.dto.request.UpdateProductDto;
+import com.movieticket.product.dto.CreateProductDto;
+import com.movieticket.product.dto.admin.request.SearchProductDto;
+import com.movieticket.product.dto.admin.request.UpdateProductDto;
 import com.movieticket.product.entity.Product;
 import com.movieticket.product.exception.BusinessException;
 import com.movieticket.product.repository.ProductRepository;
@@ -25,6 +25,11 @@ import java.util.stream.Collectors;
 public class ProductService {
     private final CloudinaryUtil cloudinaryUtil;
     private final ProductRepository productRepository;
+
+
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
 
     public Page<Product> searchProducts(Pageable pageable, SearchProductDto searchProductDto) {
         return productRepository.filterProducts(

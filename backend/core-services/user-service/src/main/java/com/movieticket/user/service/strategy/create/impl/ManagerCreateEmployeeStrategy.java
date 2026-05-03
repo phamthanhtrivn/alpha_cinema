@@ -32,7 +32,6 @@ public class ManagerCreateEmployeeStrategy implements CreateEmployeeStrategy {
         e.setFullName(dto.getFullName());
         e.setEmail(dto.getEmail());
         e.setPhone(dto.getPhone());
-        e.setPassword(passwordEncoder.encode("1234"));
         e.setGender(dto.getGender());
         e.setDateOfBirth(dto.getDateOfBirth());
         e.setStatus(true);

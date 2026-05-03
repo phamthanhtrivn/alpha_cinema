@@ -14,12 +14,12 @@ public class RoomRequest {
     private String cinemaId;
     @NotNull(message = "roomNumber không được rỗng")
     @Min(value = 1, message = "roomNumber phải >= 1")
-    private int roomNumber;
+    private Integer roomNumber;
     @NotNull(message = "projectionType không được rỗng")
     private ProjectionType projectionType;
     @Min(value = 1, message = "Phải >= 1")
     @NotNull(message = "catatity không được rỗng")
-    private int capacity;
+    private Integer capacity;
     @NotNull(message = "Trạng thái không rỗng")
-    private boolean status;
+    private Boolean status;
 }

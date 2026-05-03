@@ -30,7 +30,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log("LỖI NHẬN ĐƯỢC:", error);
+    console.log("LỖI NHẬN ĐƯỢC:", error.response?.status, error.message);
     const originalRequest = error.config;
 
     if (originalRequest.url?.includes("users/refresh")) {

@@ -42,6 +42,23 @@ public class TicketService {
         );
     }
 
+    public TicketResponseDto resolveTicketPrice(DetermineTicketPriceDto determineDto) {
+        DayType dayType = dayTypeResolver.resolveDayType(determineDto.getShowTime());
+
+        TicketPrice ticketPrice = ticketRepository.findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(
+                determineDto.getSeatTypeId(),
+                determineDto.getProjectionType(),
+                dayType,
+                true
+        );
+
+        if (ticketPrice == null) {
+            throw new BusinessException("No active ticket price found for the given criteria");
+        }
+
+        return TicketUtil.toTicketResponseDto(ticketPrice);
+    }
+
     public TicketPrice getTicketPriceById(String id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy giá vé với id: " + id));
@@ -125,22 +142,5 @@ public class TicketService {
         existingPrice.setStatus(updateDto.isStatus());
 
         return ticketRepository.save(existingPrice);
-    }
-
-    public TicketResponseDto resolveTicketPrice(DetermineTicketPriceDto determineDto) {
-        DayType dayType = dayTypeResolver.resolveDayType(determineDto.getShowTime());
-
-        TicketPrice ticketPrice = ticketRepository.findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(
-                determineDto.getSeatTypeId(),
-                determineDto.getProjectionType(),
-                dayType,
-                true
-        );
-
-        if (ticketPrice == null) {
-            throw new BusinessException("No active ticket price found for the given criteria");
-        }
-
-        return TicketUtil.toTicketResponseDto(ticketPrice);
     }
 }
