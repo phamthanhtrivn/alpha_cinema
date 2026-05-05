@@ -3,7 +3,6 @@ import type { UserRole } from '@/types/user';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-const getStoredToken = () => localStorage.getItem('accessToken');
 
 interface AuthState {
   user: any | null;
@@ -15,10 +14,10 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  accessToken: getStoredToken(),
+  accessToken: null,
   role: "GUEST",
   cinemaId: '',
-  isAuthenticated: true,
+  isAuthenticated: false,
 };
 
 

@@ -1,22 +1,21 @@
 import React from 'react';
 
 interface BookingProgressBarProps {
-    currentStep: number; // 0-indexed: 0: Phim, 1: Ghế, 2: Thức ăn, 3: Thanh toán, 4: Xác nhận
+    currentStep: number; // 0-indexed: 0: Ghế, 1: Sản phẩm / giảm giá, 2: Xác nhận, 3: Thanh toán
 }
 
 const STEPS = [
-    'Chọn phim / Rạp / Suất',
     'Chọn ghế',
-    'Chọn thức ăn',
+    'Chọn sản phẩm / giảm giá',
+    'Xác nhận',
     'Thanh toán',
-    'Xác nhận'
 ];
 
 export const BookingProgressBar: React.FC<BookingProgressBarProps> = ({ currentStep }) => {
     return (
         <div className="bg-slate-50 border-b border-slate-200 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center justify-center py-6 min-w-[600px]">
+                <div className="flex items-center justify-center py-6 min-w-150">
                     <ul className="flex items-center gap-12 text-[13px] font-bold uppercase tracking-wider">
                         {STEPS.map((step, index) => {
                             const isActive = index === currentStep;

@@ -39,8 +39,6 @@ const MovieDetail = () => {
         enabled: !!id,
     });
 
-    console.log(availableDates);
-
     const dateTabs = useMemo(() => {
         if (!availableDates) return [];
         const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];

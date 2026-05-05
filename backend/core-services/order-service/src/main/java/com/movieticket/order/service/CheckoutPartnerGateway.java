@@ -90,56 +90,50 @@ public class CheckoutPartnerGateway {
                         throw new BusinessException("Customer is unavailable for id: " + customerId);
                     }
                     return customer;
-                })
-                .onErrorMap(ex -> new BusinessException("Unable to resolve customer information for id: " + customerId));
+                });
 
-        Mono<ShowScheduleSnapshot> showScheduleMono = webClient.get()
+        Mono<ShowScheduleSnapshot> showMono = webClient.get()
                 .uri(productServiceBaseUrl + "/api/show-schedules/{id}", showScheduleId)
                 .retrieve()
                 .bodyToMono(ShowScheduleLookupResponse.class)
-                .map(response -> response == null ? null : response.getData())
-                .map(showSchedule -> {
-                    if (showSchedule == null) {
-                        throw new BusinessException("Unable to resolve show schedule information for checkout");
+                .map(res -> res == null ? null : res.getData())
+                .map(show -> {
+                    if (show == null) {
+                        throw new BusinessException("Show schedule not found");
                     }
-                    return showSchedule;
-                })
-                .onErrorMap(ex -> new BusinessException("Unable to resolve show schedule information for checkout"));
+                    return show;
+                });
 
-        return Mono.zip(customerMono, showScheduleMono)
-                .flatMap(tuple -> {
-                    CustomerInformation customer = tuple.getT1();
-                    ShowScheduleSnapshot showSchedule = tuple.getT2();
+        Mono<RoomSnapshot> roomMono = showMono.flatMap(show ->
+                webClient.get()
+                        .uri(cinemaServiceBaseUrl + "/api/rooms/{id}", show.getRoomId())
+                        .retrieve()
+                        .bodyToMono(RoomLookupResponse.class)
+                        .map(res -> res == null ? null : res.getData())
+                        .map(room -> {
+                            if (room == null) throw new BusinessException("Room not found");
+                            return room;
+                        })
+        );
 
-                    Mono<RoomSnapshot> roomMono = webClient.get()
-                            .uri(cinemaServiceBaseUrl + "/api/rooms/{id}", showSchedule.getRoomId())
-                            .retrieve()
-                            .bodyToMono(RoomLookupResponse.class)
-                            .map(response -> response == null ? null : response.getData())
-                            .map(room -> {
-                                if (room == null) {
-                                    throw new BusinessException("Unable to resolve room information for checkout");
-                                }
-                                return room;
-                            })
-                            .onErrorMap(ex -> new BusinessException("Unable to resolve room information for checkout"));
+        Mono<CinemaSnapshot> cinemaMono = showMono.flatMap(show ->
+                webClient.get()
+                        .uri(cinemaServiceBaseUrl + "/api/cinemas/{id}", show.getCinemaId())
+                        .retrieve()
+                        .bodyToMono(CinemaLookupResponse.class)
+                        .map(res -> res == null ? null : res.getData())
+                        .map(cinema -> {
+                            if (cinema == null || !cinema.isStatus()) {
+                                throw new BusinessException("Cinema not valid");
+                            }
+                            return cinema;
+                        })
+        );
 
-                    Mono<CinemaSnapshot> cinemaMono = webClient.get()
-                            .uri(cinemaServiceBaseUrl + "/api/cinemas/{id}", showSchedule.getCinemaId())
-                            .retrieve()
-                            .bodyToMono(CinemaLookupResponse.class)
-                            .map(response -> response == null ? null : response.getData())
-                            .map(cinema -> {
-                                if (cinema == null || !cinema.isStatus()) {
-                                    throw new BusinessException("Unable to resolve cinema information for checkout");
-                                }
-                                return cinema;
-                            })
-                            .onErrorMap(ex -> new BusinessException("Unable to resolve cinema information for checkout"));
-
-                    return Mono.zip(Mono.just(customer), Mono.just(showSchedule), roomMono, cinemaMono);
-                })
-                .map(tuple -> new CreateSessionSnapshot(tuple.getT1(), tuple.getT2(), tuple.getT3(), tuple.getT4()))
+        return Mono.zip(customerMono, showMono, roomMono, cinemaMono)
+                .map(t -> new CreateSessionSnapshot(
+                        t.getT1(), t.getT2(), t.getT3(), t.getT4()
+                ))
                 .block();
     }
 
@@ -226,78 +220,6 @@ public class CheckoutPartnerGateway {
             return ticketPriceCacheById;
         } catch (RestClientException ex) {
             throw new BusinessException("Unable to resolve ticket price information for checkout");
-        }
-    }
-
-    public CustomerInformation getCustomerInformation(String customerId) {
-        try {
-            CustomerInformation customer = restTemplate.getForObject(
-                    userServiceBaseUrl + "/api/customers/{id}/info",
-                    CustomerInformation.class,
-                    customerId
-            );
-
-            if (customer == null || !customer.isStatus()) {
-                throw new BusinessException("Customer is unavailable for id: " + customerId);
-            }
-
-            return customer;
-        } catch (RestClientException ex) {
-            throw new BusinessException("Unable to resolve customer information for id: " + customerId);
-        }
-    }
-
-    public ShowScheduleSnapshot getShowSchedule(String showScheduleId) {
-        try {
-            ShowScheduleLookupResponse response = restTemplate.getForObject(
-                    productServiceBaseUrl + "/api/show-schedules/{id}",
-                    ShowScheduleLookupResponse.class,
-                    showScheduleId
-            );
-
-            ShowScheduleSnapshot showSchedule = response == null ? null : response.getData();
-            if (showSchedule == null) {
-                throw new BusinessException("Unable to resolve show schedule information for checkout");
-            }
-            return showSchedule;
-        } catch (RestClientException ex) {
-            throw new BusinessException("Unable to resolve show schedule information for checkout");
-        }
-    }
-
-    public RoomSnapshot getRoom(String roomId) {
-        try {
-            RoomLookupResponse response = restTemplate.getForObject(
-                    cinemaServiceBaseUrl + "/api/rooms/{id}",
-                    RoomLookupResponse.class,
-                    roomId
-            );
-
-            RoomSnapshot room = response == null ? null : response.getData();
-            if (room == null) {
-                throw new BusinessException("Unable to resolve room information for checkout");
-            }
-            return room;
-        } catch (RestClientException ex) {
-            throw new BusinessException("Unable to resolve room information for checkout");
-        }
-    }
-
-    public CinemaSnapshot getCinema(String cinemaId) {
-        try {
-            CinemaLookupResponse response = restTemplate.getForObject(
-                    cinemaServiceBaseUrl + "/api/cinemas/{id}",
-                    CinemaLookupResponse.class,
-                    cinemaId
-            );
-
-            CinemaSnapshot cinema = response == null ? null : response.getData();
-            if (cinema == null || !cinema.isStatus()) {
-                throw new BusinessException("Unable to resolve cinema information for checkout");
-            }
-            return cinema;
-        } catch (RestClientException ex) {
-            throw new BusinessException("Unable to resolve cinema information for checkout");
         }
     }
 
