@@ -72,7 +72,7 @@ public class ShowScheduleDetailService {
             Object lockOwner = redisTemplate.opsForValue().get(key);
 
             if (lockOwner == null) {
-                throw new BusinessException("Thời gian khóa ghế đã hết hạn: " + seat.getSeatId());
+                throw new BusinessException("Thời gian khóa ghế đã hết hạn");
             }
 
             if (!sessionId.equals(lockOwner.toString())) {

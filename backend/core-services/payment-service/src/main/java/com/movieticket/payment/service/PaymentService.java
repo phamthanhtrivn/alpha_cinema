@@ -89,7 +89,7 @@ public class PaymentService {
         String providerTransactionId = request.getParameter("vnp_TransactionNo");
 
         boolean success = "00".equals(responseCode);
-        processPaymentResult(orderId, PaymentMethod.VNPAY, success, providerTransactionId, "VNPay responseCode=" + responseCode);
+        processPaymentResult(orderId, PaymentMethod.VNPAY, responseCode, providerTransactionId, "VNPay responseCode=" + responseCode);
         redirectToFrontend(response, orderId, success);
     }
 
@@ -118,7 +118,7 @@ public class PaymentService {
     private void processPaymentResult(
             String orderId,
             PaymentMethod method,
-            boolean success,
+            String responseCode,
             String providerTransactionId,
             String providerResponse
     ) {
@@ -144,9 +144,13 @@ public class PaymentService {
         payment.setProviderTransactionId(providerTransactionId);
         payment.setProviderResponse(providerResponse);
 
-        if (success) {
+        if (responseCode.equals("00")) {
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setPaidAt(LocalDateTime.now());
+        } else if (responseCode.equals("24")) {
+            payment.setStatus(PaymentStatus.CANCELLED);
+        } else if (responseCode.equals("11")) {
+            payment.setStatus(PaymentStatus.EXPIRED);
         } else {
             payment.setStatus(PaymentStatus.FAILED);
         }

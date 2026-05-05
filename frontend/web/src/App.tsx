@@ -46,6 +46,8 @@ import ClientResgister from "./pages/client/ClientResgister";
 import Profile from "./pages/client/customer/Profile";
 import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
+import { Checkout } from "./pages/client/customer/Checkout";
+import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
 
 // REDIRECT
 import RoleRedirect from "./routes/RoleRedirect";
@@ -64,13 +66,13 @@ function App() {
     const fetchUser = async () => {
       try {
         const response = await userService.getProfile();
-        console.log(response);
         if (response.success) {
           dispatch(
             setCredentials({
               user: response.data,
               accessToken: accessToken,
               role: response.data.role,
+              cinemaId: response.data.cinemaId || "",
             }),
           );
         }
@@ -90,6 +92,8 @@ function App() {
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
             <Route path="/booking/:id" element={<Booking />} />
+            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
+            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
           </Route>
