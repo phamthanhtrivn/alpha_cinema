@@ -2,6 +2,7 @@ export interface SeatResponseToProduct {
     seatId: string;
     rowName: string;
     columnName: string;
+    seatTypeId?: string;
     seatType: string;
     usable: boolean;
     status: string;

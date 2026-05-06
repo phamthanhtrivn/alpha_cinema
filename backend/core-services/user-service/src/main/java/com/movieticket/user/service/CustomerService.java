@@ -34,6 +34,12 @@ public class CustomerService {
         return customers.map(UserUtil::toCustomerResponseDto);
     }
 
+    public CustomerResponseDto getCustomerById(String customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new BusinessException("Customer not found with id: " + customerId));
+        return UserUtil.toCustomerResponseDto(customer);
+    }
+
     public CustomerResponseDto updateCustomerStatus(String customerId, Boolean status) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new BusinessException("Customer not found with id: " + customerId));

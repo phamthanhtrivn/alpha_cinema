@@ -205,7 +205,7 @@ public class CheckoutSessionService {
         return CheckoutConfirmResponse.builder()
                 .orderId(savedOrder.getId())
                 .status(savedOrder.getStatus().name())
-                .message("Đơn đặt hàng đã được tạo thành công. Bước tiếp theo là thanh toán.")
+                .message("Đơn đặt vé đã được tạo thành công. Bước tiếp theo là thanh toán.")
                 .seats(toSeatItems(cache.getSeats()))
                 .products(toProductItems(cache.getItems()))
                 .paymentMethod(paymentSnapshot.getMethod())
@@ -303,7 +303,7 @@ public class CheckoutSessionService {
     private CheckoutSessionCache getSession(String sessionId) {
         Object cached = redisTemplate.opsForValue().get(buildSessionKey(sessionId));
         if (cached == null) {
-            throw new BusinessException("Phiên thanh toán không tồn tại hoặc đã hết hạn");
+            throw new BusinessException("Phiên đặt vé của bạn không tồn tại hoặc đã hết hạn");
         }
 
         CheckoutSessionCache sessionCache;
@@ -315,15 +315,15 @@ public class CheckoutSessionService {
                 sessionCache = objectMapper.convertValue(cached, CheckoutSessionCache.class);
                 convertedFromMap = true;
             } catch (IllegalArgumentException ex) {
-                throw new BusinessException("Dữ liệu phiên thanh toán không hợp lệ");
+                throw new BusinessException("Dữ liệu phiên đặt vé không hợp lệ");
             }
         } else {
-            throw new BusinessException("Dữ liệu phiên thanh toán không hợp lệ");
+            throw new BusinessException("Dữ liệu phiên đặt vé không hợp lệ");
         }
 
         if (sessionCache.getExpiresAt() != null && !sessionCache.getExpiresAt().isAfter(LocalDateTime.now())) {
             deleteCheckoutCache(sessionCache);
-            throw new BusinessException("Phiên thanh toán đã hết hạn");
+            throw new BusinessException("Phiên đặt vé đã hết hạn");
         }
 
         if (convertedFromMap) {
@@ -508,10 +508,7 @@ public class CheckoutSessionService {
         if (request.getPointsToRedeem() != null) {
             return request.getPointsToRedeem();
         }
-        if (request.getPointDiscount() <= 0D) {
-            return 0;
-        }
-        return (int) Math.floor(request.getPointDiscount() / POINT_VALUE_VND);
+        return 0;
     }
 
     private int calculateApplicablePoints(int requestedPoints, int availablePoints, double payableBeforePoints) {

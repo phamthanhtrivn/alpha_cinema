@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3305/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3306/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: root
   jpa:
@@ -43,6 +43,14 @@ vnpay:
   version: ${VNPAY_VERSION}
   command: ${VNPAY_COMMAND}
   orderType: ${VNPAY_ORDER_TYPE}
+
+momo:
+  partner-code: ${MOMO_PARTNER_CODE}
+  access-key: ${MOMO_ACCESS_KEY}
+  secret-key: ${MOMO_SECRET_KEY}
+  end-point: ${MOMO_END_POINT}
+  return-url: ${BACKEND_BASE_URL}/api/payments/momo-pay-callback
+  request-type: ${MOMO_REQUEST_TYPE}
 
 payment:
   backend-base-url: ${BACKEND_BASE_URL}

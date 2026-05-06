@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -17,8 +18,9 @@ import java.time.LocalDateTime;
 public class DetermineTicketPriceDto {
     @NotBlank(message = "Loại ghế không được để trống")
     private String seatTypeId;
-    @NotNull(message = "Loại suất chiếu không được để trống")
+
     private ProjectionType projectionType;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @NotNull(message = "Thời gian chiếu không được để trống")
     private LocalDateTime showTime;
 }

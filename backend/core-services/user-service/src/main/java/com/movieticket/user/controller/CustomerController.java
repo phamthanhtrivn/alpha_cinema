@@ -27,6 +27,18 @@ public class CustomerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CustomerResponseDto>> getCustomerById(@PathVariable String id) {
+        CustomerResponseDto customer = customerService.getCustomerById(id);
+        ApiResponse<CustomerResponseDto> response = ApiResponse.success(customer, "Customer retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/info")
+    public ResponseEntity<CustomerResponseDto> getCustomerInfo(@PathVariable String id) {
+        return ResponseEntity.ok(customerService.getCustomerById(id));
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<CustomerResponseDto>> updateCustomerStatus(
             @PathVariable String id,
