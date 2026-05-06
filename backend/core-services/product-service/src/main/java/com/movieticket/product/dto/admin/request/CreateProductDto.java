@@ -1,5 +1,4 @@
-package com.movieticket.product.dto.request;
-
+package com.movieticket.product.dto.admin.request;
 import com.movieticket.product.enums.ProductType;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

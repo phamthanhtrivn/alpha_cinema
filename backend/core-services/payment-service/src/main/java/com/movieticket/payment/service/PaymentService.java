@@ -49,7 +49,8 @@ public class PaymentService {
     }
 
     @Transactional
-    public InitiatePaymentResponse initiatePayment(String orderId, InitiatePaymentRequest request, HttpServletRequest httpRequest) {
+    public InitiatePaymentResponse initiatePayment(String orderId, InitiatePaymentRequest request,
+            HttpServletRequest httpRequest) {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseGet(() -> createPaymentFromInitiateRequest(orderId, request));
 
@@ -168,4 +169,21 @@ public class PaymentService {
         }
         response.sendRedirect(frontendUrl + "/payment/failed?orderId=" + encodedOrderId);
     }
+
+    public boolean paymentByCash(String orderId, Double totalPayment) {
+        try {
+            paymentRepository.save(
+                    Payment.builder()
+                            .orderId(orderId)
+                            .amount(totalPayment)
+                            .method(PaymentMethod.CASH)
+                            .status(PaymentStatus.SUCCESS)
+                            .build());
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error processing payment: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

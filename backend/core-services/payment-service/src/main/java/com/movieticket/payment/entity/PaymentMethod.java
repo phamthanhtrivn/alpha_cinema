@@ -1,5 +1,6 @@
 package com.movieticket.payment.entity;
 
+
 public enum PaymentMethod {
-    VNPAY, MOMO
+    VNPAY, MOMO, CASH
 }

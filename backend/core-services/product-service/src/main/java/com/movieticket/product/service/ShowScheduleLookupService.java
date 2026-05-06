@@ -1,6 +1,6 @@
 package com.movieticket.product.service;
 
-import com.movieticket.product.dto.response.ShowScheduleLookupDto;
+import com.movieticket.product.dto.admin.response.ShowScheduleLookupDto;
 import com.movieticket.product.entity.Movie;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.repository.ShowScheduleRepository;

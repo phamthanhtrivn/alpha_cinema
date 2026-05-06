@@ -2,6 +2,9 @@ package com.movieticket.order.repository;
 
 import com.movieticket.order.entity.OrderStatus;
 import com.movieticket.order.entity.ShowScheduleDetail;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +34,8 @@ public interface ShowScheduleDetailRepository extends JpaRepository<ShowSchedule
             "WHERE d.showScheduleId = :showScheduleId " +
             "AND d.order.status != 'CANCELLED'")
     List<Object[]> findBookedSeatsInternal(@Param("showScheduleId") String showScheduleId);
+
+    List<ShowScheduleDetail> findByShowScheduleId(String showScheduleId);
+    @Transactional
+    void deleteByOrderId(String orderId);
 }

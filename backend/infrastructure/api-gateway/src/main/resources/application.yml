@@ -53,7 +53,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/orders/**, /api/checkouts/**
+            - Path=/api/orders/**, /api/promotions/**, /api/show-schedule-details/**, /api/checkouts/**
         # Route cho dịch vụ thanh toán
         - id: payment-service
           uri: lb://payment-service
@@ -67,7 +67,6 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     # Thời gian để client cố gắng đăng ký lại với Eureka nếu lần đầu thất bại
     registry-fetch-interval-seconds: 5
-
 logging:
   level:
     # Đặt mức log cho các package liên quan đến Gateway và Netty để dễ dàng debug khi có lỗi

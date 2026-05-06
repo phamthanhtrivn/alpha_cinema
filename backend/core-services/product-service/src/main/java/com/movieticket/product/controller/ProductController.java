@@ -1,9 +1,9 @@
 package com.movieticket.product.controller;
 
 import com.movieticket.product.common.ApiResponse;
-import com.movieticket.product.dto.request.CreateProductDto;
-import com.movieticket.product.dto.request.SearchProductDto;
-import com.movieticket.product.dto.request.UpdateProductDto;
+import com.movieticket.product.dto.CreateProductDto;
+import com.movieticket.product.dto.admin.request.SearchProductDto;
+import com.movieticket.product.dto.admin.request.UpdateProductDto;
 import com.movieticket.product.entity.Product;
 import com.movieticket.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -31,6 +31,13 @@ public class ProductController {
             ) {
         Page<Product> products = productService.searchProducts(PageRequest.of(page, size), searchProductDto);
         ApiResponse<Page<Product>> response = ApiResponse.success(products, "Products retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<Product>>> getAllProductsWithoutPagination() {
+        List<Product> products = productService.getAllProducts();
+        ApiResponse<List<Product>> response = ApiResponse.success(products, "Products retrieved successfully");
         return ResponseEntity.ok(response);
     }
 

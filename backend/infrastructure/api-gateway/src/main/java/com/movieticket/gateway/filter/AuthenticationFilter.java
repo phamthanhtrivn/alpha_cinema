@@ -72,6 +72,7 @@ public class AuthenticationFilter implements GlobalFilter, Order {
 //            }
 
             String userId = jwtUtils.extractUserId(token);
+            String cinemaId = jwtUtils.extractCinemaId(token);
             String clientIp = IpUtils.resolveClientIp(request);
 
             ServerHttpRequest mutatedRequest = request.mutate()
@@ -79,6 +80,7 @@ public class AuthenticationFilter implements GlobalFilter, Order {
                         headers.remove("X-User-Id");
                         headers.remove("X-User-IP");
                         headers.add("X-User-Id", userId);
+                        headers.add("X-Cinema-Id", cinemaId);
                         headers.add("X-User-IP", clientIp);
                     })
                     .build();

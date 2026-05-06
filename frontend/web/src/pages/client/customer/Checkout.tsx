@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
+  ArrowLeft,
   Loader2,
   Minus,
   Plus,
@@ -186,6 +187,33 @@ export const Checkout = () => {
     });
   };
 
+  const buildBookingUrl = () => {
+    const params = new URLSearchParams();
+
+    if (movieId) {
+      params.set("movieId", movieId);
+    }
+
+    const query = params.toString();
+    return query ? `/booking/${id}?${query}` : `/booking/${id}`;
+  };
+
+  const goBackToBooking = async () => {
+    if (sessionId) {
+      try {
+        await checkoutService.cancelSession(sessionId);
+      } catch {
+        toast.error("Không thể hủy phiên thanh toán hiện tại.");
+        return;
+      }
+    }
+
+    navigate(buildBookingUrl(), {
+      replace: true,
+      state: { movieId },
+    });
+  };
+
   const handleContinue = async () => {
     if (!sessionId || !session) return;
 
@@ -234,7 +262,7 @@ export const Checkout = () => {
           </div>
           <p className="text-slate-500">Vui lòng thực hiện lại đơn đặt vé.</p>
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => void goBackToBooking()}
             className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600"
           >
             Quay lại
@@ -254,7 +282,26 @@ export const Checkout = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20 text-slate-900">
-      <BookingProgressBar currentStep={1} />
+      <BookingProgressBar
+        currentStep={1}
+        onStepClick={(step) => {
+          if (step === 0) {
+            void goBackToBooking();
+          }
+        }}
+      />
+
+      <div className="max-w-360 mx-auto px-4 pt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void goBackToBooking()}
+          className="inline-flex items-center gap-2 rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-alpha-blue"
+        >
+          <ArrowLeft size={16} />
+          Quay lại chọn ghế
+        </Button>
+      </div>
 
       <div className="max-w-360 mx-auto px-4 py-8 grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="space-y-6">
@@ -289,7 +336,10 @@ export const Checkout = () => {
                     {session.availableLoyaltyPoints}
                   </div>
                   <p className="text-sm text-slate-500 mt-2">
-                    Mỗi 1 điểm có giá trị tương đương 1.000₫ khi sử dụng để thanh toán. Bạn có thể dùng tối đa {maxRedeemPoints.toLocaleString("vi-VN")} điểm cho đơn hàng này.
+                    Mỗi 1 điểm có giá trị tương đương 1.000₫ khi sử dụng để
+                    thanh toán. Bạn có thể dùng tối đa{" "}
+                    {maxRedeemPoints.toLocaleString("vi-VN")} điểm cho đơn hàng
+                    này.
                   </p>
                 </div>
               </div>
@@ -376,6 +426,7 @@ export const Checkout = () => {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button
+                        className="cursor-pointer"
                         type="button"
                         variant="outline"
                         size="icon"
@@ -388,6 +439,7 @@ export const Checkout = () => {
                         {quantity}
                       </div>
                       <Button
+                        className="cursor-pointer"
                         type="button"
                         variant="outline"
                         size="icon"
@@ -455,7 +507,9 @@ export const Checkout = () => {
                     <span className="font-semibold text-slate-800">
                       {layout?.cinemaName || "Rạp chiếu"}
                     </span>
-                    <span className="text-alpha-blue">- Phòng {layout?.roomName || "Phòng"}</span>
+                    <span className="text-alpha-blue">
+                      - Phòng {layout?.roomName || "Phòng"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock3 size={15} className="text-alpha-orange" />
@@ -571,8 +625,16 @@ export const Checkout = () => {
               </span>
             </div>
 
-            <div className="border-t border-dashed border-slate-200 pt-4 flex justify-between items-center">
-              <span className="text-lg font-bold text-slate-800">Tiếp tục</span>
+            <div className="border-t border-dashed border-slate-200 pt-4 flex justify-between items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => void goBackToBooking()}
+                className="flex items-center gap-2 border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer hover:text-alpha-blue"
+              >
+                <ArrowLeft size={16} />
+                Quay lại
+              </Button>
+
               <Button
                 onClick={handleContinue}
                 disabled={submitting}

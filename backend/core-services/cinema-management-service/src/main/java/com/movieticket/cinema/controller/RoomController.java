@@ -23,11 +23,13 @@ import java.util.List;
 public class RoomController {
     @Autowired
     private RoomService roomService;
-    
     @GetMapping
-    public ApiResponse<List<Room>> getAllRooms(){
+    public ApiResponse<List<Room>> getAllRooms(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId){
+
         try{
-            return new ApiResponse<>(true, roomService.getAllRooms());
+            System.out.println("Received header X-Cinema-Id: " + cinemaHeaderId);
+            String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
+            return new ApiResponse<>(true, roomService.getAllRooms(cinemaIdFromHeader));
         }
         catch (Exception e){
             System.out.println(e);
@@ -41,10 +43,13 @@ public class RoomController {
             @RequestParam(required = false) String projectionType,
             @RequestParam(required = false) Boolean status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "5") int size,
+            @RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId
     ){
         try{
-            return new ApiResponse<>(true, roomService.getAllRoomsAndPage(cinemaId, roomNumber, projectionType, status, page, size));
+            System.out.println("Received header X-Cinema-Id: " + cinemaHeaderId);
+            String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
+            return new ApiResponse<>(true, roomService.getAllRoomsAndPage(cinemaId, roomNumber, projectionType, status, page, size, cinemaIdFromHeader));
         }
         catch (Exception e){
             System.out.println(e);

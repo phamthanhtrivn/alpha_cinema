@@ -1,10 +1,8 @@
 package com.movieticket.cinema.service;
 
-
 import com.movieticket.cinema.dto.CinemaRoomInfoDTO;
 import com.movieticket.cinema.dto.RoomCinemaNameProjection;
 import com.movieticket.cinema.dto.RoomRequest;
-
 import com.movieticket.cinema.dto.SelectionDTO;
 import com.movieticket.cinema.entity.Cinema;
 import com.movieticket.cinema.entity.ProjectionType;
@@ -20,14 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
 
 @Service
 public class RoomService {
-
     @Autowired
     private RoomRepository roomRepository;
     @Autowired
@@ -35,24 +28,28 @@ public class RoomService {
     @Autowired
     private SeatRepository seatRepository;
 
-    public List<Room> getAllRooms() {
+    public List<Room> getAllRooms(String cinemaHeaderId) {
         try {
-            return roomRepository.findAll();
+            if (cinemaHeaderId == null)
+                return roomRepository.findAll();
+            else
+                return roomRepository.findByCinemaId(cinemaHeaderId);
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
 
-    public Page<Room> getAllRoomsAndPage(String cinemaId, Integer roomNumber, String projectionType, Boolean status, int page, int size) {
+    public Page<Room> getAllRoomsAndPage(String cinemaId, Integer roomNumber, String projectionType, Boolean status,
+            int page, int size, String cinemaHeaderId) {
         try {
             return roomRepository.filterCinemas(
+                    cinemaHeaderId,
                     cinemaId,
                     roomNumber,
                     projectionType != null ? ProjectionType.valueOf(projectionType) : null,
                     status,
-                    PageRequest.of(page, size)
-            );
+                    PageRequest.of(page, size));
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -68,8 +65,7 @@ public class RoomService {
             throw new RuntimeException("Room number đã tồn tại trong cinema này");
         }
 
-        String id = GenerateID.generateRoomId();
-        System.out.println(id);
+        String id = GenerateID.generateRoomId(request.getCinemaId());
 
         Room room = new Room(
                 id,
@@ -77,8 +73,7 @@ public class RoomService {
                 request.getRoomNumber(),
                 request.getCapacity(),
                 request.getProjectionType(),
-                request.isStatus()
-        );
+                request.getStatus());
         return roomRepository.save(room);
     }
 
@@ -94,7 +89,7 @@ public class RoomService {
         room.setRoomNumber(request.getRoomNumber());
         room.setCapacity(request.getCapacity());
         room.setProjectionType(request.getProjectionType());
-        room.setStatus(request.isStatus());
+        room.setStatus(request.getStatus());
         return roomRepository.save(room);
     }
 
@@ -103,8 +98,8 @@ public class RoomService {
                 .orElseThrow(() -> new RuntimeException("Room khong tim thay"));
     }
 
-    //Lấy danh sách các phòng theo cinema,
-    //2 trường id, name để người quản lý chọn
+    // Lấy danh sách các phòng theo cinema,
+    // 2 trường id, name để người quản lý chọn
     public List<SelectionDTO> getRoomOptions(String cinemaId, List<ProjectionType> projections) {
         List<Object[]> rawResults = roomRepository.findRawRoomOptions(cinemaId, projections);
 

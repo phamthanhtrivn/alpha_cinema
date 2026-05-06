@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { selectAuth } from "../../../store/slices/authSlice";
+import { selectAuth } from "@/store/slices/authSlice";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
 import type { EmployeeFilterParams, EmployeeRole } from "@/types/employee";
 import { employeeService } from "@/services/employee.service";
@@ -21,7 +21,7 @@ import BaseFormModal, {
   type FieldConfig,
 } from "@/components/employee/BaseFormModal";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { cinemaService } from "../../../services/cinema.service";
+import { cinemaService } from "@/services/cinema.service";
 
 const StaffManagement: React.FC = () => {
   const { user } = useSelector(selectAuth);

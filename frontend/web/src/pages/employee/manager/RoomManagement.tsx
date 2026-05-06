@@ -1,9 +1,596 @@
-import React from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { FilterSelect } from "@/components/employee/FilterSelect";
+import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
+import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
+import ViewModal from "@/components/employee/ViewModal";
+import ManagementTable from "@/components/employee/ManagementTable";
+import StatusBadge from "@/components/employee/StatusBadge";
+import TableActions from "@/components/employee/TableActions";
+import BaseFormModal, {
+  type FieldConfig,
+} from "@/components/employee/BaseFormModal";
+import { roomService } from "@/services/room.service";
+import { cinemaService } from "@/services/cinema.service";
+import type { RoomFilterParams, Room } from "@/types/room";
 
-const RoomManagement = () => {
+const RoomManagement: React.FC = () => {
+  const pageSize = 5;
+
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [cinemas, setCinemas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    cinemaId: "",
+    roomNumber: "",
+    projectionType: "2D",
+    capacity: "",
+    status: true,
+  });
+
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [updateForm, setUpdateForm] = useState({
+    cinemaId: "",
+    roomNumber: "",
+    projectionType: "2D",
+    capacity: "",
+    status: true,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewData, setViewData] = useState<any>(null);
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const [filters, setFilters] = useState<RoomFilterParams>({
+    cinemaId: undefined,
+    roomNumber: undefined,
+    projectionType: undefined,
+    status: undefined,
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<RoomFilterParams>({
+    cinemaId: undefined,
+    roomNumber: undefined,
+    projectionType: undefined,
+    status: undefined,
+  });
+
+  const buildParams = () => {
+    const params: any = {
+      ...appliedFilters,
+      page: currentPage - 1,
+      size: pageSize,
+    };
+
+    // Map projectionType back to enum names for query params (which don't use @JsonValue)
+    if (params.projectionType === "2D") params.projectionType = "_2D";
+    if (params.projectionType === "3D") params.projectionType = "_3D";
+
+    return Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== ""),
+    );
+  };
+
+  const handleFetchCinemas = async () => {
+    try {
+      const res = await cinemaService.getAllCinemas();
+      if (res?.success || res?.data) {
+        setCinemas(res.data || res); // Handle both formats if data wrapped or not
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleFetchRooms = async () => {
+    try {
+      setLoading(true);
+
+      const res = await roomService.getAllRooms(buildParams());
+
+      if (res?.success) {
+        setRooms(res.data.content);
+        setTotalItems(res.data.totalElements);
+      } else {
+        toast.error(res?.message || "Lỗi tải danh sách phòng chiếu");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Lỗi tải danh sách phòng chiếu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    const reset = {
+      cinemaId: undefined,
+      roomNumber: undefined,
+      projectionType: undefined,
+      status: undefined,
+    };
+    setFilters(reset);
+    setAppliedFilters(reset);
+    setCurrentPage(1);
+  };
+
+  const handleAddFormChange = (name: string, value: any) => {
+    setAddForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAddSubmit = async () => {
+    try {
+      setLoadingSubmit(true);
+      setErrors({});
+      const payload = {
+        ...addForm,
+        roomNumber: Number(addForm.roomNumber),
+        capacity: Number(addForm.capacity),
+      };
+      const res = await roomService.createRoom(payload);
+      if (res?.success) {
+        toast.success("Thêm phòng chiếu thành công");
+        handleFetchRooms();
+        setAddForm({
+          cinemaId: "",
+          roomNumber: "",
+          projectionType: "2D",
+          capacity: "",
+          status: true,
+        });
+        setIsAddOpen(false);
+      } else {
+        console.log("res", res);
+        toast.error(res?.message || "Lỗi thêm mới!");
+      }
+    } catch (err: any) {
+      const data = err.response?.data;
+      if (!data) {
+        toast.error("Server không phản hồi!");
+        return;
+      }
+      if (data.errors) {
+        setErrors(data.errors);
+        return;
+      }
+      if (data.message) {
+        toast.error(data.message);
+        return;
+      }
+      toast.error("Lỗi thêm mới!");
+    } finally {
+      setLoadingSubmit(false);
+    }
+  };
+
+  const handleView = (room: any) => {
+    setViewData(room);
+    setIsViewOpen(true);
+  };
+
+  const handleEdit = (room: any) => {
+    setSelectedRoom(room);
+    const pt = room.projectionType;
+    setUpdateForm({
+      cinemaId: room.cinema?.id || "",
+      roomNumber: room.roomNumber,
+      projectionType: pt || "2D",
+      capacity: room.capacity,
+      status: room.status,
+    });
+    setErrors({});
+    setIsUpdateOpen(true);
+  };
+
+  const handleUpdateFormChange = (name: string, value: any) => {
+    setUpdateForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleUpdateSubmit = async () => {
+    try {
+      setLoadingSubmit(true);
+      setErrors({});
+        
+      const payload = {
+        ...updateForm,
+        roomNumber: Number(updateForm.roomNumber),
+        capacity: Number(updateForm.capacity),
+        status: updateForm.status,
+      };
+
+      const res = await roomService.updateRoom(
+        selectedRoom.id,
+        payload,
+      );
+
+      if (res?.success) {
+        toast.success("Cập nhật phòng chiếu thành công");
+        handleFetchRooms();
+        setIsUpdateOpen(false);
+      } else {
+        console.log(res);
+        toast.error(res?.message || "Lỗi cập nhật!");
+      }
+    } catch (err: any) {
+      const data = err.response?.data;
+      if (!data) {
+        toast.error("Server không phản hồi!");
+        return;
+      }
+      if (data.errors) {
+        setErrors(data.errors);
+        return;
+      }
+      if (data.message) {
+        toast.error(data.message);
+        return;
+      }
+      toast.error("Lỗi cập nhật!");
+    } finally {
+      setLoadingSubmit(false);
+    }
+  };
+
+  useEffect(() => {
+    handleFetchCinemas();
+  }, []);
+
+  useEffect(() => {
+    handleFetchRooms();
+  }, [currentPage, appliedFilters]);
+
+  const FilterContent = (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Cinema */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Rạp chiếu
+        </label>
+        <FilterSelect
+          placeholder="Tất cả rạp"
+          options={["Tất cả", ...cinemas.map((c) => c.name)]}
+          value={
+            cinemas.find((c) => c.id === filters.cinemaId)?.name || "Tất cả"
+          }
+          onChange={(value) =>
+            setFilters({
+              ...filters,
+              cinemaId:
+                value === "Tất cả"
+                  ? undefined
+                  : cinemas.find((c) => c.name === value)?.id,
+            })
+          }
+        />
+      </div>
+
+      {/* Room Number */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Phòng số
+        </label>
+        <Input
+          type="number"
+          placeholder="Nhập số phòng..."
+          value={filters.roomNumber || ""}
+          onChange={(e) =>
+            setFilters({
+              ...filters,
+              roomNumber: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+          className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+        />
+      </div>
+
+      {/* Projection Type */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Loại trình chiếu
+        </label>
+        <FilterSelect
+          placeholder="Tất cả loại"
+          options={["Tất cả", "2D", "3D", "IMAX"]}
+          value={filters.projectionType || "Tất cả"}
+          onChange={(value) => {
+            setFilters({
+              ...filters,
+              projectionType: value === "Tất cả" ? undefined : value,
+            });
+          }}
+        />
+      </div>
+
+      {/* Status */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Trạng thái
+        </label>
+        <FilterSelect
+          placeholder="Tất cả trạng thái"
+          options={["Tất cả", "Hoạt động", "Ngừng hoạt động"]}
+          value={
+            filters.status === undefined
+              ? "Tất cả"
+              : filters.status
+                ? "Hoạt động"
+                : "Ngừng hoạt động"
+          }
+          onChange={(value) => {
+            let status;
+            if (value === "Tất cả") status = undefined;
+            else if (value === "Hoạt động") status = true;
+            else status = false;
+
+            setFilters({ ...filters, status });
+          }}
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-end gap-3 md:col-span-4">
+        <Button
+          className="h-11 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-widest bg-sky-500 hover:bg-sky-600 text-white shadow-sm transition-all cursor-pointer"
+          onClick={() => {
+            setCurrentPage(1);
+            setAppliedFilters(filters);
+          }}
+          disabled={loading}
+        >
+          {loading ? "Đang tìm..." : "Tìm kiếm"}
+        </Button>
+        <Button
+          variant="outline"
+          className="h-11 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-widest border-slate-200 text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 transition-all cursor-pointer"
+          onClick={handleRefresh}
+        >
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+
+  const roomUpdateFields: FieldConfig[] = [
+    {
+      name: "cinemaId",
+      label: "Rạp phim",
+      type: "select",
+      options: cinemas.map((c) => ({ label: c.name, value: c.id })),
+      placeholder: "Chọn rạp phim...",
+    },
+    {
+      name: "roomNumber",
+      label: "Số phòng",
+      type: "number",
+      placeholder: "Nhập số phòng...",
+    },
+    {
+      name: "projectionType",
+      label: "Loại trình chiếu",
+      type: "select",
+      options: [
+        { label: "2D", value: "2D" },
+        { label: "3D", value: "3D" },
+        { label: "IMAX", value: "IMAX" },
+      ],
+      placeholder: "Chọn loại trình chiếu...",
+    },
+    {
+      name: "capacity",
+      label: "Sức chứa (số ghế)",
+      type: "number",
+      placeholder: "Nhập sức chứa...",
+    },
+    {
+      name: "status",
+      label: "Trạng thái",
+      type: "select",
+      options: [
+        { label: "Hoạt động", value: true },
+        { label: "Ngừng hoạt động", value: false },
+      ],
+      placeholder: "Chọn trạng thái...",
+    },
+  ];
+
+  const roomViewFields = [
+    {
+      key: "id",
+      label: "Mã phòng",
+    },
+    {
+      key: "cinema.name",
+      label: "Rạp phim",
+      render: (_: any, data: any) => data?.cinema?.name,
+    },
+    {
+      key: "roomNumber",
+      label: "Phòng số",
+    },
+    {
+      key: "projectionType",
+      label: "Loại chiếu",
+    },
+    {
+      key: "capacity",
+      label: "Sức chứa",
+    },
+    {
+      key: "createdAt",
+      label: "Ngày tạo",
+      render: (val: string) =>
+        val ? new Date(val).toLocaleString("vi-VN") : "-",
+    },
+    {
+      key: "updatedAt",
+      label: "Cập nhật lần cuối",
+      render: (val: string) =>
+        val ? new Date(val).toLocaleString("vi-VN") : "-",
+    },
+    {
+      key: "status",
+      label: "Trạng thái",
+      render: (val: boolean) => (
+        <span
+          className={`px-2 py-1 rounded text-xs font-medium ${
+            val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+          }`}
+        >
+          {val ? "Hoạt động" : "Ngừng hoạt động"}
+        </span>
+      ),
+    },
+  ];
+
   return (
-    <div>RoomManagement</div>
-  )
-}
+    <BaseManagementLayout
+      title="Quản lý Phòng chiếu"
+      subtitle="Quản lý thông tin phòng chiếu tại các rạp."
+      totalItems={totalItems}
+      currentPage={currentPage}
+      pageSize={pageSize}
+      onPageChange={(p) => setCurrentPage(p)}
+      onAdd={() => setIsAddOpen(true)}
+      filterContent={
+        <ManagementFilterBar
+          onRefresh={handleRefresh}
+          onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
+          isFilterActive={isFilterOpen}
+        >
+          {FilterContent}
+        </ManagementFilterBar>
+      }
+    >
+      <BaseFormModal
+        mode="add"
+        open={isAddOpen}
+        onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) setErrors({});
+        }}
+        title="Thêm phòng chiếu mới"
+        fields={roomUpdateFields}
+        values={addForm}
+        errors={errors}
+        onChange={handleAddFormChange}
+        onSubmit={handleAddSubmit}
+        onCancel={() => setIsAddOpen(false)}
+        loading={loadingSubmit}
+      />
 
-export default RoomManagement
+      <BaseFormModal
+        mode="update"
+        open={isUpdateOpen}
+        onOpenChange={(open) => setIsUpdateOpen(open)}
+        title="Cập nhật phòng chiếu"
+        fields={roomUpdateFields}
+        values={updateForm}
+        errors={errors}
+        onChange={handleUpdateFormChange}
+        onSubmit={handleUpdateSubmit}
+        onCancel={() => setIsUpdateOpen(false)}
+        loading={loadingSubmit}
+      />
+
+      <ViewModal
+        open={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Chi tiết phòng chiếu"
+        data={viewData}
+        fields={roomViewFields}
+      />
+
+      <ManagementTable
+        headers={[
+          "Mã phòng",
+          "Rạp phim",
+          "Phòng số",
+          "Loại chiếu",
+          "Sức chứa",
+          "Trạng thái",
+          "Hành động",
+        ]}
+        isLoading={loading}
+      >
+        {rooms.map((room) => (
+          <TableRow
+            key={room.id}
+            className="group hover:bg-slate-50/80 transition"
+          >
+            {/* ID */}
+            <TableCell className="px-6 py-4 font-semibold text-slate-700">
+              {room.id}
+            </TableCell>
+
+            {/* Cinema Name */}
+            <TableCell className="px-6 py-4">
+              <span className="font-semibold text-slate-800 leading-tight">
+                {room.cinema?.name}
+              </span>
+            </TableCell>
+
+            {/* Room Number */}
+            <TableCell className="px-6 py-4">
+              <span className="text-sm font-bold text-slate-600">
+                {room.roomNumber}
+              </span>
+            </TableCell>
+
+            {/* Projection Type */}
+            <TableCell className="px-6 py-4">
+              <span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-600">
+                {room.projectionType?.replace("_", "")}
+              </span>
+            </TableCell>
+
+            {/* Capacity */}
+            <TableCell className="px-6 py-4">
+              <span className="text-xs font-bold px-2 py-1">
+                {room.capacity}
+              </span>
+            </TableCell>
+
+            {/* Status */}
+            <TableCell className="px-6 py-4">
+              <StatusBadge
+                status={room.status ? "Hoạt động" : "Ngừng hoạt động"}
+                type={room.status ? "success" : "error"}
+              />
+            </TableCell>
+
+            {/* Actions */}
+            <TableCell className="px-6 py-4 text-right">
+              <TableActions
+                onView={() => handleView(room)}
+                onEdit={() => handleEdit(room)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </ManagementTable>
+    </BaseManagementLayout>
+  );
+};
+
+export default RoomManagement;
