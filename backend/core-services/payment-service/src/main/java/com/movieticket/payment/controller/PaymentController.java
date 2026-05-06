@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+
 @RestController
+
 @RequiredArgsConstructor
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -31,6 +33,11 @@ public class PaymentController {
     @GetMapping("/vn-pay-callback")
     public void payCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
         paymentService.handleVnPayCallback(request, response);
+    }
+
+    @RequestMapping(value = "/momo-pay-callback", method = {RequestMethod.GET, RequestMethod.POST})
+    public void momoCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        paymentService.handleMoMoCallback(request, response);
     }
 
     @PostMapping("/payment-by-cash")

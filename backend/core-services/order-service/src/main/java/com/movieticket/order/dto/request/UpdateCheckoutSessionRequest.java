@@ -16,11 +16,5 @@ public class UpdateCheckoutSessionRequest {
     private String promotionCode;
 
     @Min(0)
-    private Double promotionDiscount;
-
-    @Min(0)
-    private Double pointDiscount;
-
-    @Min(0)
     private Integer pointsToRedeem;
 }

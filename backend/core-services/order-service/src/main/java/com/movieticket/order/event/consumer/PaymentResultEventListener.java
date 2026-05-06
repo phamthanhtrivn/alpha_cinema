@@ -70,8 +70,14 @@ public class PaymentResultEventListener {
 
             return;
         }
+        else if ("CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            order.setStatus(OrderStatus.CANCELLED);
+        } else if ("EXPIRED".equalsIgnoreCase(event.getStatus())) {
+            order.setStatus(OrderStatus.EXPIRED);
+        } else {
+            order.setStatus(OrderStatus.FAILED);
+        }
 
-        order.setStatus(OrderStatus.FAILED);
         orderRepository.save(order);
         showScheduleDetailService.releaseBookedSeats(order.getId());
         deleteCheckoutCache(cache, order.getId());
