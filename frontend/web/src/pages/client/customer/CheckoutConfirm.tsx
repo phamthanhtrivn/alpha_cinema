@@ -34,6 +34,7 @@ import type {
   CheckoutConfirmResponse,
 } from "@/types/checkout";
 import { ALL_TRANSLATION } from "@/types/movie";
+import { PAYMENT_METHODS } from "@/constants/payment.constant";
 
 type MovieDetail = {
   title: string;
@@ -352,20 +353,7 @@ export const CheckoutConfirm = () => {
 
               {/* Scroll container */}
               <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
-                {[
-                  {
-                    value: "VNPAY",
-                    label: "VNPAY",
-                    img: "https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png",
-                    desc: "Thanh toán qua ngân hàng / QR",
-                  },
-                  // {
-                  //   value: "MOMO",
-                  //   label: "MoMo",
-                  //   img: "https://play-lh.googleusercontent.com/uCtnppeJ9ENYdJaSL5av-ZL1ZM1f3b35u9k8EOEjK3ZdyG509_2osbXGH5qzXVmoFv0",
-                  //   desc: "Ví điện tử MoMo",
-                  // },
-                ].map((method) => (
+                {PAYMENT_METHODS.map((method) => (
                   <label
                     key={method.value}
                     className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${

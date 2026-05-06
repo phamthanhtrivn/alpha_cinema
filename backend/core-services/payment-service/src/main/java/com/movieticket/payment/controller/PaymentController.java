@@ -2,9 +2,7 @@ package com.movieticket.payment.controller;
 
 import com.movieticket.payment.common.ApiResponse;
 import com.movieticket.payment.dto.request.InitiatePaymentRequest;
-import com.movieticket.payment.dto.request.PaymentRequest;
 import com.movieticket.payment.dto.response.InitiatePaymentResponse;
-import com.movieticket.payment.dto.response.MoMoResponse;
 import com.movieticket.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,5 +33,10 @@ public class PaymentController {
     @GetMapping("/vn-pay-callback")
     public void payCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
         paymentService.handleVnPayCallback(request, response);
+    }
+
+    @RequestMapping(value = "/momo-pay-callback", method = {RequestMethod.GET, RequestMethod.POST})
+    public void momoCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        paymentService.handleMoMoCallback(request, response);
     }
 }

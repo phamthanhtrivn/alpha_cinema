@@ -20,7 +20,8 @@ public class RouteValidator {
             "api/movies/public",
             "api/cinemas/public",
             "api/show-schedules/public",
-            "/api/payments/vn-pay-callback"
+            "/api/payments/vn-pay-callback",
+            "/api/payments/momo-pay-callback"
     );
     
     public Predicate<ServerHttpRequest> isSecured =
