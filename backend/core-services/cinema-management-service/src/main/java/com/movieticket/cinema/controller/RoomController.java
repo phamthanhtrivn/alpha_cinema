@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -99,5 +100,11 @@ public class RoomController {
         System.out.println(projections);
         List<SelectionDTO> options = roomService.getRoomOptions(cinemaId, projections);
         return ResponseEntity.ok(new ApiResponse<>(true, options));
+    }
+
+    @PostMapping("/batch-numbers")
+    public ResponseEntity<ApiResponse<Map<String,Integer>>> getRoomNumbersByIds(@RequestBody List<String> roomIds) {
+        Map<String, Integer> roomNumbers = roomService.getRoomNumbersByIds(roomIds);
+        return ResponseEntity.ok(new ApiResponse<>(true, roomNumbers));
     }
 }

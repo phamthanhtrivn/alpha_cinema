@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import FoodSelection from "./FoodSelection";
 import PaymentSelection from "./PaymentSelection";
 import SeatPreviewMap, { type SeatItem } from "./SeatPreviewMap";
@@ -10,6 +16,9 @@ import { orderService } from "@/services/order.service";
 import { productService } from "@/services/product.service";
 import type { Product } from "@/types/product";
 import { toast } from "react-toastify";
+import PointOfSaleComponent from "@/components/employee/PointOfSaleComponent";
+import { cinemaService } from "@/services/cinema.service";
+import { useSelector } from "react-redux";
 
 type Step = "seat" | "food" | "payment" | "ticket";
 type PaymentMethod = "cash" | "bank_qr";
@@ -19,6 +28,7 @@ interface ShowSchedule {
   projectionType: string;
   translationType: string;
   roomId: string;
+  roomNumber: number;
   startTime: string;
   endTime: string;
   availableSeat: number;
@@ -81,6 +91,11 @@ const SellTickets: React.FC = () => {
   const ticketPriceDataCacheRef = useRef<
     Record<string, { price: number; ticketPriceId: string }>
   >({});
+  const [posOpen, setPosOpen] = useState(false);
+  const [cinema, setCianema] = useState<{ address?: string; phone?: string } | undefined>(undefined);
+
+  const cinemaId  = useSelector((state : any) => state?.auth.cinemaId);
+  console.log("cinemaId", cinemaId);
 
   const fetchMovies = async () => {
     try {
@@ -100,8 +115,22 @@ const SellTickets: React.FC = () => {
     }
   };
 
+  const fetchCinemaInfo = async () => {
+    try {
+      const response = await cinemaService.getCinemaInfo(cinemaId);
+      if (response?.data) {
+        setCianema(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch cinema info:", error);
+    }
+  };
+
+  console.log(cinema);
+
   useEffect(() => {
     fetchMovies();
+    fetchCinemaInfo();
   }, []);
 
   useEffect(() => {
@@ -148,7 +177,7 @@ const SellTickets: React.FC = () => {
     }
   }, [selectedMovieData, selectedScheduleId]);
 
-  const fetchSeats = async () => {
+  const fetchSeats = useCallback(async () => {
     if (!selectedScheduleId || !selectedSchedule?.roomId) {
       setSeatItems([]);
       return;
@@ -169,10 +198,11 @@ const SellTickets: React.FC = () => {
     } finally {
       setSeatLoading(false);
     }
-  };
+  }, [selectedScheduleId, selectedSchedule?.roomId]);
+
   useEffect(() => {
     fetchSeats();
-  }, [selectedScheduleId, selectedSchedule?.roomId]);
+  }, [fetchSeats]);
 
   const seatMap = useMemo(() => {
     const map = new Map<string, SeatItem>();
@@ -297,7 +327,6 @@ const SellTickets: React.FC = () => {
   const total = ticketTotal + snackTotal;
 
   const resetSellingFlow = async () => {
-    // clear UI state immediately so selected seats disappear right away
     setStep("seat");
     setSelectedSeats([]);
     setTicketPriceDataBySeatCode({});
@@ -356,7 +385,6 @@ const SellTickets: React.FC = () => {
             price: p.unitPrice,
           })),
       };
-      console.log(payload);
       const req = await orderService.checkoutEmployee(payload);
       if (req.success) {
         toast.success("Thanh toán thành công");
@@ -402,6 +430,30 @@ const SellTickets: React.FC = () => {
   const selectedScheduleDate = selectedSchedule
     ? new Date(selectedSchedule.startTime).toLocaleDateString("vi-VN")
     : "";
+
+  const posTicketData = {
+    movie: selectedMovieData?.movie.title ?? "",
+    room: String(
+      selectedSchedule?.roomNumber ?? selectedSchedule?.roomId ?? "",
+    ),
+    seat: selectedSeats.length > 0 ? selectedSeats.join(", ") : "",
+    time: `${selectedScheduleTime} - ${selectedScheduleDate}`,
+    price: `${total.toLocaleString("vi-VN")} VND`,
+    cinemaName: "ALPHA CINEMA",
+    cinemaPhone: cinema?.phone || "",
+    cinemaAddress: cinema?.address || "123 Đường Tên Lửa, TP.HCM",
+    auditoriumName: selectedSchedule?.roomNumber
+      ? `Phòng ${selectedSchedule.roomNumber}`
+      : String(selectedSchedule?.roomId ?? ""),
+    snacks: products
+      .filter((p) => (quantities[p.id] ?? 0) > 0)
+      .map((p) => ({
+        name: p.name,
+        qty: quantities[p.id],
+        price: p.unitPrice,
+      })),
+    snackTotal: `${snackTotal.toLocaleString("vi-VN")} VND`,
+  };
 
   return (
     <div className="space-y-6 pb-6">
@@ -591,7 +643,7 @@ const SellTickets: React.FC = () => {
                   <div className="flex justify-center gap-4">
                     <button
                       type="button"
-                      onClick={() => window.print()}
+                      onClick={() => setPosOpen(true)}
                       className="rounded-xl bg-orange-500 px-6 py-3 font-bold text-white hover:bg-orange-600 shadow-sm"
                     >
                       In vé
@@ -627,6 +679,11 @@ const SellTickets: React.FC = () => {
           </div>
         </>
       )}
+      <PointOfSaleComponent
+        open={posOpen}
+        onOpenChange={setPosOpen}
+        ticketData={posTicketData}
+      />
     </div>
   );
 };

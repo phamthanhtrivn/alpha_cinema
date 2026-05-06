@@ -2,6 +2,7 @@ package com.movieticket.product.service;
 
 import com.movieticket.product.clients.CinemaClient;
 import com.movieticket.product.clients.OrderClient;
+import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.CinemaRoomInfoDTO;
 import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
 import com.movieticket.product.dto.SeatResponseToProduct;
@@ -21,11 +22,13 @@ import com.movieticket.product.repository.ShowScheduleRepository;
 import com.movieticket.product.specification.ShowScheduleSpecification;
 import com.movieticket.product.util.mapper.ShowScheduleMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -46,6 +49,8 @@ public class ShowScheduleService {
     private final MovieService movieService;
     private final CinemaClient cinemaClient;
     private final OrderClient orderClient;
+    private final CacheService cacheService;
+    private final WebClient.Builder webClientBuilder;
 
     public Page<ShowScheduleResDTO> searchSchedules(ShowScheduleSearchDTO dto, Pageable pageable) {
         Specification<ShowSchedule> spec = Specification
@@ -136,7 +141,6 @@ public class ShowScheduleService {
         Map<String, String> cinemaMap = cinemaSelections.stream()
                 .collect(Collectors.toMap(SelectionDTO::getId, SelectionDTO::getLabel));
 
-        //Gom nhóm: Cinema -> {Projection, Translation}
         return schedules.stream()
                 .filter(s -> s.getCinemaId() != null)
                 .collect(Collectors.groupingBy(ShowScheduleView::getCinemaId))
@@ -231,28 +235,70 @@ public class ShowScheduleService {
      public List<MoiveAndShowScheduleReponse> getMovieAndSchedulesForPos(String cinemaId){
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endOfShift = LocalDate.now().plusDays(1).atTime(3, 0);
-        List<ShowSchedule> allSchedules = showScheduleRepository.findAllSchedulesWithMovieForShift(cinemaId, now, endOfShift);
+        List<ShowSchedule> allSchedules = showScheduleRepository.findAllSchedulesWithMovieForShift(cinemaId,endOfShift);
 
-        Map<Movie,List<ShowSchedule>> movieScheduleMap = allSchedules.stream()
-                .collect(Collectors.groupingBy(ShowSchedule::getMovie));
+         Set<String> uniqueRoomIds = allSchedules.stream()
+                 .map(ShowSchedule::getRoomId)
+                 .filter(Objects::nonNull)
+                 .collect(Collectors.toSet());
+        Map<String,Integer> roomIdToRoomNumber = new HashMap<>();
+        List<String> missRoomNumber = new ArrayList<>();
 
-        return movieScheduleMap.entrySet().stream()
-                .map(entry -> MoiveAndShowScheduleReponse.builder()
-                        .movie(entry.getKey())
-                        // Map List<ShowSchedule> sang List<ShowScheduleDto>
-                        .showSchedules(entry.getValue().stream()
-                                .map(schedule -> ShowScheduleDto.builder()
-                                        .id(schedule.getId())
-                                        .projectionType(schedule.getProjectionType())
-                                        .translationType(schedule.getTranslationType())
-                                        .roomId(schedule.getRoomId())
-                                        .startTime(schedule.getStartTime())
-                                        .endTime(schedule.getEndTime())
-                                        .availableSeat(schedule.getAvailableSeat())
-                                        .status(schedule.isStatus())
-                                        .build())
-                                .collect(Collectors.toList()))
-                        .build())
-                .collect(Collectors.toList());
+        for(String roomId : uniqueRoomIds){
+            Integer roomNumber = cacheService.getRoomNumberByRoomId(roomId);
+            if(roomNumber != null){
+                roomIdToRoomNumber.put(roomId,roomNumber);
+            }else{
+                System.out.println("Không tìm thấy số phòng trong cache - Room ID: " + roomId);
+                missRoomNumber.add(roomId);
+            }
+        }
+
+        if(!missRoomNumber.isEmpty()){
+            ApiResponse<Map<String, Integer>> apiResponse = webClientBuilder.build()
+                    .post()
+                    .uri("http://cinema-management-service/api/rooms/batch-numbers")
+                    .bodyValue(missRoomNumber)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<ApiResponse<Map<String, Integer>>>() {})
+                    .block();
+
+            if (apiResponse != null && apiResponse.getData() != null) {
+                Map<String, Integer> fetchedRooms = apiResponse.getData();
+                for (Map.Entry<String, Integer> entry : fetchedRooms.entrySet()) {
+                    System.out.println("Lấy số phòng từ Cinema Service - Room ID: " + entry.getKey() + ", Room Number: " + entry.getValue());
+                    roomIdToRoomNumber.put(entry.getKey(), entry.getValue());
+                    cacheService.saveRoomIdToRoomNumber(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+         Map<Movie,List<ShowSchedule>> movieScheduleMap = allSchedules.stream()
+                 .collect(Collectors.groupingBy(ShowSchedule::getMovie));
+
+         LocalDateTime cutoffTime = now.minusMinutes(30);
+
+         return movieScheduleMap.entrySet().stream()
+                 .map(entry -> MoiveAndShowScheduleReponse.builder()
+                         .movie(entry.getKey())
+                         .showSchedules(entry.getValue().stream()
+                                 .filter(schedule -> schedule.getStartTime() != null &&
+                                         schedule.getStartTime().compareTo(cutoffTime) >= 0)
+                                 .map(schedule -> {
+                                     return ShowScheduleDto.builder()
+                                             .id(schedule.getId())
+                                             .projectionType(schedule.getProjectionType())
+                                             .translationType(schedule.getTranslationType())
+                                             .roomId(schedule.getRoomId())
+                                             .roomNumber(roomIdToRoomNumber.get(schedule.getRoomId())) // Lấy dữ liệu đã gom ở trên
+                                             .startTime(schedule.getStartTime())
+                                             .endTime(schedule.getEndTime())
+                                             .availableSeat(schedule.getAvailableSeat())
+                                             .status(schedule.isStatus())
+                                             .build();
+                                 })
+                                 .collect(Collectors.toList()))
+                         .build())
+                 .collect(Collectors.toList());
     }
 }
