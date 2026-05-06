@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @RestController
+
 @RequiredArgsConstructor
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -24,8 +25,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<InitiatePaymentResponse>> initiatePayment(
             @PathVariable String orderId,
             @Valid @RequestBody InitiatePaymentRequest request,
-            HttpServletRequest httpServletRequest
-    ) {
+            HttpServletRequest httpServletRequest) {
         InitiatePaymentResponse response = paymentService.initiatePayment(orderId, request, httpServletRequest);
         return ResponseEntity.ok(ApiResponse.success(response, "Khởi tạo thanh toán thành công"));
     }
@@ -38,5 +38,16 @@ public class PaymentController {
     @RequestMapping(value = "/momo-pay-callback", method = {RequestMethod.GET, RequestMethod.POST})
     public void momoCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
         paymentService.handleMoMoCallback(request, response);
+    }
+
+    @PostMapping("/payment-by-cash")
+    public ResponseEntity<ApiResponse<?>> paymentByCash(String orderId, Double totalPayment) {
+        System.out.println("Received payment by cash request for orderId: " + orderId + ", totalPayment: " + totalPayment);
+        boolean result = paymentService.paymentByCash(orderId, totalPayment);
+        if (result) {
+            return ResponseEntity.ok(ApiResponse.success("null", "Payment by cash successful"));
+        } else {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Payment failed"));
+        }
     }
 }

@@ -37,15 +37,56 @@ export const Booking = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const movieId = searchParams.get("movieId");
+  const checkoutSessionId = searchParams.get("checkoutSessionId");
+  const checkoutExpiresAt = searchParams.get("checkoutExpiresAt");
   const navigate = useNavigate();
   const { user } = useSelector(selectAuth);
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
   const [loadingSeatId, setLoadingSeatId] = useState<string | null>(null);
-  const [creatingSession, setCreatingSession] = useState                        (false);
+  const [creatingSession, setCreatingSession] = useState(false);
 
   useEffect(() => {
     setSelectedSeats([]);
   }, [id]);
+
+  useEffect(() => {
+    if (!checkoutSessionId || !checkoutExpiresAt) {
+      return;
+    }
+
+    const expiresAt = new Date(checkoutExpiresAt).getTime();
+    if (Number.isNaN(expiresAt) || Date.now() <= expiresAt) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const cancelExpiredSession = async () => {
+      try {
+        await checkoutService.cancelSession(checkoutSessionId);
+        if (!cancelled) {
+          toast.info("Phiên thanh toán đã hết hạn, hệ thống đã hủy phiên giữ ghế cũ.");
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error("Không thể hủy phiên thanh toán đã hết hạn.");
+        }
+      } finally {
+        if (!cancelled) {
+          navigate(
+            movieId ? `/booking/${id}?movieId=${movieId}` : `/booking/${id}`,
+            { replace: true },
+          );
+        }
+      }
+    };
+
+    void cancelExpiredSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutExpiresAt, checkoutSessionId, id, movieId, navigate]);
 
   const {
     data: layout,
@@ -107,9 +148,6 @@ export const Booking = () => {
 
     return map;
   }, [layout]);
-
-  console.log(layout?.startTime);
-  
 
   const rows = useMemo(() => Object.keys(seatMap).sort(), [seatMap]);
   const customerId = user?.customerId || user?.id || user?.customer?.id;

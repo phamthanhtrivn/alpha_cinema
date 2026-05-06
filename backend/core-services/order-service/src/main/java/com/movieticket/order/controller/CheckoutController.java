@@ -9,6 +9,8 @@ import com.movieticket.order.dto.response.CheckoutSessionResponse;
 import com.movieticket.order.service.CheckoutSessionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import com.movieticket.order.dto.CheckoutEmployeeRequest;
+import com.movieticket.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +20,21 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CheckoutController {
     private final CheckoutSessionService checkoutSessionService;
+    private final OrderService orderService;
 
+    @PostMapping("/payment-by-cash")
+    public ResponseEntity<ApiResponse<?>> paymentByCash(
+            @RequestHeader("X-User-Id") String userID,
+            @RequestHeader("X-Cinema-Id") String cinemaID,
+            @RequestBody(required = true) CheckoutEmployeeRequest request
+    ) {
+        String id = orderService.paymentByCash(userID, cinemaID, request);
+        if (!id.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success(id, "Payment by cash successful"));
+        } else {
+            return ResponseEntity.badRequest().body(ApiResponse.fail("Payment failed"));
+        }
+    }
     @PostMapping("/sessions")
     public ResponseEntity<ApiResponse<CheckoutSessionResponse>> createSession(
             @Valid @RequestBody CreateCheckoutSessionRequest request
@@ -53,8 +69,8 @@ public class CheckoutController {
     }
 
     @DeleteMapping("/sessions/{sessionId}")
-    public ResponseEntity<ApiResponse<Void>> cancelSession(@PathVariable String sessionId) {
-        checkoutSessionService.cancelSession(sessionId);
-        return ResponseEntity.ok(ApiResponse.success(null, "Checkout session cancelled successfully"));
+    public ResponseEntity<ApiResponse<Void>> cancelSession(@PathVariable String sessionId){
+            checkoutSessionService.cancelSession(sessionId);
+            return ResponseEntity.ok(ApiResponse.success(null, "Checkout session cancelled successfully"));
     }
 }

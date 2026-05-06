@@ -5,6 +5,18 @@ export const ProductType = {
 
 export type ProductType = (typeof ProductType)[keyof typeof ProductType];
 
+export interface Product {
+  id: string;
+  name: string;
+  unitPrice: number;
+  pictureUrl: string;
+  description: string;
+  type: ProductType;
+  createdAt: string;
+  updatedAt: string;
+  status: boolean;
+}
+
 export interface ProductFilterParams {
   id?: string;
   name?: string;

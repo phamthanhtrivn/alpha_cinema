@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
+  ArrowLeft,
   Loader2,
   CreditCard,
   ArrowRight,
@@ -106,6 +107,57 @@ export const CheckoutConfirm = () => {
   const seatRows = useMemo(() => session?.seats ?? [], [session]);
   const productRows = useMemo(() => session?.items ?? [], [session]);
 
+  const buildBookingUrl = () => {
+    const params = new URLSearchParams();
+
+    if (movieId) {
+      params.set("movieId", movieId);
+    }
+    if (sessionId) {
+      params.set("checkoutSessionId", sessionId);
+    }
+    if (session?.expiresAt) {
+      params.set("checkoutExpiresAt", session.expiresAt);
+    }
+
+    const query = params.toString();
+    return query ? `/booking/${id}?${query}` : `/booking/${id}`;
+  };
+
+  const goBackToBooking = async () => {
+    if (sessionId) {
+      try {
+        await checkoutService.cancelSession(sessionId);
+      } catch {
+        toast.error("Không thể hủy phiên thanh toán hiện tại.");
+        return;
+      }
+    }
+
+    navigate(buildBookingUrl(), {
+      replace: true,
+      state: { movieId },
+    });
+  };
+
+  const goBackToCheckout = () => {
+    if (!sessionId) {
+      return;
+    }
+
+    navigate(
+      movieId
+        ? `/booking/${id}/checkout/${sessionId}?movieId=${movieId}`
+        : `/booking/${id}/checkout/${sessionId}`,
+      {
+        state: {
+          session,
+          movieId,
+        },
+      },
+    );
+  };
+
   const handleConfirm = async () => {
     if (!sessionId || !session) return;
 
@@ -146,7 +198,7 @@ export const CheckoutConfirm = () => {
           </div>
           <p className="text-slate-500">Vui lòng thực hiện lại đơn đặt vé.</p>
           <Button
-            onClick={() => navigate("/")}
+            onClick={goBackToBooking}
             className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600"
           >
             Quay lại
@@ -166,7 +218,30 @@ export const CheckoutConfirm = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20 text-slate-900">
-      <BookingProgressBar currentStep={2} />
+      <BookingProgressBar
+        currentStep={2}
+        onStepClick={(step) => {
+          if (step === 0) {
+            goBackToBooking();
+          }
+
+          if (step === 1) {
+            goBackToCheckout();
+          }
+        }}
+      />
+
+      <div className="max-w-300 mx-auto px-4 pt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={goBackToCheckout}
+          className="inline-flex items-center gap-2 rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-alpha-blue"
+        >
+          <ArrowLeft size={16} />
+          Quay lại chọn sản phẩm
+        </Button>
+      </div>
 
       <div className="max-w-300 mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] overflow-hidden">

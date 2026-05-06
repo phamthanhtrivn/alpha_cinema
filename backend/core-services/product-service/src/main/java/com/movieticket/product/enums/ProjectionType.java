@@ -6,8 +6,7 @@ public enum ProjectionType {
     _2D, _3D, IMAX;
 
     @JsonValue
-    @Override
-    public String toString() {
+    public String toJson() {
         return name().startsWith("_") ? name().substring(1) : name();
     }
 }

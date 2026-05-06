@@ -37,4 +37,8 @@ export const checkoutService = {
     });
     return response.data as { success: boolean; data: CheckoutConfirmResponse; message?: string };
   },
+  cancelSession: async (sessionId: string) => {
+    const response = await apiClient.delete(`/checkouts/sessions/${sessionId}`);
+    return response.data as { success: boolean; message?: string };
+  },
 };

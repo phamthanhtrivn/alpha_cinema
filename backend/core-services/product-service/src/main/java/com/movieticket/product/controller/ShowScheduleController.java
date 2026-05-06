@@ -4,12 +4,14 @@ import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.admin.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleSearchDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleUpdateDTO;
+import com.movieticket.product.dto.admin.response.ShowScheduleLookupDto;
 import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.dto.client.BookingLayoutDTO;
 import com.movieticket.product.dto.client.CinemaShowtimeDTO;
 import com.movieticket.product.dto.client.ShowtimeDTO;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.service.ShowScheduleLookupService;
+import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
 import com.movieticket.product.service.ShowScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +23,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.movieticket.product.dto.response.ShowScheduleLookupDto;
 
 import java.time.LocalDate;
+
 import java.util.List;
 
 @RestController
@@ -108,4 +110,15 @@ public class ShowScheduleController {
                 showScheduleService.getAvailableDates(movieId);
         return ResponseEntity.ok(ApiResponse.success(data, ""));
     }
+
+     @GetMapping("/movies-and-schedules")
+    public ApiResponse<List<MoiveAndShowScheduleReponse>> getMoiveAndSchedules(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId) {
+        try{
+            List<MoiveAndShowScheduleReponse> list = showScheduleService.getMovieAndSchedulesForPos(cinemaHeaderId);
+            return ApiResponse.success(list, "Lấy danh sách phim và suất chiếu thành công");
+        } catch (Exception e) {
+            return ApiResponse.fail("Lỗi khi lấy danh sách phim và suất chiếu: " + e.getMessage());
+        }
+    }
+
 }

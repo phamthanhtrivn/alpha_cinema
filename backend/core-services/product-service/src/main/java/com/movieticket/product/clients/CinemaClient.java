@@ -1,7 +1,7 @@
 package com.movieticket.product.clients;
 
 import com.movieticket.product.dto.CinemaRoomInfoDTO;
-import com.movieticket.product.dto.response.RoomDetailDTO;
+import com.movieticket.product.dto.RoomDetailDTO;
 import com.movieticket.product.dto.SeatResponseToProduct;
 import com.movieticket.product.dto.admin.response.CinemaServiceResponse;
 import com.movieticket.product.dto.admin.response.SelectionDTO;
@@ -9,7 +9,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Collections;
 import java.util.List;
 
 @Component

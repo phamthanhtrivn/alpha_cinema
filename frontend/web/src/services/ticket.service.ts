@@ -2,6 +2,20 @@
 import type { HolidayFilterParams } from "@/types/holiday";
 import { apiClient } from "./api";
 
+export interface DetermineTicketPriceDto {
+  seatTypeId: string;
+  projectionType: string;
+  showTime: string;
+}
+
+export interface TicketResponseDto {
+  id: string;
+  seatTypeId: string;
+  projectionType: string;
+  dayType: string;
+  price: number;
+}
+
 export const ticketService = {
   getAllHolidays: async (params: HolidayFilterParams) => {
     const response = await apiClient.get(`/holidays`, {
@@ -39,4 +53,12 @@ export const ticketService = {
     const response = await apiClient.delete(`/tickets/${id}`);
     return response.data;
   },
+  determineTicketPrice: async (data: DetermineTicketPriceDto) => {
+    const response = await apiClient.get('/tickets/determine-ticket-price', {
+      params: data,
+    });
+    const payload = response.data?.data ?? response.data ?? [];
+    // Ensure we return an array
+    return Array.isArray(payload) ? (payload as TicketResponseDto[]) : [payload as TicketResponseDto];
+  }
 };
