@@ -121,4 +121,12 @@ public class ShowScheduleController {
         }
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<List<ShowScheduleLookupDto>>> getShowSchedulesByIds(
+            @RequestBody List<String> ids
+    ) {
+        List<ShowScheduleLookupDto> showSchedules = showScheduleLookupService.getShowSchedulesByIds(ids);
+        return ResponseEntity.ok(ApiResponse.success(showSchedules, "Show schedules retrieved successfully"));
+    }
+
 }

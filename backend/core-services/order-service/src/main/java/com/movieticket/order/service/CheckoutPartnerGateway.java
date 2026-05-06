@@ -12,6 +12,7 @@ import com.movieticket.order.dto.client.RoomLookupResponse;
 import com.movieticket.order.dto.client.RoomSnapshot;
 import com.movieticket.order.dto.client.SeatBatchLookupResponse;
 import com.movieticket.order.dto.client.SeatSnapshot;
+import com.movieticket.order.dto.client.ShowScheduleBatchLookupResponse;
 import com.movieticket.order.dto.client.ShowScheduleLookupResponse;
 import com.movieticket.order.dto.client.ShowScheduleSnapshot;
 import com.movieticket.order.dto.client.TicketPriceBatchLookupResponse;
@@ -70,6 +71,89 @@ public class CheckoutPartnerGateway {
             RoomSnapshot room,
             CinemaSnapshot cinema
     ) {
+    }
+
+    public CustomerInformation getCustomerInformation(String customerId) {
+        return webClientBuilder.build()
+                .get()
+                .uri(userServiceBaseUrl + "/api/customers/{id}/info", customerId)
+                .retrieve()
+                .bodyToMono(CustomerInformation.class)
+                .map(customer -> {
+                    if (customer == null || !customer.isStatus()) {
+                        throw new BusinessException("Customer is unavailable for id: " + customerId);
+                    }
+                    return customer;
+                })
+                .block();
+    }
+
+    public Map<String, ShowScheduleSnapshot> getShowScheduleSnapshots(List<String> showScheduleIds) {
+        List<String> normalizedIds = normalizeDistinctIds(showScheduleIds);
+        if (normalizedIds.isEmpty()) {
+            return Map.of();
+        }
+
+        try {
+            ShowScheduleBatchLookupResponse response = restTemplate.postForObject(
+                    productServiceBaseUrl + "/api/show-schedules/batch",
+                    normalizedIds,
+                    ShowScheduleBatchLookupResponse.class
+            );
+
+            List<ShowScheduleSnapshot> showSchedules = response == null ? null : response.getData();
+            if (showSchedules == null) {
+                throw new BusinessException("Unable to resolve show schedule information for checkout");
+            }
+
+            Map<String, ShowScheduleSnapshot> showSchedulesById = showSchedules.stream()
+                    .collect(Collectors.toMap(ShowScheduleSnapshot::getId, Function.identity(), (first, second) -> first));
+
+            Map<String, ShowScheduleSnapshot> orderedShowSchedules = new LinkedHashMap<>();
+            for (String id : normalizedIds) {
+                ShowScheduleSnapshot showSchedule = showSchedulesById.get(id);
+                if (showSchedule != null) {
+                    orderedShowSchedules.put(id, showSchedule);
+                }
+            }
+
+            return orderedShowSchedules;
+        } catch (RestClientException ex) {
+            ex.printStackTrace();
+            throw new BusinessException("Error: Unable to resolve show schedule information for checkout");
+        }
+    }
+
+    public RoomSnapshot getRoomSnapshot(String roomId) {
+        return webClientBuilder.build()
+                .get()
+                .uri(cinemaServiceBaseUrl + "/api/rooms/{id}", roomId)
+                .retrieve()
+                .bodyToMono(RoomLookupResponse.class)
+                .map(res -> res == null ? null : res.getData())
+                .map(room -> {
+                    if (room == null) {
+                        throw new BusinessException("Room not found");
+                    }
+                    return room;
+                })
+                .block();
+    }
+
+    public CinemaSnapshot getCinemaSnapshot(String cinemaId) {
+        return webClientBuilder.build()
+                .get()
+                .uri(cinemaServiceBaseUrl + "/api/cinemas/{id}", cinemaId)
+                .retrieve()
+                .bodyToMono(CinemaLookupResponse.class)
+                .map(res -> res == null ? null : res.getData())
+                .map(cinema -> {
+                    if (cinema == null || !cinema.isStatus()) {
+                        throw new BusinessException("Cinema not valid");
+                    }
+                    return cinema;
+                })
+                .block();
     }
 
     public CreateSessionSnapshot getCreateSessionSnapshot(String customerId, String showScheduleId) {
