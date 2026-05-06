@@ -44,6 +44,14 @@ vnpay:
   command: ${VNPAY_COMMAND}
   orderType: ${VNPAY_ORDER_TYPE}
 
+momo:
+  partner-code: ${MOMO_PARTNER_CODE}
+  access-key: ${MOMO_ACCESS_KEY}
+  secret-key: ${MOMO_SECRET_KEY}
+  end-point: ${MOMO_END_POINT}
+  return-url: ${BACKEND_BASE_URL}/api/payments/momo-pay-callback
+  request-type: ${MOMO_REQUEST_TYPE}
+
 payment:
   backend-base-url: ${BACKEND_BASE_URL}
   frontend-base-url: ${FRONTEND_BASE_URL}
