@@ -301,4 +301,19 @@ public class ShowScheduleService {
                          .build())
                  .collect(Collectors.toList());
     }
+
+    //Ha Thanh Tuan
+    public List<SelectionDTO> getCinemasByMovie(String movieId) {
+        List<String> cinemaIds = showScheduleRepository.findActiveCinemaIdsByMovie(movieId);
+        if (cinemaIds.isEmpty()) return Collections.emptyList();
+
+        return cinemaClient.getCinemaSelectionsByIds(cinemaIds);
+    }
+
+    public List<LocalDate> getDatesByMovieAndCinema(String movieId, String cinemaId) {
+        return showScheduleRepository.findActiveDatesByMovieAndCinema(movieId, cinemaId)
+                .stream()
+                .map(java.sql.Date::toLocalDate)
+                .toList();
+    }
 }

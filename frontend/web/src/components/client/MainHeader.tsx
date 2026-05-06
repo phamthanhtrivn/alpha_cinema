@@ -5,7 +5,7 @@ import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";
 import { userService } from "../../services/user.service";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 const MainHeader: React.FC = () => {
   const dispatch = useDispatch();
@@ -15,7 +15,7 @@ const MainHeader: React.FC = () => {
   const handleLogout = () => {
     const handle = async () => {
       const data = await userService.logout();
-      
+
       if (data.success) {
         toast.success("Đăng xuất thành công");
         dispatch(logout());

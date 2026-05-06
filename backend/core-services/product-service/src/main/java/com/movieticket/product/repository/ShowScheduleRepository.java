@@ -61,4 +61,16 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
             @Param("cinemaId") String cinemaId,
             @Param("endOfShift") LocalDateTime endOfShift
     );
+
+    @Query("SELECT DISTINCT s.cinemaId FROM ShowSchedule s " +
+            "WHERE s.movie.id = :movieId AND s.startTime >= CURRENT_TIMESTAMP")
+    List<String> findActiveCinemaIdsByMovie(@Param("movieId") String movieId);
+
+    @Query("SELECT DISTINCT CAST(s.startTime AS date) FROM ShowSchedule s " +
+            "WHERE s.movie.id = :movieId AND s.cinemaId = :cinemaId " +
+            "AND s.startTime >= CURRENT_TIMESTAMP " +
+            "ORDER BY 1 ASC")
+    List<java.sql.Date> findActiveDatesByMovieAndCinema(
+            @Param("movieId") String movieId,
+            @Param("cinemaId") String cinemaId);
 }
