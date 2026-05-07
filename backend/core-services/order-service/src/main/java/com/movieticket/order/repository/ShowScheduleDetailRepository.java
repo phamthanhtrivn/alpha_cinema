@@ -15,6 +15,9 @@ import java.util.List;
 
 @Repository
 public interface ShowScheduleDetailRepository extends JpaRepository<ShowScheduleDetail, Long> {
+
+    List<ShowScheduleDetail> findByOrder_IdIn(Collection<String> orderIds);
+
     @Query("""
             select detail.seatId
             from ShowScheduleDetail detail
@@ -30,12 +33,14 @@ public interface ShowScheduleDetailRepository extends JpaRepository<ShowSchedule
     );
 
     void deleteByOrder_Id(String orderId);
-    @Query("SELECT d.seatId, d.showSeatType FROM ShowScheduleDetail d " +
-            "WHERE d.showScheduleId = :showScheduleId " +
-            "AND d.order.status != 'CANCELLED'")
+
+    @Query("SELECT d.seatId, d.showSeatType FROM ShowScheduleDetail d "
+            + "WHERE d.showScheduleId = :showScheduleId "
+            + "AND d.order.status != 'CANCELLED'")
     List<Object[]> findBookedSeatsInternal(@Param("showScheduleId") String showScheduleId);
 
     List<ShowScheduleDetail> findByShowScheduleId(String showScheduleId);
+
     @Transactional
     void deleteByOrderId(String orderId);
 }
