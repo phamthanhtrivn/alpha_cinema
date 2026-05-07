@@ -171,7 +171,7 @@ export const Booking = () => {
 
     try {
       setLoadingSeatId(seat.seatId);
-      
+
       const response = await checkoutService.determineTicketPrice({
         seatTypeId: seat.seatTypeId,
         projectionType: layout.projection,
@@ -196,7 +196,7 @@ export const Booking = () => {
       const message =
         typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Không thể xác định giá ghế này."
+            ?.data?.message || "Không thể xác định giá ghế này."
           : "Không thể xác định giá ghế này.";
       toast.error(message);
     } finally {
@@ -293,7 +293,7 @@ export const Booking = () => {
       const message =
         typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Không thể tạo phiên thanh toán."
+            ?.data?.message || "Không thể tạo phiên thanh toán."
           : "Không thể tạo phiên thanh toán.";
       toast.error(message);
     } finally {
@@ -342,11 +342,10 @@ export const Booking = () => {
                           });
                         }
                       }}
-                      className={`px-5 py-2 rounded-md font-bold text-sm hover:cursor-pointer transition-all ${
-                        st.id === id
+                      className={`px-5 py-2 rounded-md font-bold text-sm hover:cursor-pointer transition-all ${st.id === id
                           ? "bg-alpha-blue text-white shadow-blue-100 cursor-default"
                           : "bg-white text-slate-500 border border-slate-200 hover:border-alpha-blue hover:text-alpha-blue"
-                      }`}
+                        }`}
                     >
                       {formatHHmm(st.time)}
                     </button>
@@ -387,16 +386,15 @@ export const Booking = () => {
                               disabled={
                                 seat.status !== "AVAILABLE" || !seat.usable
                               }
-                              className={`h-6 rounded text-[12px] font-semibold border transition-all flex items-center justify-center ${
-                                (seat.seatType?.toLowerCase() || "").includes(
-                                  "đôi",
-                                ) ||
-                                (seat.seatType?.toLowerCase() || "").includes(
-                                  "couple",
-                                )
+                              className={`h-6 rounded text-[12px] font-semibold border transition-all flex items-center justify-center ${(seat.seatType?.toLowerCase() || "").includes(
+                                "đôi",
+                              ) ||
+                                  (seat.seatType?.toLowerCase() || "").includes(
+                                    "couple",
+                                  )
                                   ? "w-13.5"
                                   : "w-6"
-                              } ${getSeatClass(seat)}`}
+                                } ${getSeatClass(seat)}`}
                             >
                               {loadingSeatId === seat.seatId ? (
                                 <Loader2 className="animate-spin" size={12} />
@@ -569,11 +567,10 @@ export const Booking = () => {
                   <Button
                     onClick={() => void handleCreateSession()}
                     disabled={selectedSeats.length === 0 || creatingSession}
-                    className={`w-full py-4 text-base transition-all hover:cursor-pointer ${
-                      selectedSeats.length > 0
+                    className={`w-full py-4 text-base transition-all hover:cursor-pointer ${selectedSeats.length > 0
                         ? "bg-alpha-orange text-white hover:bg-orange-600 active:scale-[0.98]"
                         : "bg-slate-100 text-slate-300 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     {creatingSession ? "Đang xử lý..." : "Tiếp tục"}
                   </Button>

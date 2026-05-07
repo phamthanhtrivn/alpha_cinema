@@ -4,13 +4,15 @@ import MovieItem from '../../components/client/MovieCard';
 import { movieService } from '../../services/movie.service';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import ScheduleSearchBar from '../../components/client/ScheduleSearchBar';
+import BannerSlider from '../../components/client/BannerSlider';
 
 type Tab = 'NOW_SHOWING' | 'UPCOMING';
 
 const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('NOW_SHOWING');
 
-  const { data: movies = [], isLoading, isFetching } = useQuery({
+  const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies', activeTab],
     queryFn: () => movieService.clientGetMovie(activeTab, '').then(res => res.data.content),
     staleTime: 1000 * 60 * 5,
@@ -18,20 +20,12 @@ const Home: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Hero Section */}
-      <Section className="bg-slate-50 py-24">
-        <Container className="text-center">
-          <span className="text-alpha-blue font-bold tracking-widest uppercase text-xs">Phim hot tuần này</span>
-          <h1 className="text-5xl md:text-7xl font-black mt-4 mb-8 tracking-tighter text-slate-900 leading-tight">MUA VÉ XEM PHIM <br className="hidden md:block" /> TRỰC TUYẾN</h1>
-          <div className="flex justify-center space-x-4">
-            <button className="bg-alpha-blue text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-blue-100 hover:scale-105 transition-transform">XEM PHIM NGAY</button>
-            <button className="border-2 border-slate-200 text-slate-800 px-10 py-4 rounded-full font-bold hover:bg-slate-100 transition-colors">TÌM RẠP CHIẾU</button>
-          </div>
-        </Container>
-      </Section>
+      <BannerSlider />
+
+      <ScheduleSearchBar />
 
       {/* Movie Section */}
-      <Section className="py-20">
+      <Section>
         <Container>
           {/* Header + Tabs */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-12">

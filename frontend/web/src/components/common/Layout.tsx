@@ -12,7 +12,7 @@ export const Container: React.FC<ContainerProps> = ({ children, className = '' }
 );
 
 export const Section: React.FC<ContainerProps> = ({ children, className = '' }) => (
-  <section className={`py-12 ${className}`}>
+  <section className={`py-10 ${className}`}>
     {children}
   </section>
 );

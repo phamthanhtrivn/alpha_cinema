@@ -95,9 +95,6 @@ function App() {
         <Route element={<MainLayout />}>
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
-            <Route path="/booking/:id" element={<Booking />} />
-            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
-            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
           </Route>
@@ -117,6 +114,9 @@ function App() {
             }
           >
             <Route path="/profile" element={<Profile />} />
+            <Route path="/booking/:id" element={<Booking />} />
+            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
+            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
           </Route>
         </Route>
 

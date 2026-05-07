@@ -2,6 +2,7 @@ package com.movieticket.notification.service;
 
 import com.movieticket.notification.event.model.OrderProductItem;
 import com.movieticket.notification.event.model.OrderSuccessfulEvent;
+import com.movieticket.notification.event.model.SendOTPEvent;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -219,5 +220,37 @@ public class EmailService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
+    }
+
+    //Thanh Tuấn
+    public boolean sendOTPEmail(SendOTPEvent event) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(event.getUserEmail());
+            helper.setSubject(event.getSubject());
+
+            String htmlContent = buildOtpEmailHtml(event.getContent());
+
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            return true;
+
+        } catch (MessagingException ex) {
+            System.err.println("Gửi OTP thất bại: " + ex.getMessage());
+            return false;
+        }
+    }
+    private String buildOtpEmailHtml(String otp) {
+        return "<div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd;'>" +
+                "<h2 style='color: #e50914;'>🎬 ALPHA CINEMA</h2>" +
+                "<p>Bạn đang thực hiện thay đổi thông tin tài khoản.</p>" +
+                "<p>Mã xác thực của bạn là:</p>" +
+                "<h1 style='color: #333; letter-spacing: 5px; background: #f4f4f4; padding: 10px; display: inline-block;'>" + otp + "</h1>" +
+                "<p style='color: #888; font-size: 12px;'>Mã này có hiệu lực trong 5 phút. Vui lòng không cung cấp mã này cho bất kỳ ai.</p>" +
+                "</div>";
     }
 }

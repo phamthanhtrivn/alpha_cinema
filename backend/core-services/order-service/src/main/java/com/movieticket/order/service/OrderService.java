@@ -1,20 +1,31 @@
 package com.movieticket.order.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.movieticket.order.client.CinemaClient;
+import com.movieticket.order.client.ProductClient;
 import com.movieticket.order.common.ApiResponse;
 import com.movieticket.order.dto.CheckoutEmployeeRequest;
+import com.movieticket.order.dto.CinemaRoomExternalDTO;
+import com.movieticket.order.dto.client.*;
 import com.movieticket.order.entity.*;
 import com.movieticket.order.exception.BusinessException;
+import com.movieticket.order.model.cache.ProductCache;
 import com.movieticket.order.repository.OrderDataiReposioty;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.repository.ShowScheduleDetailRepository;
+import com.movieticket.order.util.mapper.OrderHistoryMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +33,11 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ShowScheduleDetailRepository showScheduleDetailRepository;
     private final OrderDataiReposioty orderDataiReposioty;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final RestTemplate restTemplate;
-
+    private final ProductClient productClient;
+    private final CinemaClient cinemaClient;
+    private final OrderHistoryMapper orderHistoryMapper;
 
     public String paymentByCash(String userID, String cinemaID, CheckoutEmployeeRequest request) {
         Order newOrder = createAndSaveFullOrder(userID, cinemaID, request);
@@ -106,5 +120,29 @@ public class OrderService {
         orderDataiReposioty.deleteByOrderId(orderId);
         showScheduleDetailRepository.deleteByOrderId(orderId);
         orderRepository.deleteById(orderId);
+    }
+
+    public List<OrderHistoryResponse> customerTicketBookHistory(String customerId) {
+        List<Order> orders = orderRepository.findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
+                customerId, List.of(OrderStatus.PAID, OrderStatus.CONFIRMED));
+
+        if (orders.isEmpty()) return List.of();
+
+        // Gom id suất chiếu
+        List<String> scheduleIds = orders.stream().map(o -> o.getShowScheduleDetails().get(0).getShowScheduleId()).distinct().toList();
+
+        return productClient.getSchedulesBatch(scheduleIds).flatMap(schedules -> {
+            var scheduleMap = schedules.stream().collect(Collectors.toMap(ShowScheduleSnapshot::getId, s -> s));
+            var roomIds = schedules.stream().map(ShowScheduleSnapshot::getRoomId).distinct().toList();
+
+            return cinemaClient.getRoomsBatch(roomIds).map(rooms -> {
+                var roomMap = rooms.stream().collect(Collectors.toMap(CinemaRoomExternalDTO::getRoomId, r -> r));
+
+                // MAP DỮ LIỆU: seats và products sẽ là null/empty
+                return orders.stream().map(order ->
+                        orderHistoryMapper.toSummaryResponse(order, scheduleMap, roomMap)
+                ).toList();
+            });
+        }).block();
     }
 }

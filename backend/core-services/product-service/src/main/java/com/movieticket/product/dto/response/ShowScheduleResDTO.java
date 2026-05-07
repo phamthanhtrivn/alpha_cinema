@@ -2,6 +2,7 @@ package com.movieticket.product.dto.response;
 
 import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.TranslationType;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
 public class ShowScheduleResDTO {
     private String id;
     private String movieId;
