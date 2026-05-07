@@ -73,4 +73,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
     List<java.sql.Date> findActiveDatesByMovieAndCinema(
             @Param("movieId") String movieId,
             @Param("cinemaId") String cinemaId);
+
+    @Query("SELECT s FROM ShowSchedule s JOIN FETCH s.movie WHERE s.id IN :ids")
+    List<ShowSchedule> findAllByIdWithMovie(@Param("ids") List<String> ids);
 }

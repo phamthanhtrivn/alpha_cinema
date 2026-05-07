@@ -26,4 +26,12 @@ export const customerService = {
     const response = await apiClient.put(`/customers/change-password`, data);
     return response.data;
   },
+  requestUpdateEmail: async (newEmail: string) => {
+    const response = await apiClient.post(`/customers/email/request-update`, { newEmail });
+    return response.data;
+  },
+  verifyUpdateEmail: async (data: { newEmail: string; otp: string }) => {
+    const response = await apiClient.post(`/customers/email/verify-update`, data);
+    return response.data;
+  },
 };

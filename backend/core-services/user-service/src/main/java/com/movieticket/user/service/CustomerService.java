@@ -1,31 +1,38 @@
 package com.movieticket.user.service;
 
-import com.movieticket.user.dto.request.ChangePasswordDTO;
-import com.movieticket.user.dto.request.CustomerUpdateProfileDTO;
-import com.movieticket.user.dto.request.PasswordInfo;
-import com.movieticket.user.dto.request.SearchCustomerDto;
+import com.movieticket.user.dto.request.*;
 import com.movieticket.user.dto.response.CustomerProfileDTO;
 import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.entity.Customer;
+import com.movieticket.user.event.model.SendOTPEvent;
+import com.movieticket.user.event.producer.CustomerProducer;
 import com.movieticket.user.exception.BusinessException;
 import com.movieticket.user.repository.CustomerRepository;
 import com.movieticket.user.repository.UserRepository;
 import com.movieticket.user.utils.UserUtil;
 import com.movieticket.user.utils.mapper.CustomerMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StringRedisTemplate redisTemplate;
+    private final CustomerProducer customerProducer;
 
     public Page<CustomerResponseDto> getAllCustomers(SearchCustomerDto searchCustomerDto, Pageable pageable) {
         Page<Customer> customers = customerRepository.searchAllCustomers(
@@ -89,5 +96,59 @@ public class CustomerService {
         }
 
         userRepository.updatePassword(userId, passwordEncoder.encode(dto.getNewPassword()));
+    }
+
+    @Transactional(readOnly = true)
+    public void requestUpdateEmail(String userId, String email) {
+        if (customerRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email này đã được sử dụng!");
+        }
+
+        String redisKey = "email-update:otp:" + userId;
+
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+        if (ttl != null && ttl > 240) { // Nếu mã cũ còn hơn 4 phút (mới gửi được < 1 phút)
+            throw new RuntimeException("Vui lòng đợi 60 giây trước khi yêu cầu mã mới!");
+        }
+
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+
+        redisTemplate.opsForValue().set(redisKey, otp + ":" + email, 5, TimeUnit.MINUTES);
+
+        SendOTPEvent event = SendOTPEvent.builder()
+                .userEmail(email)
+                .subject("Xác nhận thay đổi Email - Alpha Cinema")
+                .content(otp)
+                .type("EMAIL_UPDATE")
+                .build();
+
+        customerProducer.sendOtpEmail(event);
+    }
+
+    @Transactional
+    public String verifyAndUpdateEmail(String userId, EmailVerifyReq req) {
+        String redisKey = "email-update:otp:" + userId;
+        String data = redisTemplate.opsForValue().get(redisKey);
+
+        if (data == null) {
+            throw new RuntimeException("Mã OTP đã hết hạn");
+        }
+
+        String[] parts = data.split(":");
+        String savedOtp = parts[0];
+        String newEmail = parts[1];
+
+        if (!savedOtp.equals(req.getOtp())) {
+            throw new RuntimeException("Mã OTP không chính xác vui lòng thử lại");
+        }
+
+        Customer customer = customerRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        customer.setEmail(newEmail);
+        customerRepository.save(customer);
+
+        redisTemplate.delete(redisKey);
+        log.info("User {} đã đổi email sang {} thành công", userId, newEmail);
+        return newEmail;
     }
 }

@@ -1,13 +1,12 @@
 package com.movieticket.user.controller;
 
 import com.movieticket.user.common.ApiResponse;
-import com.movieticket.user.dto.request.ChangePasswordDTO;
-import com.movieticket.user.dto.request.CustomerUpdateProfileDTO;
-import com.movieticket.user.dto.request.SearchCustomerDto;
+import com.movieticket.user.dto.request.*;
 import com.movieticket.user.dto.response.CustomerProfileDTO;
 import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.service.CustomerService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -77,5 +76,21 @@ public class CustomerController {
     ) {
         customerService.changePassword(userId, dto);
         return ResponseEntity.ok("Đổi mật khẩu thành công");
+    }
+
+    @PostMapping("/email/request-update")
+    public ResponseEntity<String> requestUpdate(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody EmailUpdateReq req) {
+        customerService.requestUpdateEmail(userId, req.getNewEmail());
+        return ResponseEntity.ok("Mã OTP đã được gửi vào Email mới của bạn");
+    }
+
+    @PostMapping("/email/verify-update")
+    public ResponseEntity<ApiResponse<String>> verifyUpdate(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody EmailVerifyReq req) {
+        String newEmail = customerService.verifyAndUpdateEmail(userId, req);
+        return ResponseEntity.ok(ApiResponse.success(newEmail, "Cập nhật Email thành công!"));
     }
 }

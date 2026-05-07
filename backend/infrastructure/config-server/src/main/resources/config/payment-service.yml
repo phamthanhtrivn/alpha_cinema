@@ -24,7 +24,8 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-       spring.json.add.type.headers: false
+       spring.json.add.type.headers: true
+       spring.json.type.mapping: "payment_result_event:com.movieticket.payment.event.model.PaymentResultEvent"
 
 eureka:
   client:

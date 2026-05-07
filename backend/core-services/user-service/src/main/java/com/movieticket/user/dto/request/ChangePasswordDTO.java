@@ -9,7 +9,6 @@ import lombok.Data;
 @Data
 @Builder
 
-
 public class ChangePasswordDTO {
     @NotBlank(message = "Hãy nhập mật khẩu hiện tại")
     private String currentPassword;

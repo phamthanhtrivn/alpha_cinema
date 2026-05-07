@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 public class CinemaRoomInfoDTO {
+    private String roomId;
     private String cinemaName;
     private String roomNumber;
 }

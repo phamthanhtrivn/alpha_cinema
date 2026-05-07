@@ -316,4 +316,25 @@ public class ShowScheduleService {
                 .map(java.sql.Date::toLocalDate)
                 .toList();
     }
+
+    public List<ShowScheduleResDTO> getShowScheduleSummaryByIds(List<String> ids) {
+        List<ShowSchedule> schedules = showScheduleRepository.findAllById(ids);
+
+        return schedules.stream()
+                .map(schedule -> {
+                    Movie movie = schedule.getMovie();
+
+                    return ShowScheduleResDTO.builder()
+                            .id(schedule.getId())
+                            .movieTitle(movie != null ? movie.getTitle() : "N/A")
+                            .movieThumbnailUrl(movie != null ? movie.getThumbnailUrl() : null)
+                            .roomId(schedule.getRoomId())
+                            .ageType(movie != null ? movie.getAgeType().getName() : null)
+                            .projectionType(schedule.getProjectionType())
+                            .translationType(schedule.getTranslationType())
+                            .startTime(schedule.getStartTime())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 }
