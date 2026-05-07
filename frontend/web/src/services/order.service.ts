@@ -22,4 +22,9 @@ export const orderService = {
     const response = await apiClient.get(`/orders/${id}`);
     return response.data as ApiResponse<OrderDetail>;
   },
-};
+  getOrderHistory: async () => {
+    const response = await apiClient.get(`/orders/my-orders`);
+    console.log(response.data);
+    return response.data;
+  }
+}

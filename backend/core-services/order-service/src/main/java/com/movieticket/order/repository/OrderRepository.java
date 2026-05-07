@@ -2,6 +2,7 @@ package com.movieticket.order.repository;
 
 import com.movieticket.order.entity.Order;
 import org.springframework.data.jpa.repository.EntityGraph;
+import com.movieticket.order.entity.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,9 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
 	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
 	List<Order> findDetailedByIdIn(Collection<String> ids);
+
+    List<Order> findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
+            String customerId,
+            List<OrderStatus> statuses
+    );
 }

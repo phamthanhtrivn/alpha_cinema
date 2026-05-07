@@ -1,6 +1,7 @@
 package com.movieticket.notification.event.consumer;
 
 import com.movieticket.notification.event.model.OrderSuccessfulEvent;
+import com.movieticket.notification.event.model.SendOTPEvent;
 import com.movieticket.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,6 +43,17 @@ public class OrderSuccessfulEventListener {
         }
         if (event.getOrderId() != null && !event.getOrderId().isBlank()) {
             redisTemplate.delete("checkout:session:order:" + event.getOrderId());
+        }
+    }
+
+    //Thanh Tuấn viết ké
+    @KafkaListener(topics = "otp-events", groupId = "notification-otp-group")
+    public void handleOtp(SendOTPEvent event) {
+        boolean isSent = emailService.sendOTPEmail(event);
+        if (isSent) {
+            System.out.println("OTP đã được gửi thành công đến " + event.getUserEmail());
+        } else {
+            System.out.println("OTP gửi thất bại " + event.getUserEmail());
         }
     }
 }

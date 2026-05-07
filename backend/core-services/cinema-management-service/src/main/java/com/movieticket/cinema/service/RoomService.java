@@ -147,4 +147,20 @@ public class RoomService {
                         Room::getRoomNumber
                 ));
     }
+    
+    public List<CinemaRoomInfoDTO> getBatchCinemaAndRoomName(List<String> roomIds) {
+        if (roomIds == null || roomIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<RoomCinemaNameProjection> projections = roomRepository.getRoomsAndCinemaNames(roomIds);
+
+        return projections.stream()
+                .map(p -> CinemaRoomInfoDTO.builder()
+                        .roomId(p.getRoomId())
+                        .cinemaName(p.getCinemaName())
+                        .roomNumber(p.getRoomNumber())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }

@@ -9,6 +9,7 @@ import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.dto.client.BookingLayoutDTO;
 import com.movieticket.product.dto.client.CinemaShowtimeDTO;
 import com.movieticket.product.dto.client.ShowtimeDTO;
+import com.movieticket.product.dto.admin.response.SelectionDTO;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.service.ShowScheduleLookupService;
 import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
@@ -18,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -111,9 +114,9 @@ public class ShowScheduleController {
         return ResponseEntity.ok(ApiResponse.success(data, ""));
     }
 
-     @GetMapping("/movies-and-schedules")
+    @GetMapping("/movies-and-schedules")
     public ApiResponse<List<MoiveAndShowScheduleReponse>> getMoiveAndSchedules(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId) {
-        try{
+        try {
             List<MoiveAndShowScheduleReponse> list = showScheduleService.getMovieAndSchedulesForPos(cinemaHeaderId);
             return ApiResponse.success(list, "Lấy danh sách phim và suất chiếu thành công");
         } catch (Exception e) {
@@ -130,4 +133,22 @@ public class ShowScheduleController {
         return ResponseEntity.ok(ApiResponse.success(showSchedules, "Show schedules retrieved successfully"));
     }
 
+    @GetMapping("/public/cinema-option-by-movie/{movieId}")
+    ResponseEntity<ApiResponse<List<SelectionDTO>>> getCinemaOptionByMovie(
+            @PathVariable String movieId
+    ) {
+        List<SelectionDTO> data =
+                showScheduleService.getCinemasByMovie(movieId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
+    }
+
+    @GetMapping("/public/active-date-for-movie-cinema")
+    ResponseEntity<ApiResponse<List<LocalDate>>> getCinemaOptionByMovie(
+            @Param("movieId") String movieId,
+            @Param("cinemaId") String cinemaId
+    ) {
+        List<LocalDate> data =
+                showScheduleService.getDatesByMovieAndCinema(movieId, cinemaId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
+    }
 }

@@ -27,4 +27,9 @@ public class CinemaInternalController {
         CinemaRoomInfoDTO data = roomService.getCinemaAndRoomName(roomId);
         return ResponseEntity.ok(data);
     }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<CinemaRoomInfoDTO>> getBatchRooms(@RequestBody List<String> roomIds) {
+        return ResponseEntity.ok(roomService.getBatchCinemaAndRoomName(roomIds));
+    }
 }

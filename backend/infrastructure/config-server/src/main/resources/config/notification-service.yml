@@ -14,11 +14,16 @@ spring:
     consumer:
       group-id: notification-service
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
-        spring.json.value.default.type: "com.movieticket.notification.event.model.OrderSuccessfulEvent"
-        spring.json.use.type.headers: false
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.use.type.headers: true
+        spring.json.trusted.packages: "com.movieticket.*"
+        spring.json.type.mapping: >
+          otp_event:com.movieticket.notification.event.model.SendOTPEvent,
+          order_event:com.movieticket.notification.event.model.OrderSuccessfulEvent
 
   mail:
     host: smtp.gmail.com

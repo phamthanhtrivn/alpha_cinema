@@ -63,4 +63,19 @@ export const showScheduleService = {
     );
     return response.data;
   },
+  getCinemaOptionByMovie: async (movieId: string) => {
+    const response = await apiClient.get(
+      `/show-schedules/public/cinema-option-by-movie/${movieId}`,
+    );
+    return response.data;
+  },
+  getActiveDateForMovieCinema: async (movieId: string, cinemaId: string) => {
+    const response = await apiClient.get(
+      `/show-schedules/public/active-date-for-movie-cinema`,
+      {
+        params: { movieId, cinemaId },
+      },
+    );
+    return response.data;
+  },
 };

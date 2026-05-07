@@ -301,4 +301,40 @@ public class ShowScheduleService {
                          .build())
                  .collect(Collectors.toList());
     }
+
+    //Ha Thanh Tuan
+    public List<SelectionDTO> getCinemasByMovie(String movieId) {
+        List<String> cinemaIds = showScheduleRepository.findActiveCinemaIdsByMovie(movieId);
+        if (cinemaIds.isEmpty()) return Collections.emptyList();
+
+        return cinemaClient.getCinemaSelectionsByIds(cinemaIds);
+    }
+
+    public List<LocalDate> getDatesByMovieAndCinema(String movieId, String cinemaId) {
+        return showScheduleRepository.findActiveDatesByMovieAndCinema(movieId, cinemaId)
+                .stream()
+                .map(java.sql.Date::toLocalDate)
+                .toList();
+    }
+
+    public List<ShowScheduleResDTO> getShowScheduleSummaryByIds(List<String> ids) {
+        List<ShowSchedule> schedules = showScheduleRepository.findAllById(ids);
+
+        return schedules.stream()
+                .map(schedule -> {
+                    Movie movie = schedule.getMovie();
+
+                    return ShowScheduleResDTO.builder()
+                            .id(schedule.getId())
+                            .movieTitle(movie != null ? movie.getTitle() : "N/A")
+                            .movieThumbnailUrl(movie != null ? movie.getThumbnailUrl() : null)
+                            .roomId(schedule.getRoomId())
+                            .ageType(movie != null ? movie.getAgeType().getName() : null)
+                            .projectionType(schedule.getProjectionType())
+                            .translationType(schedule.getTranslationType())
+                            .startTime(schedule.getStartTime())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 }

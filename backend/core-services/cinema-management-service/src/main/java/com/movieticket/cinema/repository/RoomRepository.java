@@ -49,4 +49,8 @@ public interface RoomRepository extends JpaRepository<Room, String> {
 
     List<Room> findByIdIn(List<String> ids);
 
+    @Query("SELECT r.id as roomId, r.roomNumber as roomNumber, c.name as cinemaName " +
+            "FROM Room r JOIN Cinema c ON r.cinema.id = c.id " +
+            "WHERE r.id IN :roomIds")
+    List<RoomCinemaNameProjection> getRoomsAndCinemaNames(@Param("roomIds") List<String> roomIds);
 }
