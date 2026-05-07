@@ -55,11 +55,25 @@ export interface MoviePublicDetail {
   trailerUrl: string;
 }
 
-export const ALL_GENRES = ["Hành động", "Kinh dị", "Tình cảm", "Hài hước", "Viễn tưởng", "Phiêu lưu"];
+export const ALL_GENRES = [
+  "Hành động",
+  "Kinh dị",
+  "Tình cảm",
+  "Hài hước",
+  "Viễn tưởng",
+  "Phiêu lưu",
+];
 export const ALL_PROJECTION = ["2D", "3D", "IMAX"];
+
+export const ALL_PROJECTION_OPTIONS = [
+  { label: "2D", value: "_2D" },
+  { label: "3D", value: "_3D" },
+  { label: "IMAX", value: "IMAX" },
+];
+
 export const ALL_TRANSLATION = [
   { label: "Lồng tiếng", value: "DUBBING" },
   { label: "Phụ đề", value: "SUBTITLES" },
-  { label: "Thuyết minh", value: "VOICE_OVER" }
+  { label: "Thuyết minh", value: "VOICE_OVER" },
 ];
 export const ALL_STATUS = ["UPCOMING", "NOW_SHOWING", "ENDED"];
