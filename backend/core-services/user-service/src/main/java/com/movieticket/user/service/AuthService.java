@@ -38,7 +38,7 @@ public class AuthService {
     }
 
     public UserResponse login(LoginRequest loginRequest){
-        Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
+        Optional<User> userOptional = userRepository.findByEmailAndStatus(loginRequest.getEmail(), true);
         String roleRequest = loginRequest.getRole();
 
         if (userOptional.isEmpty()) {
@@ -83,7 +83,7 @@ public class AuthService {
     };
 
     public boolean forgetPassword(ForgotPasswordRequest request){
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+        Optional<User> userOptional = userRepository.findByEmailAndStatus(request.getEmail(), true);
         if (userOptional.isEmpty()) {
             throw new BusinessException("Email không tồn tại !");
         }
@@ -97,7 +97,7 @@ public class AuthService {
         if(!resetPassword.getPassword().equals(resetPassword.getPasswordConfirm())){
             throw new BusinessException("PasswordConfirm không khớp");
         }
-        User user = userRepository.findByEmail(resetPassword.getEmail()).orElse(null);
+        User user = userRepository.findByEmailAndStatus(resetPassword.getEmail(), true).orElse(null);
         user.setPassword(passwordEncoder.encode(resetPassword.getPassword()));
         userRepository.save(user);
         return true;

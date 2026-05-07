@@ -75,7 +75,7 @@ public class SeatService {
     public List<SeatForShowScheduleResponse> getAllSeatsByShowSchedule(String showScheduleId, String roomID) {
         List<Seat> physicalSeats = seatRepository.findByRoomId(roomID);
 
-        String url = "http://localhost:8082/api/show-schedule-details/show-schedule-id/" + showScheduleId;
+        String url = "http://order-service/api/show-schedule-details/show-schedule-id/" + showScheduleId;
 
         ResponseEntity<ApiResponse<List<ShowScheduleDetailDTO>>> response = restTemplate.exchange(
                 url,

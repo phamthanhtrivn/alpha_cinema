@@ -16,6 +16,7 @@ public class ShowScheduleDto {
     private ProjectionType projectionType;
     private TranslationType translationType;
     private String roomId;
+    private Integer roomNumber;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private int availableSeat;

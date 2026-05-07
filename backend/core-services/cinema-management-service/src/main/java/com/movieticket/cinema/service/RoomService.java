@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -129,5 +130,21 @@ public class RoomService {
                 .cinemaName(projection.getCinemaName())
                 .roomNumber(projection.getRoomNumber())
                 .build();
+    }
+
+    public Map<String,Integer> getRoomNumbersByIds(List<String> roomIds){
+        if(roomIds == null || roomIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Room> rooms = roomRepository.findByIdIn(roomIds);
+        for(Room room : rooms ){
+            System.out.println(room.getRoomNumber());
+        }
+        return rooms.stream()
+                .collect(Collectors.toMap(
+                        Room::getId,
+                        Room::getRoomNumber
+                ));
     }
 }

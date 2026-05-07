@@ -15,6 +15,7 @@ interface MovieWithSchedules {
 
 interface SelectedSchedule {
   roomId: string;
+  roomNumber: number;
 }
 
 interface SeatItem {
@@ -84,7 +85,7 @@ const TicketSummaryPanel: React.FC<TicketSummaryPanelProps> = ({
 
           <div className="space-y-2 border-b border-slate-100 py-4 text-sm text-slate-600">
             <p>
-              <span className="font-semibold text-slate-800">Phòng chiếu</span> - {selectedSchedule?.roomId}
+              <span className="font-semibold text-slate-800">Phòng chiếu</span> - Phòng {selectedSchedule?.roomNumber}
             </p>
             <p>
               Suất: {" "}

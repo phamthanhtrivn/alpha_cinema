@@ -65,8 +65,11 @@ public class GoogleAuthService {
             String email = (String) payload.get("email");
             String name = (String) payload.get("name");
 
-
             Customer customer = customerRepository.findByEmail(email);
+            Customer checkStatue = customerRepository.findByEmailAndStatus(email, true);
+            if(checkStatue == null && customer != null){
+                throw new BusinessException("Tài khoản Google này đã tồn tại nhưng đang bị vô hiệu hóa. Vui lòng liên hệ hỗ trợ để được giúp đỡ.");
+            }
             UserResponse userResponse = new UserResponse();
 
             if (customer != null) {
