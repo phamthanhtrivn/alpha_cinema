@@ -54,13 +54,11 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
      @Query("SELECT s FROM ShowSchedule s " +
             "JOIN FETCH s.movie " +
             "WHERE s.cinemaId = :cinemaId " +
-            "AND s.startTime >= :now " +
             "AND s.startTime <= :endOfShift " +
             "AND s.status = true " +
             "ORDER BY s.startTime ASC")
     List<ShowSchedule> findAllSchedulesWithMovieForShift(
             @Param("cinemaId") String cinemaId,
-            @Param("now") LocalDateTime now,
             @Param("endOfShift") LocalDateTime endOfShift
     );
 }

@@ -28,7 +28,6 @@ public class CinemaController {
 
     @GetMapping
     public ApiResponse<List<Cinema>> getAllCinemas(@RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId) {
-
         System.out.println("Received X-Cinema-Id header: " + cinemaHeaderId);
         ApiResponse<List<Cinema>> api;
         try {

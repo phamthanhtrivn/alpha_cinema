@@ -21,7 +21,6 @@ public class SeatTypeController {
         return new ApiResponse<>(true,seatTypeService.getAllSeatTypes());
     }
 
-
     @GetMapping("/page")
     public ApiResponse<Page<SeatType>> getAllSeatTypes(
             @RequestParam(required = false) String name ,

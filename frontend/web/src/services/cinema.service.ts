@@ -18,10 +18,8 @@ export const cinemaService = {
     const response = await apiClient.get(`/cinemas/page`, { params });
     return response.data;
   },
-  updateCinemaStatus: async (id: string, status: boolean) => {
-    const response = await apiClient.put(`/cinemas/${id}/status`, null, {
-      params: { status },
-    });
+  getCinemaInfo: async (id: string) => {
+    const response = await apiClient.get(`/cinemas/${id}`);
     return response.data;
   },
   updateCinema: async (id: string, data: any) => {

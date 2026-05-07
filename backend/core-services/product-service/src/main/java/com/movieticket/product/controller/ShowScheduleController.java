@@ -117,6 +117,7 @@ public class ShowScheduleController {
             List<MoiveAndShowScheduleReponse> list = showScheduleService.getMovieAndSchedulesForPos(cinemaHeaderId);
             return ApiResponse.success(list, "Lấy danh sách phim và suất chiếu thành công");
         } catch (Exception e) {
+            System.err.println("Lỗi khi lấy danh sách phim và suất chiếu: " + e.getMessage());
             return ApiResponse.fail("Lỗi khi lấy danh sách phim và suất chiếu: " + e.getMessage());
         }
     }

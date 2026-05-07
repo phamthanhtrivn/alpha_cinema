@@ -47,4 +47,6 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     RoomCinemaNameProjection getRoomAndCinemaName(@Param("roomId") String roomId);
     List<Room> findByCinemaId(String cinemaId);
 
+    List<Room> findByIdIn(List<String> ids);
+
 }
