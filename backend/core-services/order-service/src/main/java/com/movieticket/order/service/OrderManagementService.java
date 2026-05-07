@@ -232,9 +232,15 @@ public class OrderManagementService {
             List<ShowScheduleDetail> showScheduleDetails,
             Map<String, ShowScheduleSnapshot> showSchedulesById
     ) {
-        OrderContext context = buildContext(order, showScheduleDetails, showSchedulesById);
-        List<OrderDetailResponse.OrderProductResponse> products = buildProductResponses(orderDetails);
-        List<OrderDetailResponse.OrderSeatResponse> seats = buildSeatResponses(showScheduleDetails, showSchedulesById);
+        java.util.concurrent.CompletableFuture<OrderContext> contextFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> buildContext(order, showScheduleDetails, showSchedulesById));
+        java.util.concurrent.CompletableFuture<List<OrderDetailResponse.OrderProductResponse>> productsFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> buildProductResponses(orderDetails));
+        java.util.concurrent.CompletableFuture<List<OrderDetailResponse.OrderSeatResponse>> seatsFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> buildSeatResponses(showScheduleDetails, showSchedulesById));
+
+        java.util.concurrent.CompletableFuture.allOf(contextFuture, productsFuture, seatsFuture).join();
+
+        OrderContext context = contextFuture.join();
+        List<OrderDetailResponse.OrderProductResponse> products = productsFuture.join();
+        List<OrderDetailResponse.OrderSeatResponse> seats = seatsFuture.join();
 
         return OrderDetailResponse.builder()
                 .id(order.getId())
@@ -277,26 +283,31 @@ public class OrderManagementService {
             List<ShowScheduleDetail> showScheduleDetails,
             Map<String, ShowScheduleSnapshot> showSchedulesById
     ) {
-        CustomerInformation customer = null;
-        if (StringUtils.hasText(order.getCustomerId())) {
-            customer = safeLookup(() -> checkoutPartnerGateway.getCustomerInformation(order.getCustomerId()));
-        }
+        java.util.concurrent.CompletableFuture<CustomerInformation> customerFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (StringUtils.hasText(order.getCustomerId())) {
+                return safeLookup(() -> checkoutPartnerGateway.getCustomerInformation(order.getCustomerId()));
+            }
+            return null;
+        });
 
         String showScheduleId = extractShowScheduleId(showScheduleDetails);
-        ShowScheduleSnapshot showSchedule;
-        RoomSnapshot room = null;
-        CinemaSnapshot cinema = null;
-        if (StringUtils.hasText(showScheduleId)) {
-            showSchedule = showSchedulesById.get(showScheduleId);
-            if (showSchedule != null) {
-                room = safeLookup(() -> checkoutPartnerGateway.getRoomSnapshot(showSchedule.getRoomId()));
-                cinema = safeLookup(() -> checkoutPartnerGateway.getCinemaSnapshot(showSchedule.getCinemaId()));
-            }
-        } else {
-            showSchedule = null;
-        }
+        final ShowScheduleSnapshot showSchedule = StringUtils.hasText(showScheduleId) ? showSchedulesById.get(showScheduleId) : null;
 
-        return new OrderContext(customer, showSchedule, room, cinema);
+        java.util.concurrent.CompletableFuture<RoomSnapshot> roomFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (showSchedule != null) {
+                return safeLookup(() -> checkoutPartnerGateway.getRoomSnapshot(showSchedule.getRoomId()));
+            }
+            return null;
+        });
+
+        java.util.concurrent.CompletableFuture<CinemaSnapshot> cinemaFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            if (showSchedule != null) {
+                return safeLookup(() -> checkoutPartnerGateway.getCinemaSnapshot(showSchedule.getCinemaId()));
+            }
+            return null;
+        });
+
+        return new OrderContext(customerFuture.join(), showSchedule, roomFuture.join(), cinemaFuture.join());
     }
 
     private List<OrderDetailResponse.OrderSeatResponse> buildSeatResponses(List<ShowScheduleDetail> details, Map<String, ShowScheduleSnapshot> showSchedulesById) {
@@ -307,22 +318,25 @@ public class OrderManagementService {
         String showScheduleId = extractShowScheduleId(details);
         ShowScheduleSnapshot showSchedule = showScheduleId == null ? null : showSchedulesById.get(showScheduleId);
 
-        Map<String, SeatSnapshot> seatSnapshotMap = checkoutPartnerGateway.getSeatsByIds(
+        java.util.concurrent.CompletableFuture<Map<String, SeatSnapshot>> seatSnapshotMapFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> checkoutPartnerGateway.getSeatsByIds(
                 details.stream().map(ShowScheduleDetail::getSeatId).filter(StringUtils::hasText).toList()
-        );
-        Map<String, TicketPriceSnapshot> ticketPriceSnapshotMap
-                = checkoutPartnerGateway.getTicketPrices(
+        ));
+        
+        java.util.concurrent.CompletableFuture<Map<String, TicketPriceSnapshot>> ticketPriceSnapshotMapFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> checkoutPartnerGateway.getTicketPrices(
                         details.stream()
                                 .map(ShowScheduleDetail::getTicketPriceId)
                                 .filter(StringUtils::hasText)
                                 .toList()
                 )
-                        .entrySet()
-                        .stream()
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> OrderUtil.mapToSnapshot(entry.getValue())
-                        ));
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> OrderUtil.mapToSnapshot(entry.getValue())
+                )));
+
+        Map<String, SeatSnapshot> seatSnapshotMap = seatSnapshotMapFuture.join();
+        Map<String, TicketPriceSnapshot> ticketPriceSnapshotMap = ticketPriceSnapshotMapFuture.join();
 
         return details.stream()
                 .map(detail -> {
