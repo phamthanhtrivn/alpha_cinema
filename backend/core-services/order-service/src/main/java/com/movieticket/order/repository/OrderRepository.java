@@ -19,6 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
 	List<Order> findDetailedByIdIn(Collection<String> ids);
 
+	@EntityGraph(attributePaths = {"showScheduleDetails"})
     List<Order> findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
             String customerId,
             List<OrderStatus> statuses

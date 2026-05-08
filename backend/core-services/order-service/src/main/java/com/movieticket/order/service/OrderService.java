@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -92,7 +93,7 @@ public class OrderService {
         ).toList();
         orderDataiReposioty.saveAll(orderDetailList);
 
-        List<ShowScheduleDetail> showScheduleDetails = request.getSeats().stream().map(seat->
+        List<ShowScheduleDetail> showScheduleDetails = request.getSeats().stream().map(seat ->
                 ShowScheduleDetail.builder()
                         .order(newOrder)
                         .seatId(seat.getSeatId())
@@ -142,6 +143,33 @@ public class OrderService {
                 return orders.stream().map(order ->
                         orderHistoryMapper.toSummaryResponse(order, scheduleMap, roomMap)
                 ).toList();
+            });
+        }).block();
+    }
+
+    public OrderHistoryResponse getOrderDetail(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+
+        String scheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
+        List<String> seatIds = order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId).distinct().toList();
+        List<String> productIds = order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct().toList();
+
+        return Mono.zip(
+                productClient.getSchedulesBatch(List.of(scheduleId)),
+                cinemaClient.getSeatsByIds(seatIds),
+                productClient.getProducts(productIds)
+        ).flatMap(tuple -> {
+            ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null : tuple.getT1().get(0);
+            Map<String, SeatSnapshot> seatMap = tuple.getT2();
+            Map<String, ProductSnapshot> productMap = tuple.getT3();
+
+            String roomId = (schedule != null) ? schedule.getRoomId() : null;
+
+            return cinemaClient.getRoomsBatch(List.of(roomId)).map(rooms -> {
+                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
+
+                return orderHistoryMapper.toDetailResponse(order, schedule, room, seatMap, productMap);
             });
         }).block();
     }
