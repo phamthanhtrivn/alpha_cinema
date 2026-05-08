@@ -1,5 +1,6 @@
 package com.movieticket.order.dto.client;
 
+import com.movieticket.order.entity.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -21,7 +22,8 @@ public class OrderHistoryResponse {
     private String roomNumber;
 
     private ShowScheduleSnapshot showScheduleSnapshot;
+    private OrderStatus status;
 
     private List<SeatSnapshot> seats;
-    private List<ProductItemDTO> products;
+    private List<ProductSnapshot> products;
 }

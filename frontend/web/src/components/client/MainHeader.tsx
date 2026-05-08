@@ -88,7 +88,7 @@ const MainHeader: React.FC = () => {
                   </Link>
 
                   <Link
-                    to="/history"
+                    to="/profile?tab=history"
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors border-t border-slate-50"
                   >
                     <History size={18} className="text-slate-700" />

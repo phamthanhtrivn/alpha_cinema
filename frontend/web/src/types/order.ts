@@ -116,15 +116,16 @@ export interface ShowScheduleSnapshot {
 
 export interface SeatSnapshot {
   id: string;
-  label: string; // Ví dụ: A1, B10
-  type: string;  // NORMAL, VIP, SWEETBOX
+  rowName: string;
+  columnName: string;
+  unitPrice: number;
 }
 
 // 4. Thông tin bắp nước (Dùng cho Item trong list)
-export interface ProductItemDTO {
+export interface ProductSnapshot {
   name: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
 }
 
 // 5. Interface CHÍNH để hứng dữ liệu từ API /history
@@ -148,5 +149,5 @@ export interface OrderHistoryItem {
   // Lưu ý: Hai trường này có thể là null/empty khi load danh sách 20 item
   // Chỉ khi vào detail mới có dữ liệu đầy đủ
   seats: SeatSnapshot[] | null;
-  products: ProductItemDTO[] | null;
+  products: ProductSnapshot[] | null;
 }

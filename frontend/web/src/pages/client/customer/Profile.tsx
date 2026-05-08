@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '@/services/customer.service';
 import { orderService } from '@/services/order.service';
@@ -11,9 +12,10 @@ import { toast } from 'react-toastify';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { Container, Section } from '@/components/common/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, FormField, SidebarAction } from './profile/ProfileUIComponents';
+import { Card, FormField, SidebarAction, AgeBadge } from './profile/ProfileUIComponents';
 import ChangePasswordModal from './profile/ChangePasswordModal';
 import ChangeEmailModal from './profile/ChangeEmailModal';
+import OrderDetailModal from './profile/OrderDetailModal';
 
 // ==============================
 // Types & Constants
@@ -52,27 +54,34 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   [OrderStatus.CANCELLED]: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-500 border border-slate-200' },
 };
 
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, className: 'bg-slate-100 text-slate-500 border border-slate-200' };
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${cfg.className}`}>{cfg.label}</span>;
-};
-
 // ==============================
-// Helper: AGE badge
+// Helper: Status Badge
 // ==============================
-const AgeBadge: React.FC<{ ageType: string }> = ({ ageType }) => (
-  <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-alpha-orange text-white">{ageType}</span>
-);
 
 // ==============================
 // Main Component
 // ==============================
 const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'profile');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && (tab === 'profile' || tab === 'history' || tab === 'notifications' || tab === 'gifts' || tab === 'policy')) {
+      setActiveTab(tab as Tab);
+    }
+  }, [searchParams]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
+
+  const handleShowOrderDetail = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsOrderDetailOpen(true);
+  };
 
   // ---- Data Fetching ----
   const { data: profile, isLoading } = useQuery<CustomerProfile>({
@@ -277,7 +286,7 @@ const ProfilePage: React.FC = () => {
             {TABS.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => setSearchParams({ tab: tab.key })}
                 className={`px-5 py-4 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${activeTab === tab.key ? 'border-alpha-blue text-alpha-blue' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
               >
                 {tab.label}
@@ -436,8 +445,14 @@ const ProfilePage: React.FC = () => {
                             return (
                               <div
                                 key={order.id}
-                                className="flex gap-3 border border-slate-100 rounded-sm p-3 hover:border-alpha-blue/30 hover:shadow-sm transition-all bg-white"
+                                onClick={() => handleShowOrderDetail(order.id)}
+                                className="relative flex gap-3 border border-slate-100 rounded-sm p-3 hover:border-alpha-blue/30 hover:shadow-sm transition-all bg-white cursor-pointer"
                               >
+                                {order.status === OrderStatus.CONFIRMED && (
+                                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">
+                                    Đã xem phim
+                                  </div>
+                                )}
                                 {/* Thumbnail */}
                                 <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-100 shrink-0">
                                   {snap.movieThumbnailUrl ? (
@@ -506,6 +521,11 @@ const ProfilePage: React.FC = () => {
       <ChangeEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
+      />
+      <OrderDetailModal
+        orderId={selectedOrderId}
+        isOpen={isOrderDetailOpen}
+        onClose={() => setIsOrderDetailOpen(false)}
       />
     </Section>
   );
