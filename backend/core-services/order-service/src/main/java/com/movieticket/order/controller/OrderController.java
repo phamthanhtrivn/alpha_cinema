@@ -56,4 +56,10 @@ public class OrderController {
 
         return ResponseEntity.ok(ApiResponse.success(history, ""));
     }
+
+    @GetMapping("/customer/{orderId}")
+    public ResponseEntity<ApiResponse<OrderHistoryResponse>> getOrderDetail(@PathVariable String orderId) {
+        OrderHistoryResponse detail = orderService.getOrderDetail(orderId);
+        return ResponseEntity.ok(ApiResponse.success(detail,""));
+    }
 }

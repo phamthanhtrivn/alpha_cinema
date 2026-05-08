@@ -2,6 +2,7 @@ import { apiClient } from "./api";
 import type {
   ApiResponse,
   OrderDetail,
+  OrderHistoryItem,
   OrderSearchParams,
   OrderSummary,
   PageResponse,
@@ -22,9 +23,13 @@ export const orderService = {
     const response = await apiClient.get(`/orders/${id}`);
     return response.data as ApiResponse<OrderDetail>;
   },
+
+  getOrderHistoryDetail: async (id: string) => {
+    const response = await apiClient.get(`/orders/customer/${id}`);
+    return response.data as ApiResponse<OrderHistoryItem>;
+  },
   getOrderHistory: async () => {
     const response = await apiClient.get(`/orders/my-orders`);
-    console.log(response.data);
     return response.data;
   }
 }

@@ -93,3 +93,12 @@ export const SidebarAction: React.FC<{
   if (to) return <Link to={to} className="block">{content}</Link>;
   return <div onClick={onClick} className="block">{content}</div>;
 };
+
+// ===========================
+// AgeBadge Component
+// ===========================
+export const AgeBadge: React.FC<{ ageType: string }> = ({ ageType }) => (
+  <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-alpha-orange text-white whitespace-nowrap inline-block">
+    {ageType}
+  </span>
+);
