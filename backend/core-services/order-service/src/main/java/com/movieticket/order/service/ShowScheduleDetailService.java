@@ -101,8 +101,67 @@ public class ShowScheduleDetailService {
         showScheduleDetailRepository.deleteByOrder_Id(orderId);
     }
 
+    public void lockSeats(String showScheduleId, List<String> seatIds) {
+        List<String> normalizedSeatIds = normalizeSeatIds(seatIds);
+
+        if (showScheduleId == null || showScheduleId.isBlank() || normalizedSeatIds.isEmpty()) {
+            return;
+        }
+
+        ensureSeatsNotBookedBySeatIds(showScheduleId, normalizedSeatIds);
+
+        List<String> acquiredKeys = new ArrayList<>();
+        for (String seatId : normalizedSeatIds) {
+            String key = buildSeatLockKey(showScheduleId, seatId);
+
+            Boolean success = redisTemplate.opsForValue()
+                    .setIfAbsent(key, "LOCKED", SEAT_LOCK_MINUTES, TimeUnit.MINUTES);
+
+            if (!Boolean.TRUE.equals(success)) {
+                acquiredKeys.forEach(redisTemplate::delete);
+                throw new BusinessException("Ghế bị khóa tạm thời do có người khác đang chọn");
+            }
+            acquiredKeys.add(key);
+        }
+    }
+
+    public void unlockSeats(String showScheduleId, List<String> seatIds) {
+        List<String> normalizedSeatIds = normalizeSeatIds(seatIds);
+
+        if (showScheduleId == null || showScheduleId.isBlank() || normalizedSeatIds.isEmpty()) {
+            return;
+        }
+
+        normalizedSeatIds.stream()
+                .map(seatId -> buildSeatLockKey(showScheduleId, seatId))
+                .forEach(redisTemplate::delete);
+    }
+
     private String buildSeatLockKey(String showScheduleId, String seatId) {
         return "seat:lock:" + showScheduleId + ":" + seatId;
+    }
+
+    private void ensureSeatsNotBookedBySeatIds(String showScheduleId, List<String> seatIds) {
+        List<String> reservedSeatIds = showScheduleDetailRepository.findReservedSeatIds(
+                showScheduleId,
+                seatIds,
+                EnumSet.of(OrderStatus.FAILED, OrderStatus.EXPIRED, OrderStatus.CANCELLED)
+        );
+
+        if (!reservedSeatIds.isEmpty()) {
+            throw new BusinessException("Ghế đã được đặt trong suất chiếu này: " + String.join(", ", reservedSeatIds));
+        }
+    }
+
+    private List<String> normalizeSeatIds(List<String> seatIds) {
+        if (seatIds == null) {
+            return List.of();
+        }
+
+        return seatIds.stream()
+                .filter(seatId -> seatId != null && !seatId.isBlank())
+                .distinct()
+                .toList();
     }
 
     public Map<String, String> getBookedSeatMap(String showScheduleId) {

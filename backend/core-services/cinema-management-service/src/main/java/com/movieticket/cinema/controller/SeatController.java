@@ -1,6 +1,7 @@
 package com.movieticket.cinema.controller;
 
 import com.movieticket.cinema.api_response.ApiResponse;
+import com.movieticket.cinema.dto.InfoBookingResponse;
 import com.movieticket.cinema.dto.SeatLookupDto;
 import com.movieticket.cinema.dto.SeatForShowScheduleResponse;
 import com.movieticket.cinema.dto.SeatRequest;
@@ -8,8 +9,10 @@ import com.movieticket.cinema.entity.Seat;
 import com.movieticket.cinema.service.SeatService;
 import org.hibernate.sql.exec.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.function.EntityResponse;
 
 import java.util.List;
 
@@ -46,8 +49,6 @@ public class SeatController {
         }
     }
 
-    
-
     @GetMapping("/showSchedule")
     public ApiResponse<List<SeatForShowScheduleResponse>> getAllSeatsByShowSchedule(
             @RequestParam(required = true) String showScheduleId,
@@ -58,6 +59,13 @@ public class SeatController {
         } catch (ExecutionException e) {
             return new ApiResponse<>(false, e.getMessage());
         }
+    }
+
+    @GetMapping("/get-info-for-booking")
+    public ResponseEntity<ApiResponse<InfoBookingResponse>> getInfoForBooking(
+            @RequestParam(required = true) List<String> seatIds
+    ){
+        return ResponseEntity.ok().body(new ApiResponse<>(true, seatService.getInfoForBooking(seatIds)));
     }
 }
 

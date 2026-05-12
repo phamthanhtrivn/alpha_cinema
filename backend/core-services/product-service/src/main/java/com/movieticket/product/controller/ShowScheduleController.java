@@ -9,6 +9,7 @@ import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.dto.client.BookingLayoutDTO;
 import com.movieticket.product.dto.client.CinemaShowtimeDTO;
 import com.movieticket.product.dto.client.ShowtimeDTO;
+import com.movieticket.product.dto.response.InfoBooking;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.service.ShowScheduleLookupService;
 import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
@@ -128,6 +129,14 @@ public class ShowScheduleController {
     ) {
         List<ShowScheduleLookupDto> showSchedules = showScheduleLookupService.getShowSchedulesByIds(ids);
         return ResponseEntity.ok(ApiResponse.success(showSchedules, "Show schedules retrieved successfully"));
+    }
+
+    @GetMapping("/get-info-for-booking")
+    public ResponseEntity<ApiResponse<InfoBooking> > getInfoForBooking(
+            @RequestParam(required = true) String showScheduleId,
+            @RequestParam(required = true) List<String> productIds
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(showScheduleService.getInfoBooking(showScheduleId, productIds), "Lấy thông tin booking thành công"));
     }
 
 }

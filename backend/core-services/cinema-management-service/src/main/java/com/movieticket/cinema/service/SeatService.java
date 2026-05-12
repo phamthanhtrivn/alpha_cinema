@@ -9,13 +9,16 @@ import com.movieticket.cinema.repository.RoomRepository;
 import com.movieticket.cinema.repository.SeatRepository;
 import com.movieticket.cinema.repository.SeatTypeRepository;
 import com.movieticket.cinema.util.GenerateID;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.sql.exec.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -25,15 +28,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SeatService {
-    @Autowired
-    private SeatRepository seatRepository;
-    @Autowired
-    private RoomRepository roomRepository;
-    @Autowired
-    private SeatTypeRepository seatTypeRepository;
-    @Autowired
-    private RestTemplate restTemplate;
+    private final SeatRepository seatRepository;
+    private final RoomRepository roomRepository;
+    private  final SeatTypeRepository seatTypeRepository;
+    private final RestTemplate restTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public List<Seat> getAllSeatsByRoom(String id) {
         return seatRepository.findByRoom_Id(id);
@@ -91,11 +92,16 @@ public class SeatService {
                     .collect(Collectors.toList());
         }
 
+        // Get locked seats from Redis
+        List<String> lockedSeatIds = getLockedSeatIds(showScheduleId);
+
         List<String> finalBookedSeatIds = bookedSeatIds;
         return physicalSeats.stream().map(seat -> {
             String currentStatus = "AVAILABLE";
 
-            if (finalBookedSeatIds.contains(seat.getId())) {
+            if (lockedSeatIds.contains(seat.getId())) {
+                currentStatus = "LOCKED";
+            } else if (finalBookedSeatIds.contains(seat.getId())) {
                 currentStatus = "BOOKED";
             }
 
@@ -162,6 +168,55 @@ public class SeatService {
                         .isUsable((Boolean) row[5])
                         .build())
                 .toList();
+    }
+
+    public InfoBookingResponse getInfoForBooking(List<String> seatIds) {
+        List<Seat> seats = seatRepository.findByIdIn(seatIds);
+
+        if(seats.isEmpty()) {
+            throw new ExecutionException("Không tìm thấy ghế nào với các ID đã cho");
+        }
+
+        Integer roomNumber = seats.get(0).getRoom().getRoomNumber();
+
+        List<InfoBookingResponse.Seat> seatResponses = seats.stream()
+                .map(seat -> InfoBookingResponse.Seat.builder()
+                        .seatId(seat.getId())
+                        .seatNumber(seat.getRowName() + seat.getColumnName())
+                        .seatType(seat.getSeatType().getName())
+                        .build())
+                .toList();
+
+        return InfoBookingResponse.builder()
+                .roomNumber(roomNumber)
+                .seats(seatResponses)
+                .build();
+    }
+
+    private List<String> getLockedSeatIds(String showScheduleId) {
+        if (showScheduleId == null || showScheduleId.isBlank()) {
+            return List.of();
+        }
+
+        String lockKeyPattern = "seat:lock:" + showScheduleId + ":*";
+        try {
+            return redisTemplate.keys(lockKeyPattern).stream()
+                    .map(key -> extractSeatIdFromKey(key, showScheduleId))
+                    .filter(seatId -> seatId != null && !seatId.isBlank())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            // If Redis is unavailable, return empty list
+            return List.of();
+        }
+    }
+
+    private String extractSeatIdFromKey(String key, String showScheduleId) {
+        // Key format: seat:lock:showScheduleId:seatId
+        String prefix = "seat:lock:" + showScheduleId + ":";
+        if (key.startsWith(prefix)) {
+            return key.substring(prefix.length());
+        }
+        return null;
     }
 
 }
