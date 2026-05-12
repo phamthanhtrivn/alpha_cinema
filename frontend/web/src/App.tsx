@@ -37,6 +37,7 @@ import ManagerStaff from "./pages/employee/manager/StaffManagement";
 import SellTickets from "./pages/employee/staff/SellTickets";
 import StaffDashboard from "./pages/employee/staff/StaffDashboard";
 import Moive from "./pages/employee/staff/Moive";
+import CheckTicket from "./pages/employee/staff/CheckTicket";
 
 // CLIENT
 import Home from "./pages/client/Home";
@@ -197,6 +198,7 @@ function App() {
               >
                 <Route path="staff/dashboard" element={<StaffDashboard />} />
                 <Route path="staff/sell" element={<SellTickets />} />
+                <Route path="staff/check-ticket" element={<CheckTicket />} />
                 <Route path="staff/movies" element={<Moive />} />
 
                 <Route index element={<Navigate to="dashboard" replace />} />

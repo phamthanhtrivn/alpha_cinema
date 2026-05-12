@@ -5,10 +5,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import FoodSelection from "./FoodSelection";
-import PaymentSelection from "./PaymentSelection";
-import SeatPreviewMap, { type SeatItem } from "./SeatPreviewMap";
-import TicketSummaryPanel from "./TicketSummaryPanel";
+import FoodSelection from "../../../components/employee/FoodSelection";
+import PaymentSelection from "../../../components/employee/PaymentSelection";
+import SeatPreviewMap, { type SeatItem } from "../../../components/employee/SeatPreviewMap";
+import TicketSummaryPanel from "../../../components/employee/TicketSummaryPanel";
 import { showScheduleService } from "@/services/show-schedule.service";
 import { seatService } from "@/services/seat.service";
 import { ticketService } from "@/services/ticket.service";
@@ -95,7 +95,7 @@ const SellTickets: React.FC = () => {
   const [cinema, setCianema] = useState<{ address?: string; phone?: string } | undefined>(undefined);
 
   const cinemaId  = useSelector((state : any) => state?.auth.cinemaId);
-  console.log("cinemaId", cinemaId);
+
 
   const fetchMovies = async () => {
     try {
@@ -335,9 +335,28 @@ const SellTickets: React.FC = () => {
     fetchSeats();
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === "seat") {
-      setStep("food");
+      // Ensure user selected at least one seat before locking
+      if (selectedSeatDetails.length === 0) {
+        toast.error("Vui lòng chọn ghế");
+        return;
+      }
+
+      // Lock seats khi chuyển từ Chọn ghế sang Chọn thức ăn
+      try {
+        setIsLoading(true);
+        const seatIds = selectedSeatDetails.map((seat) => seat.id);
+        await orderService.lockSeats({
+          showScheduleId: selectedScheduleId,
+          seatIds: seatIds,
+        });
+        setStep("food");
+      } catch (error) {
+        console.error("Failed to lock seats:", error);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -346,14 +365,28 @@ const SellTickets: React.FC = () => {
     }
   };
 
-  const previousStep = () => {
+  const previousStep = async () => {
     if (step === "payment") {
       setStep("food");
       return;
     }
 
     if (step === "food") {
-      setStep("seat");
+      // Unlock seats khi quay lại từ Chọn thức ăn về Chọn ghế
+      try {
+        setIsLoading(true);
+        const seatIds = selectedSeatDetails.map((seat) => seat.id);
+
+        await orderService.unlockSeats({
+          showScheduleId: selectedScheduleId,
+          seatIds: seatIds,
+        });
+        setStep("seat");
+      } catch (error) {
+        console.error("Failed to unlock seats:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

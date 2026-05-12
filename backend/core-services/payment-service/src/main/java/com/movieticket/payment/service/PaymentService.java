@@ -6,6 +6,7 @@ import com.movieticket.payment.entity.Payment;
 import com.movieticket.payment.entity.PaymentMethod;
 import com.movieticket.payment.entity.PaymentStatus;
 import com.movieticket.payment.event.model.PaymentResultEvent;
+import com.movieticket.payment.event.producer.PaymentCashResultEventProducer;
 import com.movieticket.payment.event.producer.PaymentResultEventProducer;
 import com.movieticket.payment.exception.BusinessException;
 import com.movieticket.payment.repository.PaymentRepository;
@@ -35,6 +36,7 @@ public class PaymentService {
     private final List<PaymentStrategy> paymentStrategies;
     private final PaymentRepository paymentRepository;
     private final PaymentResultEventProducer paymentResultEventProducer;
+    private final PaymentCashResultEventProducer paymentCashResultEventProducer;
     private Map<PaymentMethod, PaymentStrategy> paymentStrategyMap;
 
     @Value("${payment.frontend-base-url}")
@@ -172,16 +174,36 @@ public class PaymentService {
 
     public boolean paymentByCash(String orderId, Double totalPayment) {
         try {
-            paymentRepository.save(
-                    Payment.builder()
-                            .orderId(orderId)
-                            .amount(totalPayment)
-                            .method(PaymentMethod.CASH)
-                            .status(PaymentStatus.SUCCESS)
-                            .build());
+            Payment saved = paymentRepository.save(
+                Payment.builder()
+                    .orderId(orderId)
+                    .amount(totalPayment)
+                    .method(PaymentMethod.CASH)
+                    .status(PaymentStatus.SUCCESS)
+                    .paidAt(LocalDateTime.now())
+                    .build());
+
+            paymentCashResultEventProducer.publish(PaymentResultEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .paymentId(saved.getId())
+                .orderId(saved.getOrderId())
+                .method(saved.getMethod().name())
+                .status(saved.getStatus().name())
+                .message("Payment by cash successful")
+                .paidAt(saved.getPaidAt())
+                .occurredAt(LocalDateTime.now())
+                .build());
             return true;
         } catch (Exception e) {
             System.out.println("Error processing payment: " + e.getMessage());
+            paymentCashResultEventProducer.publish(PaymentResultEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .orderId(orderId)
+                .method(PaymentMethod.CASH.name())
+                .status(PaymentStatus.FAILED.name())
+                .message("Payment by cash failed: " + e.getMessage())
+                .occurredAt(LocalDateTime.now())
+                .build());
             return false;
         }
     }

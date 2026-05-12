@@ -2,58 +2,54 @@ package com.movieticket.order.service;
 
 import com.movieticket.order.common.ApiResponse;
 import com.movieticket.order.dto.CheckoutEmployeeRequest;
+import com.movieticket.order.dto.request.CheckInRequest;
+import com.movieticket.order.event.model.PaymentByCashRequestEvent;
+import com.movieticket.order.event.producer.PaymentByCashRequestedEventProducer;
+import com.movieticket.order.dto.response.InfoBookingScheduleResponse;
+import com.movieticket.order.dto.response.InfoBookingSeatResponse;
+import com.movieticket.order.dto.response.TicketDetailResponse;
 import com.movieticket.order.entity.*;
 import com.movieticket.order.exception.BusinessException;
-import com.movieticket.order.repository.OrderDataiReposioty;
+import com.movieticket.order.repository.OrderDetailRepository;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.repository.ShowScheduleDetailRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import com.movieticket.order.enums.ShowSeatType;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDateTime;
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ShowScheduleDetailRepository showScheduleDetailRepository;
-    private final OrderDataiReposioty orderDataiReposioty;
-    private final RestTemplate restTemplate;
+    private final OrderDetailRepository orderDataiReposioty;
+    private final PaymentByCashRequestedEventProducer paymentByCashRequestedEventProducer;
+    private final WebClient.Builder webClientBuilder;
 
 
     public String paymentByCash(String userID, String cinemaID, CheckoutEmployeeRequest request) {
         Order newOrder = createAndSaveFullOrder(userID, cinemaID, request);
-        System.out.println("Order created with ID: " + userID);
+        System.out.println("Order created with ID: " + newOrder.getId());
 
-        String paymentServiceUrl = "http://payment-service/api/payments/payment-by-cash";
-        String urlWithParams = UriComponentsBuilder.fromHttpUrl(paymentServiceUrl)
-                .queryParam("orderId", newOrder.getId())
-                .queryParam("totalPayment", request.getTotalPayment())
-                .toUriString();
+        paymentByCashRequestedEventProducer.publish(PaymentByCashRequestEvent.builder()
+                        .eventId(java.util.UUID.randomUUID().toString())
+                        .orderId(newOrder.getId())
+                        .totalPayment(request.getTotalPayment())
+                        .occurredAt(LocalDateTime.now())
+                        .build());
 
-        boolean isPaymentSuccess = false;
-        try {
-            ResponseEntity<ApiResponse> response = restTemplate.postForEntity(urlWithParams, null, ApiResponse.class);
-            System.out.println("Response from Payment API: " + response.getStatusCode());
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                isPaymentSuccess = true;
-            }
-        } catch (Exception e) {
-            System.out.println("Lỗi gọi API Payment: " + e.getMessage());
-        }
-
-        if (isPaymentSuccess) {
-            updateOrderStatus(newOrder.getId(), OrderStatus.PAID);
-            return newOrder.getId();
-        } else {
-            deleteOrder(newOrder.getId());
-            throw new BusinessException("Payment failed, order has been rolled back.");
-        }
+        return newOrder.getId();
     }
 
 
@@ -84,7 +80,7 @@ public class OrderService {
                         .seatId(seat.getSeatId())
                         .finalPrice(seat.getFinalPrice())
                         .ticketPriceId(seat.getTicketPriceId())
-                        .showSeatType(ShowSeatType.CHECKED_IN)
+                        .showSeatType(com.movieticket.order.entity.ShowSeatType.CHECKED_IN)
                         .showScheduleId(request.getShowScheduleId())
                         .build()
         ).toList();
@@ -106,5 +102,158 @@ public class OrderService {
         orderDataiReposioty.deleteByOrderId(orderId);
         showScheduleDetailRepository.deleteByOrderId(orderId);
         orderRepository.deleteById(orderId);
+    }
+
+    public TicketDetailResponse getTicketDetailByOrderId(String orderId, String cinemaId) {
+       
+        Order order = orderRepository.findByIdAndCinemaIdAndStatusIn(orderId, cinemaId, List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng với ID này hoặc đơn hàng không hợp lệ!"));
+
+        TicketDetailResponse ticketDetailResponse = new TicketDetailResponse();
+        ticketDetailResponse.setOrderId(order.getId());
+        ticketDetailResponse.setTotalPayment(order.getTotalPayment());
+        ticketDetailResponse.setPointDiscount(order.getPointDiscount());
+        ticketDetailResponse.setPromotionDiscount(order.getPromotionDiscount());
+        ticketDetailResponse.setTotalPrice(order.getTotalPrice());
+
+
+        ticketDetailResponse.setCustomerName("Khách hàng");
+
+        if (order.getShowScheduleDetails() == null || order.getShowScheduleDetails().isEmpty()) {
+             throw new BusinessException("Đơn hàng không có thông tin lịch chiếu hợp lệ.");
+        }
+        String showScheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
+        ticketDetailResponse.setShowScheduleId(showScheduleId);
+
+        List<String> productIds = order.getOrderDetails() == null ? List.of() : order.getOrderDetails().stream()
+                .map(OrderDetail::getProductId)
+                .toList();
+
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            productIds = List.of();
+        }
+        List<String> seatIds = order.getShowScheduleDetails().stream()
+                .map(ShowScheduleDetail::getSeatId)
+                .toList();
+
+        URI requestUrlSchedule = UriComponentsBuilder.fromUriString("http://product-service/api/show-schedules/get-info-for-booking")
+                .queryParam("showScheduleId", showScheduleId)
+                .queryParam("productIds", productIds)
+                .build()
+                .toUri();
+        ResponseEntity<ApiResponse<InfoBookingScheduleResponse>> responseSchedule = webClientBuilder.build()
+                .get()
+                .uri(requestUrlSchedule)
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingScheduleResponse>>() {})
+                .block();
+
+        URI requestUrlSeat = UriComponentsBuilder.fromUriString("http://cinema-management-service/api/seats/get-info-for-booking")
+                .queryParam("seatIds", seatIds)
+                .build()
+                .toUri();
+        ResponseEntity<ApiResponse<InfoBookingSeatResponse>> responseSeat = webClientBuilder.build()
+                .get()
+                .uri(requestUrlSeat)
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingSeatResponse>>() {})
+                .block();
+
+        if (responseSchedule == null || responseSchedule.getBody() == null || responseSchedule.getBody().getData() == null) {
+             throw new BusinessException("Không thể lấy thông tin lịch chiếu.");
+        }
+        if (responseSeat == null || responseSeat.getBody() == null || responseSeat.getBody().getData() == null) {
+             throw new BusinessException("Không thể lấy thông tin ghế ngồi.");
+        }
+
+        InfoBookingScheduleResponse apiResponseSchedule = responseSchedule.getBody().getData();
+        InfoBookingSeatResponse apiResponseSeat = responseSeat.getBody().getData();
+
+        TicketDetailResponse.Movie movie = TicketDetailResponse.Movie.builder()
+                .nameMovie(apiResponseSchedule.getNameMovie())
+                .urlMovie(apiResponseSchedule.getUrlMovie())
+                .roomNumber(apiResponseSeat.getRoomNumber())
+                .startTime(apiResponseSchedule.getStartTime())
+                .projectionType(apiResponseSchedule.getProjectionType())
+                .build();
+
+        Map<String, ShowScheduleDetail> seatDetailMap = order.getShowScheduleDetails().stream()
+                .collect(Collectors.toMap(
+                        ShowScheduleDetail::getSeatId, 
+                        detail -> detail,
+                        (existing, replacement) -> existing
+                ));
+
+        List<TicketDetailResponse.Seat> seats = apiResponseSeat.getSeats() == null ? List.of() : apiResponseSeat.getSeats().stream().map(item -> {
+           ShowScheduleDetail detail = seatDetailMap.get(item.getSeatId());
+           double price = detail != null ? detail.getFinalPrice() : 0.0;
+           
+           ShowSeatType showSeatType = (detail != null && detail.getShowSeatType() != null)
+                   ? com.movieticket.order.enums.ShowSeatType.valueOf(detail.getShowSeatType().name()) 
+                   : com.movieticket.order.enums.ShowSeatType.CHECKED_IN;
+
+           return TicketDetailResponse.Seat.builder()
+                   .seatId(item.getSeatId())
+                   .seatNumber(item.getSeatNumber())
+                   .showSeatType(showSeatType)
+                   .seatType(item.getSeatType())
+                   .price(price)
+                   .build();
+        }).toList();
+
+        Map<String, OrderDetail> productMap = order.getOrderDetails() == null ? Map.of() : order.getOrderDetails().stream()
+                .collect(Collectors.toMap(
+                        OrderDetail::getProductId, 
+                        detail -> detail,
+                        (existing, replacement) -> existing
+                ));
+
+        List<TicketDetailResponse.Product> products = apiResponseSchedule.getProducts() == null ? List.of() : apiResponseSchedule.getProducts().stream().map(item -> {
+            OrderDetail detail = productMap.get(item.getProductId());
+            double price = detail != null ? detail.getPrice() : 0.0;
+            int quantity = detail != null ? detail.getQuantity() : 0;
+            
+            return TicketDetailResponse.Product.builder()
+                    .urlProduct(item.getUrlProduct())
+                    .nameProduct(item.getNameProduct())
+                    .price(price)
+                    .quantity(quantity)
+                    .totalPrice(price * quantity)
+                    .build();
+        }).toList();
+
+        ticketDetailResponse.setMovie(movie);
+        ticketDetailResponse.setSeats(seats);
+        ticketDetailResponse.setProducts(products);
+        
+        return ticketDetailResponse;
+    }
+
+
+    @Transactional
+    public boolean checkIn(CheckInRequest request, String cinemaId) {
+        Order order = orderRepository.findByIdAndCinemaIdAndStatusIn(request.getOrderId(), cinemaId, List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng hoặc đơn hàng chưa thanh toán / đã check-in!"));
+        
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
+        int checkInCount = 0;
+
+        for (ShowScheduleDetail detail : showScheduleDetails) {
+          
+            if (detail.getShowScheduleId().equals(request.getShowScheduleId()) &&
+                request.getSeatIds().contains(detail.getSeatId())) {
+                
+                detail.setShowSeatType(com.movieticket.order.entity.ShowSeatType.CHECKED_IN);
+                checkInCount++;
+            }
+        }
+        if (checkInCount == 0) {
+            throw new BusinessException("Không có ghế nào hợp lệ hoặc khớp với lịch chiếu để check-in!");
+        }
+        orderRepository.save(order);
+
+        return true;
     }
 }

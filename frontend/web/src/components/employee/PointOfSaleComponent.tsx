@@ -39,7 +39,6 @@ const PointOfSaleComponent: React.FC<Props> = ({
         <div className="bg-linear-to-r from-slate-950 via-slate-900 to-orange-600 px-6 py-5 text-white">
           <DialogHeader className="space-y-1 text-left">
             <DialogTitle className="text-lg font-semibold tracking-wide">Quầy Thu Ngân</DialogTitle>
-            <p className="text-sm text-white/75">Xem trước và in hóa đơn vé theo bố cục rõ ràng hơn</p>
           </DialogHeader>
         </div>
 

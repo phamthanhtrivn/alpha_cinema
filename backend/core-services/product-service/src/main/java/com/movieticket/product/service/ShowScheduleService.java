@@ -4,6 +4,7 @@ import com.movieticket.product.clients.CinemaClient;
 import com.movieticket.product.clients.OrderClient;
 import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.CinemaRoomInfoDTO;
+import com.movieticket.product.dto.response.InfoBooking;
 import com.movieticket.product.dto.response.MoiveAndShowScheduleReponse;
 import com.movieticket.product.dto.SeatResponseToProduct;
 import com.movieticket.product.dto.admin.request.ShowScheduleCreateDTO;
@@ -13,11 +14,14 @@ import com.movieticket.product.dto.admin.response.SelectionDTO;
 import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.dto.client.*;
 import com.movieticket.product.entity.Movie;
+import com.movieticket.product.entity.Product;
 import com.movieticket.product.entity.ShowSchedule;
 import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.TranslationType;
 import com.movieticket.product.dto.RoomDetailDTO;
 import com.movieticket.product.dto.ShowScheduleDto;
+import com.movieticket.product.exception.BusinessException;
+import com.movieticket.product.repository.ProductRepository;
 import com.movieticket.product.repository.ShowScheduleRepository;
 import com.movieticket.product.specification.ShowScheduleSpecification;
 import com.movieticket.product.util.mapper.ShowScheduleMapper;
@@ -51,6 +55,7 @@ public class ShowScheduleService {
     private final OrderClient orderClient;
     private final CacheService cacheService;
     private final WebClient.Builder webClientBuilder;
+    private final ProductRepository productRepository;
 
     public Page<ShowScheduleResDTO> searchSchedules(ShowScheduleSearchDTO dto, Pageable pageable) {
         Specification<ShowSchedule> spec = Specification
@@ -300,5 +305,22 @@ public class ShowScheduleService {
                                  .collect(Collectors.toList()))
                          .build())
                  .collect(Collectors.toList());
+    }
+
+    public InfoBooking getInfoBooking(String showScheduleId, List<String> productIds) {
+        ShowSchedule schedule = showScheduleRepository.findById(showScheduleId)
+                .orElseThrow(() -> new BusinessException("Suất chiếu không tồn tại"));
+        List<Product> products = productRepository.findAllById(productIds);
+        return InfoBooking.builder()
+                .nameMovie(schedule.getMovie().getTitle())
+                .projectionType(schedule.getProjectionType().toString())
+                .startTime(schedule.getStartTime())
+                .urlMovie(schedule.getMovie().getThumbnailUrl())
+                .products(products.stream().map(p -> new InfoBooking.Product(
+                        p.getId(),
+                        p.getPictureUrl(),
+                        p.getName()
+                )).toList())
+                .build();
     }
 }

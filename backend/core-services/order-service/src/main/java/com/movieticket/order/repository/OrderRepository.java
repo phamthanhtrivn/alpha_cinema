@@ -1,6 +1,7 @@
 package com.movieticket.order.repository;
 
 import com.movieticket.order.entity.Order;
+import com.movieticket.order.entity.OrderStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,4 +18,7 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
 	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
 	List<Order> findDetailedByIdIn(Collection<String> ids);
+
+	Optional<Order> findByIdAndCinemaIdAndStatus(String id, String cinemaId, OrderStatus status);
+	Optional<Order> findByIdAndCinemaIdAndStatusIn(String id, String cinemaId, Collection<OrderStatus> statuses);
 }
