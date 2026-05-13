@@ -183,6 +183,12 @@ const Sidebar: React.FC = () => {
       path: "/employee/staff/movies",
       roles: ["STAFF"],
     },
+    {
+      icon: <Ticket size={18} />,
+      label: "Kiểm tra vé",
+      path: "/employee/staff/check-ticket",
+      roles: ["STAFF"],
+    },
   ];
 
   const filteredMenu = menuItems.filter((item) => {
