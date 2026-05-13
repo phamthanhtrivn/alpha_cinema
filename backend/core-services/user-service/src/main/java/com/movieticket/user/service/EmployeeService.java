@@ -1,30 +1,51 @@
 package com.movieticket.user.service;
 
+import com.movieticket.user.dto.request.ChangePasswordDTO;
 import com.movieticket.user.dto.request.CreateEmployeeDto;
+import com.movieticket.user.dto.request.EmailVerifyReq;
+import com.movieticket.user.dto.request.EmployeeUpdateProfileDTO;
 import com.movieticket.user.dto.request.SearchEmployeeDto;
 import com.movieticket.user.dto.request.UpdateEmployeeDto;
 import com.movieticket.user.dto.response.EmployeeResponseDto;
+import com.movieticket.user.dto.response.EmployeeProfileDTO;
 import com.movieticket.user.entity.Employee;
+import com.movieticket.user.event.model.SendOTPEvent;
+import com.movieticket.user.event.producer.CustomerProducer;
 import com.movieticket.user.enums.EmployeeRole;
 import com.movieticket.user.exception.BusinessException;
 import com.movieticket.user.repository.EmployeeRepository;
+import com.movieticket.user.repository.UserRepository;
 import com.movieticket.user.service.strategy.create.CreateEmployeeStrategy;
 import com.movieticket.user.service.strategy.create.CreateEmployeeStrategyContext;
 import com.movieticket.user.service.strategy.update.UpdateEmployeeStrategy;
 import com.movieticket.user.service.strategy.update.UpdateEmployeeStrategyContext;
 import com.movieticket.user.utils.EmployeeUtil;
+import com.movieticket.user.utils.mapper.EmployeeMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final CreateEmployeeStrategyContext strategyContext;
     private final UpdateEmployeeStrategyContext updateStrategyContext;
+    private final EmployeeMapper employeeMapper;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final StringRedisTemplate redisTemplate;
+    private final CustomerProducer customerProducer;
 
     public Page<EmployeeResponseDto> getAllEmployees(HttpServletRequest request,
                                                      SearchEmployeeDto searchEmployeeDto,
@@ -118,6 +139,90 @@ public class EmployeeService {
         Employee updatedEmployee = employeeRepository.save(existing);
 
         return EmployeeUtil.toEmployeeResponseDto(updatedEmployee);
+    }
+
+    public EmployeeProfileDTO getEmployeeProfile(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new BusinessException("Employee not found with id: " + employeeId));
+
+        return employeeMapper.toProfileDTO(employee);
+    }
+
+    @Transactional
+    public EmployeeProfileDTO updateEmployeeProfile(String employeeId, EmployeeUpdateProfileDTO updateDTO) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new BusinessException("Employee not found with id: " + employeeId));
+
+        employeeMapper.updateEmployeeProfileFromDto(updateDTO, employee);
+        employee = employeeRepository.save(employee);
+
+        return employeeMapper.toProfileDTO(employee);
+    }
+
+    @Transactional
+    public void changePassword(String userId, ChangePasswordDTO dto) {
+        com.movieticket.user.dto.request.PasswordInfo info = userRepository.findPasswordInfoById(userId)
+                .orElseThrow(() -> new BusinessException("Nguoi dung khong ton tai"));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), info.getPassword())) {
+            throw new BusinessException("Mat khau cu khong chinh xac");
+        }
+
+        userRepository.updateUserPassword(userId, passwordEncoder.encode(dto.getNewPassword()));
+    }
+
+    @Transactional(readOnly = true)
+    public void requestUpdateEmail(String userId, String email) {
+        if (employeeRepository.existsByEmail(email)) {
+            throw new BusinessException("Email này đã tồn tại, vui lòng chọn email khác");
+        }
+
+        String redisKey = "email-update:otp:" + userId;
+
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+        if (ttl != null && ttl > 240) {
+            throw new BusinessException("Vui lòng đợi " + ttl + " giây trước khi yêu cầu mã OTP mới");
+        }
+
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+
+        redisTemplate.opsForValue().set(redisKey, otp + ":" + email, 5, TimeUnit.MINUTES);
+
+        SendOTPEvent event = SendOTPEvent.builder()
+                .userEmail(email)
+                .subject("Xác nhận thay đổi Email - Alpha Cinema")
+                .content(otp)
+                .type("EMAIL_UPDATE")
+                .build();
+
+        customerProducer.sendOtpEmail(event);
+    }
+
+    @Transactional
+    public String verifyAndUpdateEmail(String userId, EmailVerifyReq req) {
+        String redisKey = "email-update:otp:" + userId;
+        String data = redisTemplate.opsForValue().get(redisKey);
+
+        if (data == null) {
+            throw new BusinessException("Mã OTP đã hết hạn");
+        }
+
+        String[] parts = data.split(":");
+        String savedOtp = parts[0];
+        String newEmail = parts[1];
+
+        if (!savedOtp.equals(req.getOtp())) {
+            throw new BusinessException("Mã OTP không chính xác vui lòng thử lại");
+        }
+
+        Employee employee = employeeRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("User không tồn tại"));
+        employee.setEmail(newEmail);
+        employeeRepository.save(employee);
+
+        redisTemplate.delete(redisKey);
+        log.info("User {} đã đổi email sang {} thành công", userId, newEmail);
+        return newEmail;
     }
 
     private void validateUpdateEmployee(Employee existing, UpdateEmployeeDto dto) {

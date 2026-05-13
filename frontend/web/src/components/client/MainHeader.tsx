@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";
 import { userService } from "../../services/user.service";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const MainHeader: React.FC = () => {
   const dispatch = useDispatch();
@@ -13,16 +14,28 @@ const MainHeader: React.FC = () => {
   const { user } = useSelector(selectAuth);
 
   const handleLogout = () => {
-    const handle = async () => {
-      const data = await userService.logout();
+    Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản khách hàng?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#C70000",
+      cancelButtonColor: "#94a3b8",
+    }).then(async (result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
 
-      if (data.success) {
+      try {
+        await userService.logout();
         toast.success("Đăng xuất thành công");
+      } finally {
         dispatch(logout());
         navigate("/");
       }
-    };
-    handle();
+    });
   };
 
   return (
@@ -30,7 +43,7 @@ const MainHeader: React.FC = () => {
       <Container>
         <div className="flex justify-between items-center h-20">
           {/* 1. LOGO */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="shrink-0 flex items-center">
             <Link to="/" className="text-2xl font-black tracking-tighter">
               <span className="text-alpha-blue italic">alpha</span>
               <span className="text-alpha-orange">CINEMA</span>

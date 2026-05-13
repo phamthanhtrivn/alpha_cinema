@@ -86,7 +86,7 @@ function App() {
     };
 
     fetchUser();
-  }, []);
+  }, [accessToken, dispatch]);
 
   return (
     <BrowserRouter>
@@ -100,12 +100,14 @@ function App() {
           </Route>
 
           {/* CLIENT LOGIN */}
-          <Route path="/login" element={<ClientLogin />} />
+          <Route element={<ProtectedRoute type="guest" />}>
+            <Route path="/login" element={<ClientLogin />} />
 
-          <Route path="/register" element={<ClientResgister />} />
-          <Route path="/forget-password" element={<ForgetPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/register" element={<ClientResgister />} />
+            <Route path="/forget-password" element={<ForgetPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Route>
 
           {/* CUSTOMER ONLY */}
           <Route
@@ -123,7 +125,9 @@ function App() {
         {/* ================= EMPLOYEE ================= */}
         <Route path="/employee">
           {/* LOGIN */}
-          <Route path="login" element={<Login />} />
+          <Route element={<ProtectedRoute type="guest" />}>
+            <Route path="login" element={<Login />} />
+          </Route>
 
           {/* PROTECTED EMPLOYEE */}
           <Route element={<ProtectedRoute type="employee" />}>
