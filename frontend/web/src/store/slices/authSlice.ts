@@ -42,6 +42,7 @@ const authSlice = createSlice({
       state.role = 'GUEST';
       state.cinemaId = '';
       state.isAuthenticated = false;
+
     },
   },
 

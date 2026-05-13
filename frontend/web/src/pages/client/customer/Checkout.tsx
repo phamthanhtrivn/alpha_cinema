@@ -204,7 +204,14 @@ export const Checkout = () => {
     if (!sessionId || !session) return;
 
     const request: UpdateCheckoutSessionRequest = {
+      items: selectedProducts.map((product) => ({
+        productId: product.id,
+        quantity: product.quantity,
+      })),
+      promotionCode: promotionCode.trim() || undefined,
+      pointsToRedeem: redeemPoints || undefined,
     };
+
     try {
       setSubmitting(true);
       const response = await checkoutService.updateSession(sessionId, request);
