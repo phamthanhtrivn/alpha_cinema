@@ -15,7 +15,6 @@ const MainHeader: React.FC = () => {
   const handleLogout = () => {
     const handle = async () => {
       const data = await userService.logout();
-
       if (data.success) {
         toast.success("Đăng xuất thành công");
         dispatch(logout());
