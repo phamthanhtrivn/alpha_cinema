@@ -1,41 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { customerService } from '@/services/customer.service';
-import { orderService } from '@/services/order.service';
-import type { CustomerProfile, Gender } from '@/types/customer';
-import type { OrderHistoryItem } from '@/types/order';
-import { OrderStatus } from '@/types/order';
-import { ALL_TRANSLATION } from '@/types/movie';
-import { Loader2, User, Star, Wallet, Phone, Mail, Calendar, Lock, MapPin, Clock, Film, AlertCircle } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { formatCurrency } from '@/utils/formatCurrency';
-import { Container, Section } from '@/components/common/Layout';
-import { Button } from '@/components/ui/button';
-import { Card, FormField, SidebarAction, AgeBadge } from './profile/ProfileUIComponents';
-import ChangePasswordModal from './profile/ChangePasswordModal';
-import ChangeEmailModal from './profile/ChangeEmailModal';
-import OrderDetailModal from './profile/OrderDetailModal';
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { customerService } from "@/services/customer.service";
+import { orderService } from "@/services/order.service";
+import type { CustomerProfile, Gender } from "@/types/customer";
+import type { OrderHistoryItem } from "@/types/order";
+import { OrderStatus } from "@/types/order";
+import { ALL_TRANSLATION } from "@/types/movie";
+import {
+  Loader2,
+  User,
+  Star,
+  Wallet,
+  Phone,
+  Mail,
+  Calendar,
+  Lock,
+  MapPin,
+  Clock,
+  Film,
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { Container, Section } from "@/components/common/Layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  FormField,
+  SidebarAction,
+  AgeBadge,
+} from "./profile/ProfileUIComponents";
+import ChangePasswordModal from "./profile/ChangePasswordModal";
+import ChangeEmailModal from "./profile/ChangeEmailModal";
+import OrderDetailModal from "./profile/OrderDetailModal";
+import Policy from "@/components/client/Policy";
 
 // ==============================
 // Types & Constants
 // ==============================
-type Tab = 'profile' | 'history' | 'notifications' | 'gifts' | 'policy';
+type Tab = "profile" | "history" | "notifications" | "gifts" | "policy";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'history', label: 'Lịch Sử Giao Dịch' },
-  { key: 'profile', label: 'Thông Tin Cá Nhân' },
-  { key: 'notifications', label: 'Thông Báo' },
-  { key: 'gifts', label: 'Quà Tặng' },
-  { key: 'policy', label: 'Chính Sách' },
+  { key: "history", label: "Lịch Sử Giao Dịch" },
+  { key: "profile", label: "Thông Tin Cá Nhân" },
+  { key: "notifications", label: "Thông Báo" },
+  { key: "policy", label: "Chính Sách" },
 ];
 
 const tierLabel = (type: string) => {
   switch (type) {
-    case 'MEMBER': return 'Member';
-    case 'SILVER': return 'Silver';
-    case 'GOLD': return 'Gold';
-    default: return type;
+    case "MEMBER":
+      return "Member";
+    case "SILVER":
+      return "Silver";
+    case "GOLD":
+      return "Gold";
+    default:
+      return type;
   }
 };
 
@@ -46,12 +68,30 @@ const tierLabel = (type: string) => {
 // Helper: Status Badge
 // ==============================
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  [OrderStatus.PAID]: { label: 'Đã thanh toán', className: 'bg-green-50 text-green-700 border border-green-200' },
-  [OrderStatus.CONFIRMED]: { label: 'Đã xác nhận', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
-  [OrderStatus.PENDING_PAYMENT]: { label: 'Chờ thanh toán', className: 'bg-yellow-50 text-yellow-700 border border-yellow-200' },
-  [OrderStatus.FAILED]: { label: 'Thất bại', className: 'bg-red-50 text-red-700 border border-red-200' },
-  [OrderStatus.EXPIRED]: { label: 'Hết hạn', className: 'bg-slate-100 text-slate-500 border border-slate-200' },
-  [OrderStatus.CANCELLED]: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-500 border border-slate-200' },
+  [OrderStatus.PAID]: {
+    label: "Đã thanh toán",
+    className: "bg-green-50 text-green-700 border border-green-200",
+  },
+  [OrderStatus.CONFIRMED]: {
+    label: "Đã xác nhận",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
+  [OrderStatus.PENDING_PAYMENT]: {
+    label: "Chờ thanh toán",
+    className: "bg-yellow-50 text-yellow-700 border border-yellow-200",
+  },
+  [OrderStatus.FAILED]: {
+    label: "Thất bại",
+    className: "bg-red-50 text-red-700 border border-red-200",
+  },
+  [OrderStatus.EXPIRED]: {
+    label: "Hết hạn",
+    className: "bg-slate-100 text-slate-500 border border-slate-200",
+  },
+  [OrderStatus.CANCELLED]: {
+    label: "Đã hủy",
+    className: "bg-slate-100 text-slate-500 border border-slate-200",
+  },
 };
 
 // ==============================
@@ -64,11 +104,20 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const ProfilePage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'profile');
+  const [activeTab, setActiveTab] = useState<Tab>(
+    (searchParams.get("tab") as Tab) || "profile",
+  );
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && (tab === 'profile' || tab === 'history' || tab === 'notifications' || tab === 'gifts' || tab === 'policy')) {
+    const tab = searchParams.get("tab");
+    if (
+      tab &&
+      (tab === "profile" ||
+        tab === "history" ||
+        tab === "notifications" ||
+        tab === "gifts" ||
+        tab === "policy")
+    ) {
       setActiveTab(tab as Tab);
     }
   }, [searchParams]);
@@ -85,7 +134,7 @@ const ProfilePage: React.FC = () => {
 
   // ---- Data Fetching ----
   const { data: profile, isLoading } = useQuery<CustomerProfile>({
-    queryKey: ['customer-profile'],
+    queryKey: ["customer-profile"],
     queryFn: () => customerService.getProfile().then((res) => res.data),
   });
 
@@ -94,18 +143,19 @@ const ProfilePage: React.FC = () => {
     isLoading: isHistoryLoading,
     isError: isHistoryError,
   } = useQuery<OrderHistoryItem[]>({
-    queryKey: ['order-history'],
-    queryFn: () => orderService.getOrderHistory().then((res: any) => res.data ?? res),
-    enabled: activeTab === 'history',
+    queryKey: ["order-history"],
+    queryFn: () =>
+      orderService.getOrderHistory().then((res: any) => res.data ?? res),
+    enabled: activeTab === "history",
   });
 
   // ---- Profile Form State ----
   const [form, setForm] = useState({
-    fullName: '',
-    phone: '',
-    gender: 'MALE' as Gender,
-    dateOfBirth: '',
-    password: '',
+    fullName: "",
+    phone: "",
+    gender: "MALE" as Gender,
+    dateOfBirth: "",
+    password: "",
   });
 
   React.useEffect(() => {
@@ -115,9 +165,9 @@ const ProfilePage: React.FC = () => {
         phone: profile.phone,
         gender: profile.gender,
         dateOfBirth: profile.dateOfBirth
-          ? new Date(profile.dateOfBirth).toISOString().split('T')[0]
-          : '',
-        password: '',
+          ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
+          : "",
+        password: "",
       });
     }
   }, [profile]);
@@ -127,20 +177,20 @@ const ProfilePage: React.FC = () => {
     mutationFn: (data: any) => customerService.updateProfile(data),
     onSuccess: (res) => {
       if (res.success) {
-        toast.success(res.message || 'Cập nhật thông tin thành công');
+        toast.success(res.message || "Cập nhật thông tin thành công");
         setFieldErrors({});
-        queryClient.setQueryData(['customer-profile'], res.data);
+        queryClient.setQueryData(["customer-profile"], res.data);
       } else {
-        toast.error(res.message || 'Cập nhật thất bại');
+        toast.error(res.message || "Cập nhật thất bại");
       }
     },
     onError: (error: any) => {
       const responseData = error.response?.data;
       if (responseData?.errors) {
         setFieldErrors(responseData.errors);
-        toast.error('Vui lòng kiểm tra lại thông tin nhập vào');
+        toast.error("Vui lòng kiểm tra lại thông tin nhập vào");
       } else {
-        toast.error(responseData?.message || 'Có lỗi xảy ra khi cập nhật');
+        toast.error(responseData?.message || "Có lỗi xảy ra khi cập nhật");
       }
     },
   });
@@ -163,9 +213,9 @@ const ProfilePage: React.FC = () => {
   };
 
   const MILESTONES = [
-    { pos: 0, label: 'Member' },
-    { pos: 50, label: 'Silver' },
-    { pos: 100, label: 'Gold' },
+    { pos: 0, label: "Member" },
+    { pos: 50, label: "Silver" },
+    { pos: 100, label: "Gold" },
   ];
 
   const progressPct = tierProgress(); // 0–100
@@ -173,17 +223,18 @@ const ProfilePage: React.FC = () => {
   const barWidth = progressPct === 0 ? 0 : Math.max(progressPct, 2);
 
   // ---- Group order history by month/year ----
-  const orderGroups: { label: string; orders: OrderHistoryItem[] }[] = React.useMemo(() => {
-    if (!orderHistory) return [];
-    const map = new Map<string, OrderHistoryItem[]>();
-    orderHistory.forEach((order) => {
-      const d = new Date(order.createdAt);
-      const key = `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(order);
-    });
-    return [...map.entries()].map(([label, orders]) => ({ label, orders }));
-  }, [orderHistory]);
+  const orderGroups: { label: string; orders: OrderHistoryItem[] }[] =
+    React.useMemo(() => {
+      if (!orderHistory) return [];
+      const map = new Map<string, OrderHistoryItem[]>();
+      orderHistory.forEach((order) => {
+        const d = new Date(order.createdAt);
+        const key = `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(order);
+      });
+      return [...map.entries()].map(([label, orders]) => ({ label, orders }));
+    }, [orderHistory]);
 
   // ==============================
   // Render
@@ -191,13 +242,13 @@ const ProfilePage: React.FC = () => {
   return (
     <Section className="bg-slate-50 min-h-screen">
       <Container className="flex flex-col md:flex-row gap-6">
-
         {/* ===== LEFT SIDEBAR ===== */}
         <aside className="sm:w-full md:w-72 lg:w-96 flex flex-col gap-4">
-
           <Card className="p-6">
             {isLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="animate-spin text-alpha-blue" size={32} /></div>
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin text-alpha-blue" size={32} />
+              </div>
             ) : (
               <>
                 {/* Avatar */}
@@ -206,11 +257,17 @@ const ProfilePage: React.FC = () => {
                     <User size={32} className="text-slate-400" />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <div className="font-bold text-slate-800 text-lg leading-tight">{profile?.fullName || '—'}</div>
+                    <div className="font-bold text-slate-800 text-lg leading-tight">
+                      {profile?.fullName || "—"}
+                    </div>
                     <div className="flex items-center gap-1 mt-1">
-                      <Star size={12} className="text-alpha-orange fill-alpha-orange" />
+                      <Star
+                        size={12}
+                        className="text-alpha-orange fill-alpha-orange"
+                      />
                       <span className="text-sm font-medium">
-                        {tierLabel(profile?.customerType ?? 'MEMBER')} · {profile?.points ?? 0} điểm
+                        {tierLabel(profile?.customerType ?? "MEMBER")} ·{" "}
+                        {profile?.loyaltyPoint ?? 0} điểm
                       </span>
                     </div>
                   </div>
@@ -219,8 +276,12 @@ const ProfilePage: React.FC = () => {
                 {/* Spending Progress */}
                 <div className="mb-2">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-base text-slate-700 font-medium mb-4">Tổng chi tiêu 2026</span>
-                    <span className="text-base font-bold text-alpha-orange">{formatCurrency(profile?.totalSpending ?? 0)}</span>
+                    <span className="text-base text-slate-700 font-medium mb-4">
+                      Tổng chi tiêu 2026
+                    </span>
+                    <span className="text-base font-bold text-alpha-orange">
+                      {formatCurrency(profile?.totalSpending ?? 0)}
+                    </span>
                   </div>
 
                   <div className="relative h-2 rounded-full bg-slate-100 mt-12 mb-4">
@@ -229,7 +290,10 @@ const ProfilePage: React.FC = () => {
                       className="absolute inset-y-0 left-0 rounded-full bg-alpha-blue transition-all duration-700"
                       style={{
                         width: `${barWidth}%`,
-                        boxShadow: progressPct > 0 ? '0 0 6px rgba(var(--color-alpha-blue-rgb, 59,130,246),0.5)' : 'none',
+                        boxShadow:
+                          progressPct > 0
+                            ? "0 0 6px rgba(var(--color-alpha-blue-rgb, 59,130,246),0.5)"
+                            : "none",
                       }}
                     />
                     {/* Animated dot at current position */}
@@ -246,17 +310,36 @@ const ProfilePage: React.FC = () => {
                     )}
                     {/* Milestone markers */}
                     {MILESTONES.map((m, idx) => (
-                      <div key={idx} className="absolute top-1/2 -translate-y-1/2" style={{ left: `${m.pos}%` }}>
+                      <div
+                        key={idx}
+                        className="absolute top-1/2 -translate-y-1/2"
+                        style={{ left: `${m.pos}%` }}
+                      >
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                          <div className={`text-[10px] font-bold px-2.5 py-1 rounded-md border shadow-sm relative transition-colors ${progressPct >= m.pos ? 'bg-alpha-blue text-white border-alpha-blue' : 'bg-white text-slate-500 border-slate-200'
-                            }`}>
+                          <div
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-md border shadow-sm relative transition-colors ${
+                              progressPct >= m.pos
+                                ? "bg-alpha-blue text-white border-alpha-blue"
+                                : "bg-white text-slate-500 border-slate-200"
+                            }`}
+                          >
                             {m.label}
-                            <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 border-r border-b rotate-45 ${progressPct >= m.pos ? 'bg-alpha-blue border-alpha-blue' : 'bg-white border-slate-200'
-                              }`} />
+                            <div
+                              className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 border-r border-b rotate-45 ${
+                                progressPct >= m.pos
+                                  ? "bg-alpha-blue border-alpha-blue"
+                                  : "bg-white border-slate-200"
+                              }`}
+                            />
                           </div>
                         </div>
-                        <div className={`w-3 h-3 rounded-full border-2 transition-all duration-300 -translate-x-1/2 ${progressPct >= m.pos ? 'bg-white border-alpha-blue scale-110' : 'bg-white border-slate-300'
-                          }`} />
+                        <div
+                          className={`w-3 h-3 rounded-full border-2 transition-all duration-300 -translate-x-1/2 ${
+                            progressPct >= m.pos
+                              ? "bg-white border-alpha-blue scale-110"
+                              : "bg-white border-slate-300"
+                          }`}
+                        />
                       </div>
                     ))}
                   </div>
@@ -272,22 +355,29 @@ const ProfilePage: React.FC = () => {
           </Card>
 
           <Card className="divide-y divide-slate-50 overflow-hidden">
-            <SidebarAction label="HOTLINE hỗ trợ" subLabel="19002224 (9:00 – 22:00)" href="tel:19002224" />
-            <SidebarAction label="Email" subLabel="hotro@alphastudio.vn" href="mailto:hotro@alphastudio.vn" />
+            <SidebarAction
+              label="HOTLINE hỗ trợ"
+              subLabel="19002224 (9:00 – 22:00)"
+              href="tel:19002224"
+            />
+            <SidebarAction
+              label="Email"
+              subLabel="hotro@alphastudio.vn"
+              href="mailto:hotro@alphastudio.vn"
+            />
             <SidebarAction label="Câu hỏi thường gặp" to="#" />
           </Card>
         </aside>
 
         {/* ===== MAIN CONTENT ===== */}
         <main className="flex-1 bg-white rounded-sm shadow-sm border border-slate-100 overflow-hidden">
-
           {/* Tabs */}
           <div className="border-b border-slate-100 flex overflow-x-auto">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setSearchParams({ tab: tab.key })}
-                className={`px-5 py-4 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${activeTab === tab.key ? 'border-alpha-blue text-alpha-blue' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                className={`px-5 py-4 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${activeTab === tab.key ? "border-alpha-blue text-alpha-blue" : "border-transparent text-slate-500 hover:text-slate-800"}`}
               >
                 {tab.label}
               </button>
@@ -296,41 +386,57 @@ const ProfilePage: React.FC = () => {
 
           {/* Tab Content */}
           <div className="p-6 md:p-8">
-
             {/* Profile Tab */}
-            {activeTab === 'profile' && (
+            {activeTab === "profile" && (
               <>
                 {isLoading ? (
                   <div className="flex justify-center py-20">
-                    <Loader2 className="animate-spin text-alpha-blue" size={36} />
+                    <Loader2
+                      className="animate-spin text-alpha-blue"
+                      size={36}
+                    />
                   </div>
                 ) : (
                   <form onSubmit={handleUpdate} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                      <FormField label="Họ và tên" icon={<User />} error={fieldErrors.fullName}>
+                      <FormField
+                        label="Họ và tên"
+                        icon={<User />}
+                        error={fieldErrors.fullName}
+                      >
                         <input
                           type="text"
                           value={form.fullName}
-                          onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.fullName ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-alpha-blue'}`}
+                          onChange={(e) =>
+                            setForm({ ...form, fullName: e.target.value })
+                          }
+                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.fullName ? "border-red-500 focus:border-red-500" : "border-slate-200 focus:border-alpha-blue"}`}
                         />
                       </FormField>
 
-                      <FormField label="Ngày sinh" icon={<Calendar />} error={fieldErrors.dateOfBirth}>
+                      <FormField
+                        label="Ngày sinh"
+                        icon={<Calendar />}
+                        error={fieldErrors.dateOfBirth}
+                      >
                         <input
                           type="date"
                           value={form.dateOfBirth}
-                          onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
-                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.dateOfBirth ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-alpha-blue'}`}
+                          onChange={(e) =>
+                            setForm({ ...form, dateOfBirth: e.target.value })
+                          }
+                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.dateOfBirth ? "border-red-500 focus:border-red-500" : "border-slate-200 focus:border-alpha-blue"}`}
                         />
                       </FormField>
 
                       <FormField label="Email">
-                        <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Mail
+                          size={15}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                        />
                         <input
                           type="email"
-                          value={profile?.email ?? ''}
+                          value={profile?.email ?? ""}
                           readOnly
                           className="w-full pl-9 pr-16 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-100 text-slate-400 cursor-not-allowed"
                         />
@@ -342,28 +448,48 @@ const ProfilePage: React.FC = () => {
                         </span>
                       </FormField>
 
-                      <FormField label="Số điện thoại" icon={<Phone />} error={fieldErrors.phone}>
+                      <FormField
+                        label="Số điện thoại"
+                        icon={<Phone />}
+                        error={fieldErrors.phone}
+                      >
                         <input
                           type="tel"
                           value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.phone ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-alpha-blue'}`}
+                          onChange={(e) =>
+                            setForm({ ...form, phone: e.target.value })
+                          }
+                          className={`w-full pl-9 pr-4 py-2.5 text-sm border rounded-md bg-slate-50 focus:outline-none focus:ring-2 focus:ring-alpha-blue/20 transition-all ${fieldErrors.phone ? "border-red-500 focus:border-red-500" : "border-slate-200 focus:border-alpha-blue"}`}
                         />
                       </FormField>
 
                       <FormField label="Giới tính" error={fieldErrors.gender}>
                         <div className="flex gap-6 pt-1">
-                          {[{ value: 'MALE', label: 'Nam' }, { value: 'FEMALE', label: 'Nữ' }, { value: 'OTHER', label: 'Khác' }].map((opt) => (
-                            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                          {[
+                            { value: "MALE", label: "Nam" },
+                            { value: "FEMALE", label: "Nữ" },
+                            { value: "OTHER", label: "Khác" },
+                          ].map((opt) => (
+                            <label
+                              key={opt.value}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
                               <input
                                 type="radio"
                                 name="gender"
                                 value={opt.value}
                                 checked={form.gender === opt.value}
-                                onChange={() => setForm({ ...form, gender: opt.value as Gender })}
+                                onChange={() =>
+                                  setForm({
+                                    ...form,
+                                    gender: opt.value as Gender,
+                                  })
+                                }
                                 className="accent-alpha-blue w-4 h-4"
                               />
-                              <span className="text-sm text-slate-700">{opt.label}</span>
+                              <span className="text-sm text-slate-700">
+                                {opt.label}
+                              </span>
                             </label>
                           ))}
                         </div>
@@ -393,8 +519,13 @@ const ProfilePage: React.FC = () => {
                         className="bg-alpha-orange hover:bg-orange-600 text-white font-medium px-8 py-2.5 rounded-md transition-all hover:scale-105 active:scale-95 shadow-md shadow-orange-100 flex items-center gap-2"
                       >
                         {updateMutation.isPending ? (
-                          <><Loader2 size={18} className="animate-spin" /> Đang xử lý...</>
-                        ) : ('Cập nhật')}
+                          <>
+                            <Loader2 size={18} className="animate-spin" /> Đang
+                            xử lý...
+                          </>
+                        ) : (
+                          "Cập nhật"
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -403,23 +534,32 @@ const ProfilePage: React.FC = () => {
             )}
 
             {/* History Tab */}
-            {activeTab === 'history' && (
+            {activeTab === "history" && (
               <div>
                 {isHistoryLoading ? (
                   <div className="flex justify-center py-20">
-                    <Loader2 className="animate-spin text-alpha-blue" size={36} />
+                    <Loader2
+                      className="animate-spin text-alpha-blue"
+                      size={36}
+                    />
                   </div>
                 ) : isHistoryError ? (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                     <AlertCircle size={48} className="mb-4 opacity-40" />
-                    <p className="font-semibold text-lg">Không thể tải lịch sử</p>
+                    <p className="font-semibold text-lg">
+                      Không thể tải lịch sử
+                    </p>
                     <p className="text-sm mt-1">Vui lòng thử lại sau.</p>
                   </div>
                 ) : !orderHistory || orderHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                     <Wallet size={48} className="mb-4 opacity-30" />
-                    <p className="font-semibold text-lg">Chưa có giao dịch nào</p>
-                    <p className="text-sm mt-1">Lịch sử mua vé của bạn sẽ hiển thị tại đây.</p>
+                    <p className="font-semibold text-lg">
+                      Chưa có giao dịch nào
+                    </p>
+                    <p className="text-sm mt-1">
+                      Lịch sử mua vé của bạn sẽ hiển thị tại đây.
+                    </p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-6">
@@ -427,7 +567,9 @@ const ProfilePage: React.FC = () => {
                       <div key={label}>
                         {/* ── Month/Year header ── */}
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</span>
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                            {label}
+                          </span>
                           <div className="flex-1 h-px bg-slate-100" />
                         </div>
 
@@ -436,11 +578,24 @@ const ProfilePage: React.FC = () => {
                           {orders.map((order) => {
                             const snap = order.showScheduleSnapshot;
                             const startDate = new Date(snap.startTime);
-                            const dateStr = startDate.toLocaleDateString('vi-VN', {
-                              weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
-                            });
-                            const timeStr = startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-                            const projLabel = `${snap.projectionType} - ${ALL_TRANSLATION.find(t => t.value === snap.translationType)?.label ?? snap.translationType}`;
+                            const dateStr = startDate.toLocaleDateString(
+                              "vi-VN",
+                              {
+                                weekday: "short",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              },
+                            );
+                            const timeStr = startDate.toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              },
+                            );
+                            const projLabel = `${snap.projectionType} - ${ALL_TRANSLATION.find((t) => t.value === snap.translationType)?.label ?? snap.translationType}`;
 
                             return (
                               <div
@@ -456,39 +611,63 @@ const ProfilePage: React.FC = () => {
                                 {/* Thumbnail */}
                                 <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-100 shrink-0">
                                   {snap.movieThumbnailUrl ? (
-                                    <img src={snap.movieThumbnailUrl} alt={snap.movieTitle} className="w-full h-full object-cover" />
+                                    <img
+                                      src={snap.movieThumbnailUrl}
+                                      alt={snap.movieTitle}
+                                      className="w-full h-full object-cover"
+                                    />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <Film size={24} className="text-slate-300" />
+                                      <Film
+                                        size={24}
+                                        className="text-slate-300"
+                                      />
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">{snap.movieTitle}</p>
+                                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
+                                    {snap.movieTitle}
+                                  </p>
 
                                   {/* Tags */}
                                   <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                                    <span className="text-[11px] font-medium text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">{projLabel}</span>
+                                    <span className="text-[11px] font-medium text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
+                                      {projLabel}
+                                    </span>
                                     <AgeBadge ageType={snap.ageType} />
                                   </div>
 
                                   {/* Cinema */}
                                   <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-1">
-                                    <MapPin size={11} className="text-slate-400 shrink-0" />
-                                    <span className="truncate">{order.cinemaName} - Phòng {order.roomNumber}</span>
+                                    <MapPin
+                                      size={11}
+                                      className="text-slate-400 shrink-0"
+                                    />
+                                    <span className="truncate">
+                                      {order.cinemaName} - Phòng{" "}
+                                      {order.roomNumber}
+                                    </span>
                                   </div>
 
                                   {/* Time */}
                                   <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-2">
-                                    <Clock size={11} className="text-slate-400 shrink-0" />
-                                    <span>{timeStr} - {dateStr}</span>
+                                    <Clock
+                                      size={11}
+                                      className="text-slate-400 shrink-0"
+                                    />
+                                    <span>
+                                      {timeStr} - {dateStr}
+                                    </span>
                                   </div>
 
                                   {/* Price */}
                                   <div className="flex justify-end">
-                                    <span className="font-bold text-alpha-orange text-sm">{formatCurrency(order.totalPayment)}</span>
+                                    <span className="font-bold text-alpha-orange text-sm">
+                                      {formatCurrency(order.totalPayment)}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -503,12 +682,16 @@ const ProfilePage: React.FC = () => {
             )}
 
             {/* Other Tabs */}
-            {(activeTab === 'notifications' || activeTab === 'gifts' || activeTab === 'policy') && (
+            {activeTab === "notifications" && (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <p className="font-semibold text-lg">Đang cập nhật</p>
-                <p className="text-sm mt-1">Tính năng này sẽ sớm được ra mắt.</p>
+                <p className="text-sm mt-1">
+                  Tính năng này sẽ sớm được ra mắt.
+                </p>
               </div>
             )}
+
+            {activeTab === "policy" && <Policy />}
           </div>
         </main>
       </Container>
