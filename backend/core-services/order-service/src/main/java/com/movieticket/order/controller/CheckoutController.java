@@ -35,7 +35,6 @@ public class CheckoutController {
             return ResponseEntity.badRequest().body(ApiResponse.fail("Payment failed"));
         }
     }
-
     @PostMapping("/sessions")
     public ResponseEntity<ApiResponse<CheckoutSessionResponse>> createSession(
             @Valid @RequestBody CreateCheckoutSessionRequest request

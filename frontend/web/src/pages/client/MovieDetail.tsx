@@ -73,7 +73,7 @@ const MovieDetail = () => {
         queryKey: ['movie-showtimes', id, selectedDate],
         queryFn: () => showScheduleService.getMovieShowtimes(id!, selectedDate).then((res: any) => res.data),
         enabled: !!id && !!selectedDate,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         placeholderData: keepPreviousData,
     });

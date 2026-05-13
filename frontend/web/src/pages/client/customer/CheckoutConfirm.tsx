@@ -144,18 +144,7 @@ export const CheckoutConfirm = () => {
     if (!sessionId) {
       return;
     }
-
-    navigate(
-      movieId
-        ? `/booking/${id}/checkout/${sessionId}?movieId=${movieId}`
-        : `/booking/${id}/checkout/${sessionId}`,
-      {
-        state: {
-          session,
-          movieId,
-        },
-      },
-    );
+    navigate("/");
   };
 
   const handleConfirm = async () => {
@@ -384,20 +373,20 @@ export const CheckoutConfirm = () => {
                 </span>
               </div>
               <div className="flex justify-between gap-4">
-                <span>Giảm giá mã</span>
+                <span>Tiền giảm giá voucher</span>
                 <span className="font-bold text-green-700">
                   -{session.promotionDiscount.toLocaleString("vi-VN")} đ{" "}
                   {discountPercent > 0 ? `(-${discountPercent}%)` : ""}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
-                <span>Mã giảm giá</span>
+                <span>Mã giảm giá voucher</span>
                 <span className="font-bold">
                   {session.promotionCode || "-"}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
-                <span>Giảm giá điểm</span>
+                <span>Tiền giảm giá điểm</span>
                 <span className="font-bold text-green-700">
                   -{session.pointDiscount.toLocaleString("vi-VN")} đ
                 </span>
@@ -413,7 +402,7 @@ export const CheckoutConfirm = () => {
         </Card>
 
         <Card className="border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] sticky top-24 h-fit lg:max-w-sm w-full lg:justify-self-end">
-          <div className="h-2 bg-alpha-blue" />
+          <div className="h-2 bg-alpha-blue rounded-t-2xl" />
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
               <CreditCard size={20} className="text-alpha-blue" />

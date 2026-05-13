@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3305/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3306/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: root
   jpa:
@@ -24,15 +24,24 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-       spring.json.add.type.headers: false
+        spring.json.add.type.headers: true
+        spring.json.type.mapping: > 
+          payment_result_event:com.movieticket.payment.event.model.PaymentResultEvent,
+          payment-result-cash-events:com.movieticket.payment.event.model.PaymentResultEvent
     consumer:
       group-id: payment-service
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
-        spring.json.value.default.type: "com.movieticket.payment.event.model.PaymentByCashRequestEvent"
-        spring.json.use.type.headers: false
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.use.type.headers: true
+        spring.json.trusted.packages: "com.movieticket.*"
+        spring.json.type.mapping: > 
+          payment-by-cash-requests:com.movieticket.payment.event.model.PaymentByCashRequestEvent
+
+
 
 eureka:
   client:

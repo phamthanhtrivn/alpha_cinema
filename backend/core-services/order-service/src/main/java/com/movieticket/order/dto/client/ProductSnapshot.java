@@ -10,5 +10,6 @@ public class ProductSnapshot {
     private String name;
     private String pictureUrl;
     private double unitPrice;
+    private int quantity;
     private boolean status;
 }

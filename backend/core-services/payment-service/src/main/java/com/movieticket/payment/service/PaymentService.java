@@ -166,7 +166,7 @@ public class PaymentService {
     private void redirectToFrontend(HttpServletResponse response, String orderId, boolean success) throws IOException {
         String encodedOrderId = URLEncoder.encode(orderId == null ? "" : orderId, StandardCharsets.UTF_8);
         if (success) {
-            response.sendRedirect(frontendUrl + "/payment/success?orderId=" + encodedOrderId);
+            response.sendRedirect(frontendUrl + "/profile?tab=history" + encodedOrderId);
             return;
         }
         response.sendRedirect(frontendUrl + "/payment/failed?orderId=" + encodedOrderId);

@@ -118,6 +118,9 @@ function App() {
             }
           >
             <Route path="/profile" element={<Profile />} />
+            <Route path="/booking/:id" element={<Booking />} />
+            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
+            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
           </Route>
         </Route>
 

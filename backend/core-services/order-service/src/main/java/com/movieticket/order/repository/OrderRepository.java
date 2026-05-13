@@ -21,4 +21,9 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
 	Optional<Order> findByIdAndCinemaIdAndStatus(String id, String cinemaId, OrderStatus status);
 	Optional<Order> findByIdAndCinemaIdAndStatusIn(String id, String cinemaId, Collection<OrderStatus> statuses);
+	@EntityGraph(attributePaths = {"showScheduleDetails"})
+    List<Order> findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
+            String customerId,
+            List<OrderStatus> statuses
+    );
 }

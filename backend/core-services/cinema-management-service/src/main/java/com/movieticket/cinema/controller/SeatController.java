@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.function.EntityResponse;
-
 import java.util.List;
 
 @RestController
@@ -48,6 +46,8 @@ public class SeatController {
             return new ApiResponse<>(false, e.getMessage());
         }
     }
+
+    
 
     @GetMapping("/showSchedule")
     public ApiResponse<List<SeatForShowScheduleResponse>> getAllSeatsByShowSchedule(

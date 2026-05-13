@@ -26,3 +26,14 @@ export interface CustomerFilterParams {
   minTotalSpending?: number;
   maxTotalSpending?: number;
 }
+
+export interface CustomerProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  gender: Gender;
+  dateOfBirth: Date;
+  customerType: CustomerType;
+  points: number;
+  totalSpending: number;
+}
