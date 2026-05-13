@@ -39,7 +39,7 @@ const MainHeader: React.FC = () => {
   };
 
   return (
-    <nav className="border-b border-gray-100 bg-white sticky top-0 z-50 shadow-sm">
+    <nav className="border-b border-gray-100 bg-white sticky top-0 z-100 shadow-sm">
       <Container>
         <div className="flex justify-between items-center h-20">
           {/* 1. LOGO */}
@@ -58,7 +58,10 @@ const MainHeader: React.FC = () => {
             <Link to="#" className="hover:text-alpha-blue transition-colors">
               Lịch Chiếu
             </Link>
-            <Link to="/cinematic" className="hover:text-alpha-blue transition-colors">
+            <Link
+              to="/cinematic"
+              className="hover:text-alpha-blue transition-colors"
+            >
               Góc điện ảnh
             </Link>
             <Link to="#" className="hover:text-alpha-blue transition-colors">
@@ -68,10 +71,6 @@ const MainHeader: React.FC = () => {
 
           {/* 3. USER ACTIONS & SEARCH */}
           <div className="flex items-center space-x-6">
-            <button className="text-slate-400 hover:text-alpha-blue transition-colors">
-              <Search size={22} />
-            </button>
-
             {user ? (
               /* --- KHI ĐÃ ĐĂNG NHẬP --- */
               <div className="relative group flex items-center space-x-3 cursor-pointer py-2">
@@ -93,7 +92,7 @@ const MainHeader: React.FC = () => {
                 </div>
 
                 {/* DROPDOWN MENU */}
-                <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-100">
                   <Link
                     to="/profile"
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors"

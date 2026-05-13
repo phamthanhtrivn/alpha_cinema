@@ -218,9 +218,6 @@ const ProfilePage: React.FC = () => {
     { pos: 100, label: "Gold" },
   ];
 
-  console.log(orderHistory);
-  
-
   const progressPct = tierProgress(); // 0–100
   // Ensure a minimum visible width so even tiny amounts show the bar
   const barWidth = progressPct === 0 ? 0 : Math.max(progressPct, 2);
@@ -662,7 +659,8 @@ const ProfilePage: React.FC = () => {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2 mb-1">
                                     <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 min-w-0">
-                                      {snap?.movieTitle ?? "Phim không xác định"}
+                                      {snap?.movieTitle ??
+                                        "Phim không xác định"}
                                     </p>
                                     <span
                                       className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${statusConfig.className}`}
