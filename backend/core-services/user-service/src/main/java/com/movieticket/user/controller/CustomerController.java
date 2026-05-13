@@ -1,9 +1,11 @@
 package com.movieticket.user.controller;
 
 import com.movieticket.user.common.ApiResponse;
-import com.movieticket.user.dto.request.SearchCustomerDto;
+import com.movieticket.user.dto.request.*;
+import com.movieticket.user.dto.response.CustomerProfileDTO;
 import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.service.CustomerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,5 +49,47 @@ public class CustomerController {
         CustomerResponseDto updatedCustomer = customerService.updateCustomerStatus(id, status);
         ApiResponse<CustomerResponseDto> response = ApiResponse.success(updatedCustomer, "Customer status updated successfully");
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<CustomerProfileDTO>> getMyProfile(
+            @RequestHeader("X-User-Id") String userId
+    ) {
+        CustomerProfileDTO profile = customerService.getCustomerProfile(userId);
+        return ResponseEntity.ok(ApiResponse.success(profile, ""));
+    }
+
+    @PostMapping("/update-profile")
+    public ResponseEntity<ApiResponse<CustomerProfileDTO>> updateProfile(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestBody @Valid CustomerUpdateProfileDTO updateInformation
+    ) {
+        CustomerProfileDTO profile = customerService.updateCustomerProfile(userId, updateInformation);
+        return ResponseEntity.ok(ApiResponse.success(profile, "Cập nhật thông tin thành công"));
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody ChangePasswordDTO dto
+    ) {
+        customerService.changePassword(userId, dto);
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
+    }
+
+    @PostMapping("/email/request-update")
+    public ResponseEntity<String> requestUpdate(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody EmailUpdateReq req) {
+        customerService.requestUpdateEmail(userId, req.getNewEmail());
+        return ResponseEntity.ok("Mã OTP đã được gửi vào Email mới của bạn");
+    }
+
+    @PostMapping("/email/verify-update")
+    public ResponseEntity<ApiResponse<String>> verifyUpdate(
+            @RequestHeader("X-User-Id") String userId,
+            @Valid @RequestBody EmailVerifyReq req) {
+        String newEmail = customerService.verifyAndUpdateEmail(userId, req);
+        return ResponseEntity.ok(ApiResponse.success(newEmail, "Cập nhật Email thành công!"));
     }
 }

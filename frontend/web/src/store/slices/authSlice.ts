@@ -42,10 +42,9 @@ const authSlice = createSlice({
       state.role = 'GUEST';
       state.cinemaId = '';
       state.isAuthenticated = false;
-  
     },
   },
-  
+
 });
 
 export const { setCredentials, logout } = authSlice.actions;

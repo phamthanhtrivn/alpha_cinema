@@ -96,7 +96,6 @@ const SellTickets: React.FC = () => {
 
   const cinemaId  = useSelector((state : any) => state?.auth.cinemaId);
 
-
   const fetchMovies = async () => {
     try {
       const response = await showScheduleService.getMovies_and_schedules();

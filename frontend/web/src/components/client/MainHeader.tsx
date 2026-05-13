@@ -5,7 +5,7 @@ import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";
 import { userService } from "../../services/user.service";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 const MainHeader: React.FC = () => {
   const dispatch = useDispatch();
@@ -15,7 +15,6 @@ const MainHeader: React.FC = () => {
   const handleLogout = () => {
     const handle = async () => {
       const data = await userService.logout();
-      
       if (data.success) {
         toast.success("Đăng xuất thành công");
         dispatch(logout());
@@ -78,7 +77,7 @@ const MainHeader: React.FC = () => {
                 {/* DROPDOWN MENU */}
                 <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                   <Link
-                    to="/account"
+                    to="/profile"
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                   >
                     <UserCircle size={18} className="text-slate-700" />
@@ -88,7 +87,7 @@ const MainHeader: React.FC = () => {
                   </Link>
 
                   <Link
-                    to="/history"
+                    to="/profile?tab=history"
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors border-t border-slate-50"
                   >
                     <History size={18} className="text-slate-700" />

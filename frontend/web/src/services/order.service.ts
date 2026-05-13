@@ -2,6 +2,7 @@ import { apiClient } from "./api";
 import type {
   ApiResponse,
   OrderDetail,
+  OrderHistoryItem,
   OrderSearchParams,
   OrderSummary,
   PageResponse,
@@ -44,4 +45,12 @@ export const orderService = {
     const response = await apiClient.post(`/orders/seats/unlock`, data);
     return response.data;
   },
-};
+  getOrderHistoryDetail: async (id: string) => {
+    const response = await apiClient.get(`/orders/customer/${id}`);
+    return response.data as ApiResponse<OrderHistoryItem>;
+  },
+  getOrderHistory: async () => {
+    const response = await apiClient.get(`/orders/my-orders`);
+    return response.data;
+  }
+}

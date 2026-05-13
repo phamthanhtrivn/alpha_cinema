@@ -187,17 +187,6 @@ export const Checkout = () => {
     });
   };
 
-  const buildBookingUrl = () => {
-    const params = new URLSearchParams();
-
-    if (movieId) {
-      params.set("movieId", movieId);
-    }
-
-    const query = params.toString();
-    return query ? `/booking/${id}?${query}` : `/booking/${id}`;
-  };
-
   const goBackToBooking = async () => {
     if (sessionId) {
       try {
@@ -208,24 +197,14 @@ export const Checkout = () => {
       }
     }
 
-    navigate(buildBookingUrl(), {
-      replace: true,
-      state: { movieId },
-    });
+    navigate("/");
   };
 
   const handleContinue = async () => {
     if (!sessionId || !session) return;
 
     const request: UpdateCheckoutSessionRequest = {
-      items: selectedProducts.map((product) => ({
-        productId: product.id,
-        quantity: product.quantity,
-      })),
-      promotionCode: promotionCode.trim() || undefined,
-      pointsToRedeem: redeemPoints || undefined,
     };
-
     try {
       setSubmitting(true);
       const response = await checkoutService.updateSession(sessionId, request);
@@ -312,10 +291,6 @@ export const Checkout = () => {
                   <Ticket className="text-alpha-blue" size={20} />
                   Chọn sản phẩm và ưu đãi
                 </CardTitle>
-                <BookingCountdown
-                  expiresAt={session?.expiresAt}
-                  label="Phiên giữ ghế"
-                />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

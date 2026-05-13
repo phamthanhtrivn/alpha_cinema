@@ -16,6 +16,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.movieticket.order.dto.client.OrderHistoryResponse;
+
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -77,6 +87,15 @@ public class OrderController {
         showScheduleDetailService.unlockSeats(request.getShowScheduleId(), request.getSeatIds());
         return ResponseEntity.ok(ApiResponse.success(null, "Mở khóa ghế thành công"));
     }
+    @GetMapping("/my-orders")
+    public ResponseEntity<ApiResponse<List<OrderHistoryResponse>>>getOrderHistory(@RequestHeader("X-User-Id") String customerId) {
+        List<OrderHistoryResponse> history = orderService.customerTicketBookHistory(customerId);
+        return ResponseEntity.ok(ApiResponse.success(history, ""));
+    }
 
-    
+    @GetMapping("/customer/{orderId}")
+    public ResponseEntity<ApiResponse<OrderHistoryResponse>> getOrderDetail(@PathVariable String orderId) {
+        OrderHistoryResponse detail = orderService.getOrderDetail(orderId);
+        return ResponseEntity.ok(ApiResponse.success(detail,""));
+    }
 }
