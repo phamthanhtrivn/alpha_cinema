@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.movieticket.order.dto.client.OrderHistoryResponse;
 
-
 import java.util.List;
 
 @RestController
@@ -56,7 +55,6 @@ public class OrderController {
         OrderDetailResponse order = orderManagementService.getOrderDetail(id, cinemaId);
         return ResponseEntity.ok(ApiResponse.success(order, "Lấy chi tiết đơn hàng thành công"));
     }
-
     @GetMapping("ticket-detail/{id}")
     public ResponseEntity<ApiResponse<TicketDetailResponse>> getOrderDetailByTicketId(
             @PathVariable(required = true) String id,
@@ -88,8 +86,9 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(null, "Mở khóa ghế thành công"));
     }
     @GetMapping("/my-orders")
-    public ResponseEntity<ApiResponse<List<OrderHistoryResponse>>>getOrderHistory(@RequestHeader("X-User-Id") String customerId) {
+    public ResponseEntity<ApiResponse<List<OrderHistoryResponse>>> getOrderHistory(@RequestHeader("X-User-Id") String customerId) {
         List<OrderHistoryResponse> history = orderService.customerTicketBookHistory(customerId);
+
         return ResponseEntity.ok(ApiResponse.success(history, ""));
     }
 

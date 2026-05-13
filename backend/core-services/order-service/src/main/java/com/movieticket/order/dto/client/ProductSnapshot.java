@@ -8,8 +8,8 @@ import lombok.Data;
 public class ProductSnapshot {
     private String id;
     private String name;
+    private int quantity;
     private String pictureUrl;
     private double unitPrice;
-    private int quantity;
     private boolean status;
 }

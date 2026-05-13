@@ -6,6 +6,7 @@ import com.movieticket.user.dto.response.CustomerProfileDTO;
 import com.movieticket.user.dto.response.CustomerResponseDto;
 import com.movieticket.user.service.CustomerService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

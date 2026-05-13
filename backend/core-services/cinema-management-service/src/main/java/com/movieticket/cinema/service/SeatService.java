@@ -28,13 +28,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class SeatService {
-    private final SeatRepository seatRepository;
-    private final RoomRepository roomRepository;
-    private  final SeatTypeRepository seatTypeRepository;
-    private final RestTemplate restTemplate;
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private SeatRepository seatRepository;
+    @Autowired
+    private RoomRepository roomRepository;
+    @Autowired
+    private SeatTypeRepository seatTypeRepository;
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     public List<Seat> getAllSeatsByRoom(String id) {
         return seatRepository.findByRoom_Id(id);
