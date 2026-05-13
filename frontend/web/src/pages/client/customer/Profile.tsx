@@ -218,6 +218,9 @@ const ProfilePage: React.FC = () => {
     { pos: 100, label: "Gold" },
   ];
 
+  console.log(orderHistory);
+  
+
   const progressPct = tierProgress(); // 0–100
   // Ensure a minimum visible width so even tiny amounts show the bar
   const barWidth = progressPct === 0 ? 0 : Math.max(progressPct, 2);
@@ -254,7 +257,15 @@ const ProfilePage: React.FC = () => {
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-5">
                   <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200 shrink-0">
-                    <User size={32} className="text-slate-400" />
+                    <span className="text-lg font-bold text-slate-700">
+                      {profile?.fullName
+                        ? profile.fullName
+                            .trim()
+                            .split(" ")
+                            .pop()?.[0]
+                            .toUpperCase()
+                        : "?"}
+                    </span>
                   </div>
                   <div className="flex flex-col gap-2">
                     <div className="font-bold text-slate-800 text-lg leading-tight">
@@ -577,25 +588,51 @@ const ProfilePage: React.FC = () => {
                         <div className="flex flex-col gap-3">
                           {orders.map((order) => {
                             const snap = order.showScheduleSnapshot;
-                            const startDate = new Date(snap.startTime);
-                            const dateStr = startDate.toLocaleDateString(
-                              "vi-VN",
-                              {
-                                weekday: "short",
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              },
-                            );
-                            const timeStr = startDate.toLocaleTimeString(
-                              "vi-VN",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                hour12: false,
-                              },
-                            );
-                            const projLabel = `${snap.projectionType} - ${ALL_TRANSLATION.find((t) => t.value === snap.translationType)?.label ?? snap.translationType}`;
+                            const startDate = snap?.startTime
+                              ? new Date(snap.startTime)
+                              : null;
+                            const endDate = snap?.endTime
+                              ? new Date(snap.endTime)
+                              : null;
+                            const dateStr = startDate
+                              ? startDate.toLocaleDateString("vi-VN", {
+                                  weekday: "short",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })
+                              : "Chưa có ngày chiếu";
+                            const timeStr = startDate
+                              ? startDate.toLocaleTimeString("vi-VN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })
+                              : "Chưa có giờ chiếu";
+                            const endTimeStr = endDate
+                              ? endDate.toLocaleTimeString("vi-VN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })
+                              : null;
+                            const scheduleTimeRange = endTimeStr
+                              ? `${timeStr} - ${endTimeStr}`
+                              : timeStr;
+                            const projLabel = snap
+                              ? `${snap.projectionType} - ${
+                                  ALL_TRANSLATION.find(
+                                    (t) => t.value === snap.translationType,
+                                  )?.label ?? snap.translationType
+                                }`
+                              : "Chưa có thông tin suất chiếu";
+                            const statusConfig = STATUS_CONFIG[
+                              order.status
+                            ] ?? {
+                              label: order.status,
+                              className:
+                                "bg-slate-100 text-slate-600 border border-slate-200",
+                            };
 
                             return (
                               <div
@@ -603,17 +640,12 @@ const ProfilePage: React.FC = () => {
                                 onClick={() => handleShowOrderDetail(order.id)}
                                 className="relative flex gap-3 border border-slate-100 rounded-sm p-3 hover:border-alpha-blue/30 hover:shadow-sm transition-all bg-white cursor-pointer"
                               >
-                                {order.status === OrderStatus.CONFIRMED && (
-                                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold">
-                                    Đã xem phim
-                                  </div>
-                                )}
                                 {/* Thumbnail */}
                                 <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-100 shrink-0">
-                                  {snap.movieThumbnailUrl ? (
+                                  {snap?.movieThumbnailUrl ? (
                                     <img
                                       src={snap.movieThumbnailUrl}
-                                      alt={snap.movieTitle}
+                                      alt={snap.movieTitle ?? "Phim"}
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
@@ -628,16 +660,25 @@ const ProfilePage: React.FC = () => {
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
-                                    {snap.movieTitle}
-                                  </p>
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 min-w-0">
+                                      {snap?.movieTitle ?? "Phim không xác định"}
+                                    </p>
+                                    <span
+                                      className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${statusConfig.className}`}
+                                    >
+                                      {statusConfig.label}
+                                    </span>
+                                  </div>
 
                                   {/* Tags */}
                                   <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                                     <span className="text-[11px] font-medium text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
                                       {projLabel}
                                     </span>
-                                    <AgeBadge ageType={snap.ageType} />
+                                    {snap?.ageType && (
+                                      <AgeBadge ageType={snap.ageType} />
+                                    )}
                                   </div>
 
                                   {/* Cinema */}
@@ -659,7 +700,7 @@ const ProfilePage: React.FC = () => {
                                       className="text-slate-400 shrink-0"
                                     />
                                     <span>
-                                      {timeStr} - {dateStr}
+                                      {scheduleTimeRange} - {dateStr}
                                     </span>
                                   </div>
 

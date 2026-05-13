@@ -39,3 +39,9 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
+
+external-services:
+  cinema-service: 
+    base-url: http://cinema-management-service
+  order-service:
+    base-url: http://order-service

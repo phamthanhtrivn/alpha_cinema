@@ -123,9 +123,14 @@ export interface SeatSnapshot {
 
 // 4. Thông tin bắp nước (Dùng cho Item trong list)
 export interface ProductSnapshot {
-  name: string;
+  id?: string;
+  productId?: string;
+  name?: string;
+  productName?: string;
+  pictureUrl?: string;
   quantity: number;
   unitPrice: number;
+  subTotal?: number;
 }
 
 // 5. Interface CHÍNH để hứng dữ liệu từ API /history
@@ -144,7 +149,7 @@ export interface OrderHistoryItem {
   roomNumber: string;
 
   // Snapshot suất chiếu (chứa thông tin Phim)
-  showScheduleSnapshot: ShowScheduleSnapshot;
+  showScheduleSnapshot: ShowScheduleSnapshot | null;
 
   // Lưu ý: Hai trường này có thể là null/empty khi load danh sách 20 item
   // Chỉ khi vào detail mới có dữ liệu đầy đủ

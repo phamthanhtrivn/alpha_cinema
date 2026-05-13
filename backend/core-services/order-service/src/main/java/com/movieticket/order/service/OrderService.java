@@ -153,7 +153,13 @@ public class OrderService {
 
         String scheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
         List<String> seatIds = order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId).distinct().toList();
-        List<String> productIds = order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct().toList();
+        List<String> productIds = order.getOrderDetails().stream()
+                .map(OrderDetail::getProductId)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isBlank())
+                .distinct()
+                .toList();
 
         return Mono.zip(
                 productClient.getSchedulesBatch(List.of(scheduleId)),

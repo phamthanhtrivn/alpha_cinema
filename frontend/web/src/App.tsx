@@ -59,6 +59,7 @@ import { userService } from "./services/user.service";
 import { useEffect } from "react";
 import { Booking } from "./pages/client/customer/Booking";
 import { store } from "./store";
+import Cinematic from "./pages/client/customer/Cinematic";
 
 function App() {
   const dispatch = useDispatch();
@@ -97,6 +98,7 @@ function App() {
           <Route element={<ProtectedRoute type="public" />}>
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
+            <Route path="/cinematic" element={<Cinematic />} />
           </Route>
 
           {/* CLIENT LOGIN */}

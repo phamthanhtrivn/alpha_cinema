@@ -1,12 +1,13 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { orderService } from '@/services/order.service';
-import { OrderStatus, type OrderHistoryItem } from '@/types/order';
+import { type OrderHistoryItem } from '@/types/order';
+import { ORDER_STATUS_LABELS } from '@/constants/order.constants';
 import { ALL_TRANSLATION } from '@/types/movie';
 import {
   X, Loader2, MapPin, Clock,
   Ticket, Coffee, CreditCard, Calendar,
-  QrCode, AlertCircle
+  QrCode, AlertCircle, Film
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { AgeBadge } from './ProfileUIComponents';
@@ -18,12 +19,58 @@ interface OrderDetailModalProps {
   onClose: () => void;
 }
 
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  PENDING_PAYMENT: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
+  PAID: 'bg-green-50 text-green-700 border border-green-200',
+  CONFIRMED: 'bg-blue-50 text-blue-700 border border-blue-200',
+  FAILED: 'bg-red-50 text-red-700 border border-red-200',
+  EXPIRED: 'bg-slate-100 text-slate-500 border border-slate-200',
+  CANCELLED: 'bg-slate-100 text-slate-500 border border-slate-200',
+};
+
 const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, onClose }) => {
   const { data: order, isLoading, isError } = useQuery<OrderHistoryItem>({
     queryKey: ['order-detail', orderId],
     queryFn: () => orderService.getOrderHistoryDetail(orderId!).then(res => res.data),
     enabled: !!orderId && isOpen,
   });
+  const orderStatusLabel = order
+    ? ORDER_STATUS_LABELS[order.status] ?? order.status
+    : '';
+  const orderStatusClass = order
+    ? STATUS_BADGE_CLASSES[order.status] ?? 'bg-slate-100 text-slate-600 border border-slate-200'
+    : '';
+  const scheduleSnapshot = order?.showScheduleSnapshot ?? null;
+  const scheduleStartDate = scheduleSnapshot?.startTime
+    ? new Date(scheduleSnapshot.startTime)
+    : null;
+  const scheduleEndDate = scheduleSnapshot?.endTime
+    ? new Date(scheduleSnapshot.endTime)
+    : null;
+  const scheduleDateLabel = scheduleStartDate
+    ? scheduleStartDate.toLocaleDateString('vi-VN', {
+        weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
+      })
+    : 'Chưa có ngày chiếu';
+  const scheduleTimeLabel = scheduleStartDate
+    ? scheduleStartDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit', minute: '2-digit', hour12: false
+      })
+    : 'Chưa có giờ chiếu';
+  const scheduleEndTimeLabel = scheduleEndDate
+    ? scheduleEndDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit', minute: '2-digit', hour12: false
+      })
+    : null;
+  const scheduleTimeRangeLabel = scheduleEndTimeLabel
+    ? `${scheduleTimeLabel} - ${scheduleEndTimeLabel}`
+    : scheduleTimeLabel;
+  const scheduleFormatLabel = scheduleSnapshot
+    ? `${scheduleSnapshot.projectionType} · ${
+        ALL_TRANSLATION.find(t => t.value === scheduleSnapshot.translationType)?.label ??
+        scheduleSnapshot.translationType
+      }`
+    : 'Chưa có thông tin suất chiếu';
 
   if (!isOpen) return null;
 
@@ -80,19 +127,24 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
                 {/* Movie Poster & Basic Info */}
                 <div className="w-full md:w-40 bg-slate-50 border-b md:border-b-0 md:border-r border-dashed border-slate-200 p-4 shrink-0 flex md:flex-col gap-4 md:gap-0 items-center md:items-stretch">
                   <div className="w-20 md:w-full aspect-[2/3] rounded-sm overflow-hidden shadow-sm mb-0 md:mb-4 shrink-0">
-                    <img
-                      src={order.showScheduleSnapshot.movieThumbnailUrl}
-                      alt={order.showScheduleSnapshot.movieTitle}
-                      className="w-full h-full object-cover"
-                    />
+                    {scheduleSnapshot?.movieThumbnailUrl ? (
+                      <img
+                        src={scheduleSnapshot.movieThumbnailUrl}
+                        alt={scheduleSnapshot.movieTitle ?? 'Phim'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                        <Film size={28} className="text-slate-300" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col gap-1.5 flex-1">
-                    <AgeBadge ageType={order.showScheduleSnapshot.ageType} />
+                    {scheduleSnapshot?.ageType && (
+                      <AgeBadge ageType={scheduleSnapshot.ageType} />
+                    )}
                     <span className="text-[10px] md:text-xs font-bold text-slate-500 md:text-center">
-                      {order.showScheduleSnapshot.projectionType} · {
-                        ALL_TRANSLATION.find(t => t.value === order.showScheduleSnapshot.translationType)?.label ??
-                        order.showScheduleSnapshot.translationType
-                      }
+                      {scheduleFormatLabel}
                     </span>
                   </div>
                 </div>
@@ -111,7 +163,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
                   <div className="flex flex-col h-full">
                     <div>
                       <h4 className="text-xl font-black text-slate-800 leading-tight mb-3">
-                        {order.showScheduleSnapshot.movieTitle}
+                        {scheduleSnapshot?.movieTitle ?? 'Phim không xác định'}
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 md:gap-y-4">
@@ -119,18 +171,14 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
                           <span className="text-xs font-medium text-slate-600">Ngày chiếu</span>
                           <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
                             <Calendar size={14} className="text-alpha-blue" />
-                            {new Date(order.showScheduleSnapshot.startTime).toLocaleDateString('vi-VN', {
-                              weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
-                            })}
+                            {scheduleDateLabel}
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="text-xs font-medium text-slate-600">Suất chiếu</span>
                           <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
                             <Clock size={14} className="text-alpha-blue" />
-                            {new Date(order.showScheduleSnapshot.startTime).toLocaleTimeString('vi-VN', {
-                              hour: '2-digit', minute: '2-digit', hour12: false
-                            })}
+                            {scheduleTimeRangeLabel}
                           </div>
                         </div>
                         <div className="flex flex-col gap-1 md:col-span-2">
@@ -192,15 +240,23 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
                     </h5>
                     <div className="space-y-3">
                       {order.products && order.products.length > 0 ? (
-                        order.products.map((p, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-sm">
-                            <div className="flex flex-col">
-                              <span className="font-semibold text-slate-700">{p.name}</span>
-                              <span className="text-xs text-slate-400">Số lượng: {p.quantity}</span>
+                        order.products.map((p, idx) => {
+                          const productName =
+                            p.name ?? p.productName ?? 'Sản phẩm đi kèm';
+                          const quantity = p.quantity ?? 0;
+                          const unitPrice = p.unitPrice ?? 0;
+                          const lineTotal = p.subTotal ?? unitPrice * quantity;
+
+                          return (
+                            <div key={p.id ?? p.productId ?? idx} className="flex justify-between items-center gap-3 text-sm">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-slate-700">{productName}</span>
+                                <span className="text-xs text-slate-400">Số lượng: {quantity}</span>
+                              </div>
+                              <span className="font-bold text-slate-700 shrink-0">{formatCurrency(lineTotal)}</span>
                             </div>
-                            <span className="font-bold text-slate-700">{formatCurrency(p.unitPrice * p.quantity)}</span>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <p className="text-xs text-slate-400 italic">Không có bắp nước đính kèm</p>
                       )}
@@ -237,11 +293,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
                       <span className="text-xs font-medium text-slate-400">Trạng thái</span>
-                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.status === OrderStatus.CONFIRMED
-                        ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                        : 'bg-yellow-50 text-yellow-600 border border-yellow-100'
-                        }`}>
-                        {order.status === OrderStatus.CONFIRMED ? 'Đã xem phim' : 'Chưa xem phim'}
+                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${orderStatusClass}`}>
+                        {orderStatusLabel}
                       </div>
                     </div>
                   </div>

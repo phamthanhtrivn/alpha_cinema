@@ -58,8 +58,8 @@ const MainHeader: React.FC = () => {
             <Link to="#" className="hover:text-alpha-blue transition-colors">
               Lịch Chiếu
             </Link>
-            <Link to="#" className="hover:text-alpha-blue transition-colors">
-              Phim Đang Chiếu
+            <Link to="/cinematic" className="hover:text-alpha-blue transition-colors">
+              Góc điện ảnh
             </Link>
             <Link to="#" className="hover:text-alpha-blue transition-colors">
               Khuyến Mãi
@@ -77,7 +77,11 @@ const MainHeader: React.FC = () => {
               <div className="relative group flex items-center space-x-3 cursor-pointer py-2">
                 {/* Avatar & Info */}
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                  <User size={24} className="text-slate-400" />
+                  <span className="text-sm font-bold text-slate-700">
+                    {user.fullName
+                      ? user.fullName.trim().split(" ").pop()?.[0].toUpperCase()
+                      : "?"}
+                  </span>
                 </div>
 
                 <div className="hidden md:block">

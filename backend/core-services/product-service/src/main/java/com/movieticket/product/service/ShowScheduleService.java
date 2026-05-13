@@ -326,13 +326,16 @@ public class ShowScheduleService {
 
                     return ShowScheduleResDTO.builder()
                             .id(schedule.getId())
+                            .movieId(movie != null ? movie.getId() : null)
                             .movieTitle(movie != null ? movie.getTitle() : "N/A")
                             .movieThumbnailUrl(movie != null ? movie.getThumbnailUrl() : null)
                             .roomId(schedule.getRoomId())
-                            .ageType(movie != null ? movie.getAgeType().getName() : null)
+                            .cinemaId(schedule.getCinemaId())
+                            .ageType(movie != null && movie.getAgeType() != null ? movie.getAgeType().getName() : null)
                             .projectionType(schedule.getProjectionType())
                             .translationType(schedule.getTranslationType())
                             .startTime(schedule.getStartTime())
+                            .endTime(schedule.getEndTime())
                             .build();
                 })
                 .collect(Collectors.toList());
