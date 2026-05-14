@@ -58,11 +58,11 @@ spring:
         table-name: ai_knowledge_documents
 
   system:
-    product-service-base-url: "${PRODUCT_SERVICE_BASE_URL:http://localhost:8084}"
-    cinema-service-base-url: "${CINEMA_SERVICE_BASE_URL:http://localhost:8081}"
-    order-service-base-url: "${ORDER_SERVICE_BASE_URL:http://localhost:8082}"
-    review-service-base-url: "${USER_SERVICE_BASE_URL:http://localhost:8083}"
-    request-timeout-seconds: "${AI_SYSTEM_REQUEST_TIMEOUT_SECONDS:3}"
+    product-service-base-url: "${PRODUCT_SERVICE_BASE_URL}"
+    cinema-service-base-url: "${CINEMA_SERVICE_BASE_URL}"
+    order-service-base-url: "${ORDER_SERVICE_BASE_URL:http}"
+    review-service-base-url: "${USER_SERVICE_BASE_URL:http}"
+    request-timeout-seconds: "${AI_SYSTEM_REQUEST_TIMEOUT_SECONDS}"
 
 eureka:
   client:

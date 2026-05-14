@@ -113,7 +113,7 @@ const ScheduleManagement: React.FC = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [editingMovieTitle, setEditingMovieTitle] = useState("");
-  const [formMode, setFormMode] = useState<Mode>("add");
+  const [, setFormMode] = useState<Mode>("add");
   const [form, setForm] = useState({
     movieId: "",
     cinemaId: "",

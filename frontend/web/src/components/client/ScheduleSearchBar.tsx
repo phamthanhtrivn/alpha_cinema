@@ -41,8 +41,6 @@ const ScheduleSearchBar: React.FC = () => {
         enabled: !!selectedMovieId && !!selectedCinemaId && !!selectedDate,
     });
 
-    console.log('showtimes', showtimesResponse);
-
     const showtimes = showtimesResponse || [];
 
     // Reset dependent fields when parent changes

@@ -3,8 +3,11 @@ package com.movieticket.order.client;
 import com.movieticket.order.dto.CinemaRoomExternalDTO;
 import com.movieticket.order.dto.client.SeatBatchLookupResponse;
 import com.movieticket.order.dto.client.SeatSnapshot;
+import com.movieticket.order.dto.client.SelectionOption;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -12,12 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Component
 public class CinemaClient {
     private final WebClient webClient;
 
-    public CinemaClient(WebClient.Builder builder) {
-        this.webClient = builder.baseUrl("http://cinema-management-service").build();
+    public CinemaClient(
+            WebClient.Builder builder,
+            @Value("${external-services.cinema-service.base-url}") String cinemaServiceBaseUrl
+    ) {
+        this.webClient = builder.baseUrl(cinemaServiceBaseUrl).build();
     }
 
     public Mono<List<CinemaRoomExternalDTO>> getRoomsBatch(List<String> roomIds) {
@@ -56,6 +64,20 @@ public class CinemaClient {
                                     (existing, replacement) -> existing // Xử lý nếu trùng key
                             ));
                 })
+                .onErrorReturn(Collections.emptyMap());
+    }
+
+    public Mono<Map<String, String>> getCinemaNamesByIds(List<String> cinemaIds) {
+        if (cinemaIds == null || cinemaIds.isEmpty()) {
+            return Mono.just(Collections.emptyMap());
+        }
+
+        return webClient.post()
+                .uri("/internal/cinemas/selections")
+                .bodyValue(cinemaIds.stream().filter(id -> id != null && !id.isBlank()).distinct().toList())
+                .retrieve()
+                .bodyToFlux(SelectionOption.class)
+                .collectMap(SelectionOption::getId, SelectionOption::getLabel)
                 .onErrorReturn(Collections.emptyMap());
     }
 

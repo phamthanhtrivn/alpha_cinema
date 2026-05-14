@@ -177,7 +177,7 @@ public class CheckoutSessionService {
                 .build();
 
         List<OrderDetail> orderDetails = buildOrderDetails(order, cache.getItems());
-        List<ShowScheduleDetail> showScheduleDetails = buildShowScheduleDetails(order, cache.getShowScheduleId(), cache.getSeats());
+        List<ShowScheduleDetail> showScheduleDetails = buildShowScheduleDetails(order, cache.getShowScheduleId(), cache.getSeats(), cache.getMovieId());
 
         order.setOrderDetails(orderDetails);
         order.setShowScheduleDetails(showScheduleDetails);
@@ -239,18 +239,19 @@ public class CheckoutSessionService {
                 .toList();
     }
 
-    private List<ShowScheduleDetail> buildShowScheduleDetails(Order order, String showScheduleId, List<SeatRequestDto> seats) {
+        private List<ShowScheduleDetail> buildShowScheduleDetails(Order order, String showScheduleId, List<SeatRequestDto> seats, String movieId) {
         return seats.stream()
-                .map(seat -> ShowScheduleDetail.builder()
-                        .order(order)
-                        .showScheduleId(showScheduleId)
-                        .seatId(seat.getSeatId())
-                        .ticketPriceId(seat.getTicketPriceId())
-                        .finalPrice(seat.getFinalPrice() == null ? 0D : seat.getFinalPrice())
-                        .showSeatType(ShowSeatType.LOCKED)
-                        .build())
-                .toList();
-    }
+            .map(seat -> ShowScheduleDetail.builder()
+                .order(order)
+                .showScheduleId(showScheduleId)
+                .movieId(movieId)
+                .seatId(seat.getSeatId())
+                .ticketPriceId(seat.getTicketPriceId())
+                .finalPrice(seat.getFinalPrice() == null ? 0D : seat.getFinalPrice())
+                .showSeatType(ShowSeatType.LOCKED)
+                .build())
+            .toList();
+        }
 
     private CheckoutProductItemCache toProductItemCache(CheckoutProductItemRequest request, Map<String, ProductCache> productsById) {
         ProductCache product = productsById.get(request.getProductId());

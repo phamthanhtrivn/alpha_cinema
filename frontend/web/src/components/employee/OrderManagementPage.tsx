@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CalendarDays,
+  CreditCard,
   Film,
   Package,
   ReceiptText,
@@ -37,6 +38,8 @@ import {
 } from "@/constants/order.constants";
 import type {
   OrderSearchParams,
+  OrderPaymentStatus,
+  PaymentMethod,
   OrderStatus,
   OrderSummary,
 } from "@/types/order";
@@ -55,6 +58,10 @@ type OrderFilterState = {
   toDate: string;
   minTotalPayment: string;
   maxTotalPayment: string;
+  paymentMethod: PaymentMethod | "ALL";
+  paymentStatus: OrderPaymentStatus | "ALL";
+  paymentCode: string;
+  providerTransactionId: string;
 };
 
 const DEFAULT_FILTERS: OrderFilterState = {
@@ -68,6 +75,34 @@ const DEFAULT_FILTERS: OrderFilterState = {
   toDate: "",
   minTotalPayment: "",
   maxTotalPayment: "",
+  paymentMethod: "ALL",
+  paymentStatus: "ALL",
+  paymentCode: "",
+  providerTransactionId: "",
+};
+
+const PAYMENT_METHOD_OPTIONS: { label: string; value: PaymentMethod | "ALL" }[] = [
+  { label: "Tất cả phương thức", value: "ALL" },
+  { label: "VNPAY", value: "VNPAY" },
+  { label: "MOMO", value: "MOMO" },
+  { label: "Tiền mặt", value: "CASH" },
+];
+
+const PAYMENT_STATUS_OPTIONS: { label: string; value: OrderPaymentStatus | "ALL" }[] = [
+  { label: "Tất cả thanh toán", value: "ALL" },
+  { label: "Đang chờ", value: "PENDING" },
+  { label: "Thành công", value: "SUCCESS" },
+  { label: "Thất bại", value: "FAILED" },
+  { label: "Hết hạn", value: "EXPIRED" },
+  { label: "Đã hủy", value: "CANCELLED" },
+];
+
+const PAYMENT_STATUS_LABELS: Record<OrderPaymentStatus, string> = {
+  PENDING: "Đang chờ",
+  SUCCESS: "Thành công",
+  FAILED: "Thất bại",
+  EXPIRED: "Hết hạn",
+  CANCELLED: "Đã hủy",
 };
 
 interface OrderManagementPageProps {
@@ -91,6 +126,8 @@ const buildParams = (
   pageSize: number,
 ): OrderSearchParams => {
   const status = filters.status === "ALL" ? undefined : filters.status;
+  const paymentMethod = filters.paymentMethod === "ALL" ? undefined : filters.paymentMethod;
+  const paymentStatus = filters.paymentStatus === "ALL" ? undefined : filters.paymentStatus;
 
   return {
     keyword: filters.keyword.trim() || undefined,
@@ -107,6 +144,10 @@ const buildParams = (
     maxTotalPayment: filters.maxTotalPayment
       ? Number(filters.maxTotalPayment)
       : undefined,
+    paymentMethod,
+    paymentStatus,
+    paymentCode: filters.paymentCode.trim() || undefined,
+    providerTransactionId: filters.providerTransactionId.trim() || undefined,
     page: currentPage - 1,
     size: pageSize,
     sortBy: "createdAt",
@@ -304,6 +345,68 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
 
         <div className="space-y-2">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Phương thức thanh toán
+          </label>
+          <FilterSelect
+            placeholder="Tất cả phương thức"
+            options={PAYMENT_METHOD_OPTIONS}
+            value={filters.paymentMethod}
+            onChange={(value) =>
+              setFilters({
+                ...filters,
+                paymentMethod: value === "ALL" ? "ALL" : (value as PaymentMethod),
+              })
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Trạng thái thanh toán
+          </label>
+          <FilterSelect
+            placeholder="Tất cả thanh toán"
+            options={PAYMENT_STATUS_OPTIONS}
+            value={filters.paymentStatus}
+            onChange={(value) =>
+              setFilters({
+                ...filters,
+                paymentStatus: value === "ALL" ? "ALL" : (value as OrderPaymentStatus),
+              })
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Mã thanh toán
+          </label>
+          <Input
+            placeholder="Nhập mã thanh toán..."
+            value={filters.paymentCode}
+            onChange={(e) =>
+              setFilters({ ...filters, paymentCode: e.target.value })
+            }
+            className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Mã giao dịch NCC
+          </label>
+          <Input
+            placeholder="Nhập mã giao dịch..."
+            value={filters.providerTransactionId}
+            onChange={(e) =>
+              setFilters({ ...filters, providerTransactionId: e.target.value })
+            }
+            className="h-12 rounded-2xl border-slate-100 bg-white/50 focus:bg-white focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500 transition-all font-medium text-slate-700 shadow-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
             Từ ngày
           </label>
           <Input
@@ -398,6 +501,7 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
           "Rạp / Phim",
           "Suất chiếu",
           "Trạng thái",
+          "Thanh toán",
           "Tổng thanh toán",
           "Hành độnng",
         ]}
@@ -480,6 +584,23 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
               <div className="mt-2 text-xs text-slate-500 space-y-1">
                 <div>Ghế: {order.seatCount}</div>
                 <div>Sản phẩm: {order.productCount}</div>
+              </div>
+            </TableCell>
+
+            <TableCell className="px-8 py-6 align-top">
+              <div className="space-y-1 text-sm text-slate-700">
+                <div className="flex items-center gap-2 font-black text-slate-800">
+                  <CreditCard size={14} className="text-sky-500" />
+                  {order.paymentMethod || "-"}
+                </div>
+                <div className="text-xs font-bold text-emerald-600">
+                  {order.paymentStatus
+                    ? PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus
+                    : "-"}
+                </div>
+                <div className="max-w-40 truncate text-[11px] text-slate-400">
+                  {order.paymentCode || order.providerTransactionId || "-"}
+                </div>
               </div>
             </TableCell>
 
@@ -581,6 +702,42 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
                               {currency(selectedOrder.totalPayment)} đ
                             </span>
                           }
+                        />
+                        <DetailLine
+                          label="Phương thức"
+                          value={selectedOrder.paymentMethod || "-"}
+                        />
+                        <DetailLine
+                          label="Trạng thái thanh toán"
+                          value={
+                            selectedOrder.paymentStatus
+                              ? PAYMENT_STATUS_LABELS[selectedOrder.paymentStatus] || selectedOrder.paymentStatus
+                              : "-"
+                          }
+                        />
+                        <DetailLine
+                          label="Số tiền payment"
+                          value={
+                            selectedOrder.paymentAmount != null
+                              ? `${currency(selectedOrder.paymentAmount)} ${selectedOrder.paymentCurrency || "VND"}`
+                              : "-"
+                          }
+                        />
+                        <DetailLine
+                          label="Mã payment"
+                          value={selectedOrder.paymentCode || "-"}
+                        />
+                        <DetailLine
+                          label="Mã giao dịch NCC"
+                          value={selectedOrder.providerTransactionId || "-"}
+                        />
+                        <DetailLine
+                          label="Thanh toán lúc"
+                          value={formatDateTime(selectedOrder.paidAt)}
+                        />
+                        <DetailLine
+                          label="Payment hết hạn"
+                          value={formatDateTime(selectedOrder.paymentExpiredAt)}
                         />
                         <DetailLine
                           label="Điểm đã dùng"

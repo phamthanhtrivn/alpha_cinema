@@ -2,6 +2,7 @@ package com.movieticket.order.repository;
 
 import com.movieticket.order.entity.OrderStatus;
 import com.movieticket.order.entity.ShowScheduleDetail;
+import com.movieticket.order.entity.ShowSeatType;
 
 import jakarta.transaction.Transactional;
 
@@ -30,6 +31,18 @@ public interface ShowScheduleDetailRepository extends JpaRepository<ShowSchedule
             @Param("showScheduleId") String showScheduleId,
             @Param("seatIds") Collection<String> seatIds,
             @Param("releasedStatuses") Collection<OrderStatus> releasedStatuses
+    );
+
+    @Query("""
+            select detail.showScheduleId, count(detail.id)
+            from ShowScheduleDetail detail
+            where detail.showScheduleId in :showScheduleIds
+              and detail.showSeatType in :bookedSeatTypes
+            group by detail.showScheduleId
+            """)
+    List<Object[]> countBookedSeatsByScheduleIds(
+            @Param("showScheduleIds") Collection<String> showScheduleIds,
+            @Param("bookedSeatTypes") Collection<ShowSeatType> bookedSeatTypes
     );
 
     void deleteByOrder_Id(String orderId);

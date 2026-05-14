@@ -17,8 +17,11 @@ import type { CinemaShowtime } from '@/types/show-schedule';
 import { ALL_TRANSLATION } from '@/types/movie';
 import { formatDDMMYYYY, formatHHmm } from '@/utils/formatTime';
 import { cinemaService } from '@/services/cinema.service';
+import { useSelector } from 'react-redux';
+import { selectAuth } from '@/store/slices/authSlice';
 
 const MovieDetail = () => {
+    const { user } = useSelector(selectAuth)
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [isTrailerOpen, setIsTrailerOpen] = useState<boolean>(false);
@@ -83,6 +86,15 @@ const MovieDetail = () => {
         if (selectedCinema === 'Tất cả rạp') return showtimes;
         return showtimes.filter(s => s.cinemaName === selectedCinema);
     }, [showtimes, selectedCinema]);
+
+    const handleBookingShowTime = (showTimeId: string) => {
+        if (!user) {
+            navigate("/login")
+        }
+        else {
+            navigate(`/booking/${showTimeId}?movieId=${id}`);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -285,7 +297,7 @@ const MovieDetail = () => {
                                                                 <button
                                                                     key={st.id}
                                                                     className="border hover:cursor-pointer border-slate-200 rounded-md px-5 py-2.5 text-sm text-slate-700 hover:bg-alpha-blue hover:text-white transition-all bg-white active:scale-95"
-                                                                    onClick={() => navigate(`/booking/${st.id}?movieId=${id}`)}
+                                                                    onClick={() => handleBookingShowTime(st.id)}
                                                                 >
                                                                     {formatHHmm(st.time)}
                                                                 </button>

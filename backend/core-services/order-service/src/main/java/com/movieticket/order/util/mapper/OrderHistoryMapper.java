@@ -77,12 +77,10 @@ public class OrderHistoryMapper {
         List<ProductSnapshot> productItems = order.getOrderDetails().stream()
                 .map(detail -> {
                     ProductSnapshot p = productMap.get(detail.getProductId());
-                    if (p == null) return null;
-
                     return ProductSnapshot.builder()
-                            .id(p.getId())
-                            .name(p.getName())
-                            .pictureUrl(p.getPictureUrl())
+                            .id(p != null ? p.getId() : detail.getProductId())
+                            .name(p != null ? p.getName() : "Sản phẩm đi kèm")
+                            .pictureUrl(p != null ? p.getPictureUrl() : null)
                             .quantity(detail.getQuantity())   // Lấy số lượng thực tế lúc mua
                             .unitPrice(detail.getPrice())     // Lấy giá thực tế lúc mua
                             .build();

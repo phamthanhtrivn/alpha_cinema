@@ -3,8 +3,10 @@ package com.movieticket.order.client;
 import com.movieticket.order.dto.client.ProductBatchLookupResponse;
 import com.movieticket.order.dto.client.ProductSnapshot;
 import com.movieticket.order.dto.client.ShowScheduleSnapshot;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -12,19 +14,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Component
 public class ProductClient {
+
     private final WebClient webClient;
 
-    public ProductClient(WebClient.Builder builder) {
-        this.webClient = builder.baseUrl("http://product-service/internal").build();
+    public ProductClient(
+            WebClient.Builder builder,
+            @Value("${external-services.product-service.base-url}") String productServiceBaseUrl
+    ) {
+        this.webClient = builder.baseUrl(productServiceBaseUrl).build();
     }
 
     public Mono<List<ShowScheduleSnapshot>> getSchedulesBatch(List<String> scheduleIds) {
-        if (scheduleIds == null || scheduleIds.isEmpty()) return Mono.just(List.of());
+        if (scheduleIds == null || scheduleIds.isEmpty()) {
+            return Mono.just(List.of());
+        }
 
         return webClient.post()
-                .uri("/show-schedules/summary-batch")
+                .uri("/internal/show-schedules/summary-batch")
                 .bodyValue(scheduleIds)
                 .retrieve()
                 .bodyToFlux(ShowScheduleSnapshot.class)

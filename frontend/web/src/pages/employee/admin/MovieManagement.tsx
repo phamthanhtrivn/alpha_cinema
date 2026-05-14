@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Calendar, Clock, Star, PlayCircle, Film } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
@@ -18,9 +18,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Info, User, Globe, MapPin, Tag } from "lucide-react";
 
@@ -110,7 +107,6 @@ const MovieManagement: React.FC = () => {
   const {
     data: moviesData,
     isLoading,
-    isError,
     refetch: refetchMovies,
   } = useQuery({
     queryKey: ["movies", currentPage, appliedFilters],
