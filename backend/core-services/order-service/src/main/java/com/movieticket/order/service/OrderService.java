@@ -9,6 +9,7 @@ import com.movieticket.order.dto.response.InfoBookingScheduleResponse;
 import com.movieticket.order.dto.response.InfoBookingSeatResponse;
 import com.movieticket.order.dto.response.TicketDetailResponse;
 import com.movieticket.order.entity.*;
+import com.movieticket.order.enums.ReviewType;
 import com.movieticket.order.exception.BusinessException;
 import com.movieticket.order.repository.OrderDetailRepository;
 import com.movieticket.order.repository.OrderRepository;
@@ -331,4 +332,25 @@ public class OrderService {
                                         });
                                 }).block();
         }
+
+    public ReviewType getReviewTypeForCustomer(String customerId, String movieId) {
+        List<OrderStatus> statuses = orderRepository.findOrderStatusesByCustomerAndMovie(customerId, movieId);
+
+        if (statuses.isEmpty()) {
+            return ReviewType.NOT_PURCHASED;
+        }
+
+        // Chỉ cần có 1 order CONFIRMED là VIEWED
+        if (statuses.contains(OrderStatus.CONFIRMED)) {
+            return ReviewType.VIEWED;
+        }
+
+        // Không có CONFIRMED nhưng có PAID thì là PURCHASED
+        if (statuses.contains(OrderStatus.PAID)) {
+            return ReviewType.PURCHASED;
+        }
+
+        // Các trạng thái khác (CANCELLED, FAILED, PENDING_PAYMENT...)
+        return ReviewType.NOT_PURCHASED;
+    }
 }

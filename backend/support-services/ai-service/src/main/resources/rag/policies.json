@@ -1,0 +1,92 @@
+[
+  {
+    "title": "Tong quan he thong Alpha Cinema",
+    "content": "Alpha Cinema la he thong rap chieu phim moi trong nam 2026 tai TP HCM, co 5 chi nhanh: Alpha Quan 1, Alpha Quan 7, Alpha Go Vap, Alpha Tan Phu va Alpha Thu Duc. He thong ho tro quang ba phim, dat ve truc tuyen, quan ly rap, phong chieu, ghe, suat chieu, gia ve, khuyen mai, nhan vien, khach hang, don hang va dashboard thong ke doanh thu.",
+    "sourceUrl": "policy://alpha/overview",
+    "metadata": "policy,overview,cinema"
+  },
+  {
+    "title": "Thong tin phim hien thi cho khach hang",
+    "content": "Thong tin phim gom ten phim, thoi luong, thoi gian khoi chieu, dien vien, the loai, dao dien, nha san xuat, noi dung, trailer, do tuoi toi thieu, nam phat hanh, quoc gia phat hanh, trang thai phat hanh, hinh thuc chieu ho tro nhu 2D, 3D, IMAX va hinh thuc dich nhu phu de, long tieng, thuyet minh.",
+    "sourceUrl": "policy://movie/information",
+    "metadata": "policy,movie,product"
+  },
+  {
+    "title": "Quy trinh dat ve truc tuyen",
+    "content": "Khach hang muon dat ve bat buoc phai dang nhap. Quy trinh gom tim va chon phim, chon rap, chon ngay va suat chieu hop le, chon ghe, chon do an vat neu can, nhap ma giam gia hoac diem thanh vien neu co, sau do thanh toan qua Momo hoac VNPay. Ve duoc gui bang QR code qua email va co the xem lai trong lich su dat ve.",
+    "sourceUrl": "policy://booking/flow",
+    "metadata": "policy,booking,customer"
+  },
+  {
+    "title": "Quy dinh ve gia ve Triple-Constraint Pricing",
+    "content": "Gia ve khong co dinh ma duoc xac dinh theo to hop ba tieu chi: hinh thuc chieu cua suat chieu gom 2D, 3D, IMAX; thoi diem chieu gom ngay thuong thu 2 den thu 6, thu 7 va chu nhat truoc 17h, thu 7 va chu nhat sau 17h, ngay le tet do Admin quan ly; loai ghe gom ghe don, ghe doi Couple, ghe VIP. Gia cuoi cung la giao thoa cua ba tieu chi trong bang ma tran gia do Admin thiet lap.",
+    "sourceUrl": "policy://pricing/rules",
+    "metadata": "policy,pricing,ticket"
+  },
+  {
+    "title": "Bang gia ve tham khao",
+    "content": "Bang gia tham khao: 2D ghe don 60000 ngay thuong, 80000 cuoi tuan truoc 17h, 90000 cuoi tuan sau 17h, 95000 le tet. 2D ghe doi 120000, 160000, 180000, 190000. 2D ghe VIP 85000, 105000, 120000, 135000. 3D ghe don 80000, 100000, 110000, 115000. 3D ghe doi 160000, 200000, 220000, 230000. 3D ghe VIP 105000, 125000, 140000, 155000. IMAX ghe don 95000, 115000, 125000, 135000. IMAX ghe doi 190000, 230000, 250000, 270000. IMAX ghe VIP 135000, 155000, 165000, 185000.",
+    "sourceUrl": "policy://pricing/reference-table",
+    "metadata": "policy,pricing,ticket"
+  },
+  {
+    "title": "Quy dinh hoan tra va su dung ve",
+    "content": "Chinh sach No-Refund: ve da thanh toan thanh cong tuyet doi khong duoc hoan tra hoac doi suat chieu duoi moi hinh thuc. Moi ma QR code chi co gia tri su dung mot lan duy nhat. Ve sau khi da duoc nhan vien soat ve check-in se khong con hieu luc tren he thong.",
+    "sourceUrl": "policy://ticket/no-refund",
+    "metadata": "policy,refund,ticket,checkin"
+  },
+  {
+    "title": "Quy trinh soat ve va nhan hang tai quay",
+    "content": "Khi nhan vien quet QR code cua khach hang, he thong lap tuc doi soat tinh hop le, tu dong in ve giay va hien thi danh sach do an, thuc uong hoac vat pham di kem de nhan vien chuan bi. Sau khi ban giao, he thong cap nhat trang thai Da vao rap cho ghe va Da giao hang cho vat pham. Moi QR code chi co hieu luc mot lan de ngan ngua gian lan.",
+    "sourceUrl": "policy://ticket/qr-checkin",
+    "metadata": "policy,ticket,qr,product"
+  },
+  {
+    "title": "Quy dinh diem thuong va hang thanh vien",
+    "content": "Diem tich luy duoc tinh theo tong chi tieu trong nam tu 1/1 den 31/12. Thanh vien chi tieu duoi 2000000 VND duoc tich 3 phan tram. Hang Bac tu 2000000 den 3999999 VND duoc tich 5 phan tram. Hang Vang tren 4000000 VND duoc tich 7 phan tram. Vi du giao dich 200000 VND o hang Thanh vien duoc 6 diem.",
+    "sourceUrl": "policy://loyalty/tier",
+    "metadata": "policy,loyalty,customer"
+  },
+  {
+    "title": "Quy dinh lam tron va quy doi diem",
+    "content": "Diem thuong ap dung lam tron so thap phan: tu 0.1 den 0.4 lam tron xuong, tu 0.5 den 0.9 lam tron len. Gia tri quy doi la 1 diem bang 1000 VND. Diem chi dung de thanh toan dich vu noi bo nhu ve, bap nuoc tai Alpha Cinema, khong co gia tri quy doi tien mat va khong hoan lai khi giao dich da ghi nhan thanh cong. Diem tich luy co thoi han su dung 1 nam.",
+    "sourceUrl": "policy://loyalty/points",
+    "metadata": "policy,loyalty,payment"
+  },
+  {
+    "title": "Quy dinh danh gia va phan hoi phim",
+    "content": "Khach vang lai hoac thanh vien chua mua ve duoc gui danh gia, so sao va binh luan ve phim nhung khong co nhan Da mua ve. Khach hang da mua ve sau khi ve chuyen sang trang thai Da vao rap se co danh gia uu tien hien thi voi nhan Nguoi xem thuc te va co trong so cao nhat khi tinh diem trung binh avgRating.",
+    "sourceUrl": "policy://review/rules",
+    "metadata": "policy,review,movie"
+  },
+  {
+    "title": "Noi dung va kiem duyet danh gia",
+    "content": "Mot danh gia day du gom so sao tu 1 den 5, noi dung binh luan va hinh anh dinh kem tuy chon. He thong khuyen khich hinh chup tai rap hoac anh cuong ve giay de tang do tin cay. Admin co quyen an hoac xoa vinh vien danh gia vi pham nhu ngon tu tho tuc, spam, quang cao rac, cong kich ca nhan hoac to chuc khong lien quan trai nghiem phim. Co che la kiem duyet truoc, hien thi sau.",
+    "sourceUrl": "policy://review/moderation",
+    "metadata": "policy,review,admin"
+  },
+  {
+    "title": "Quy dinh ve san pham va combo",
+    "content": "Ngoai ban ve, website ban vat pham nhu ly nuoc, do choi va combo dac biet co chu de giong cac phim sap chieu. Khach hang co the them san pham vao gio hang va thanh toan voi quy trinh tuong tu mua ve. Khach hang can den rap va trinh QR code de nhan san pham.",
+    "sourceUrl": "policy://product/combo",
+    "metadata": "policy,product,combo"
+  },
+  {
+    "title": "Quyen va pham vi cua Manager",
+    "content": "Manager quan ly mot cum rap cu the va chi duoc phep quan ly du lieu thuoc rap minh phu trach. Manager co quyen quan ly nhan vien, don hang, phong chieu, ghe ngoi va suat chieu cua rap minh; xem thong ke doanh thu, tinh trang hoat dong va hieu qua kinh doanh cua rap do minh quan ly.",
+    "sourceUrl": "policy://role/manager",
+    "metadata": "policy,role,manager"
+  },
+  {
+    "title": "Quyen va pham vi cua Admin",
+    "content": "Admin quan tri tong the he thong Alpha Cinema, quan ly nghe si, phim, danh gia, gia ve, khuyen mai, ngay le, ghe, khach hang, tai khoan, phan quyen, toan bo chuoi rap, phong chieu, suat chieu, nhan vien, don hang va dashboard thong ke toan he thong. Admin co the thuc hien cac chuc nang Manager tren pham vi toan he thong.",
+    "sourceUrl": "policy://role/admin",
+    "metadata": "policy,role,admin"
+  },
+  {
+    "title": "Yeu cau hieu nang va giao dien",
+    "content": "He thong dat ve can phan hoi khong vuot qua 3 giay moi yeu cau, dac biet trong khung gio su kien. Giao dien web can don gian, de hieu, bo cuc ro rang, mau chu dao xanh duong dam va trang, co trang gia skeleton khi tai de khach hang biet trang dang xu ly.",
+    "sourceUrl": "policy://non-functional/performance-ui",
+    "metadata": "policy,performance,ui"
+  }
+]

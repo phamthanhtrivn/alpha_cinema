@@ -1,10 +1,72 @@
 server:
-  port: 8088 # Port chạy service AI
+  port: 8088
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${AI_POSTGRES_HOST:localhost}:${AI_POSTGRES_PORT:5433}/${AI_POSTGRES_DB:alpha_ai}
+    username: ${AI_POSTGRES_USER:alpha_ai}
+    password: ${AI_POSTGRES_PASSWORD:alpha_ai_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      timeout: 6000ms
+      connect-timeout: 2000ms
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+        spring.json.type.mapping: "review_moderation_result_event:com.movieticket.ai.event.model.ReviewModerationResultEvent"
+    consumer:
+      group-id: ai-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.use.type.headers: true
+        spring.json.trusted.packages: "com.movieticket.*"
+        spring.json.type.mapping: > 
+          review_moderation_event:com.movieticket.ai.event.model.ReviewModerationEvent
+  ai:
+    google:
+      genai:
+        api-key: ${GOOGLE_AI_API_KEY}
+        chat:
+          options:
+            model: ${GOOGLE_AI_MODEL}
+        embedding:
+          api-key: ${GOOGLE_AI_API_KEY}
+          text:
+            options:
+              model: ${GOOGLE_EMBEDDING_MODEL}
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768
+        table-name: ai_knowledge_documents
+
+  system:
+    product-service-base-url: "${PRODUCT_SERVICE_BASE_URL:http://localhost:8084}"
+    cinema-service-base-url: "${CINEMA_SERVICE_BASE_URL:http://localhost:8081}"
+    order-service-base-url: "${ORDER_SERVICE_BASE_URL:http://localhost:8082}"
+    review-service-base-url: "${USER_SERVICE_BASE_URL:http://localhost:8083}"
+    request-timeout-seconds: "${AI_SYSTEM_REQUEST_TIMEOUT_SECONDS:3}"
 
 eureka:
   client:
     service-url:
-      # Nơi đăng ký với Eureka Server với tên là ai-service
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
