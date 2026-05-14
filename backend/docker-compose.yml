@@ -10,6 +10,20 @@ services:
       - alpha_redis_data:/data
     networks:
       - alpha_network
+  ai-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: alpha-ai-postgres
+    ports:
+      - "${AI_POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${AI_POSTGRES_DB}
+      POSTGRES_USER: ${AI_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AI_POSTGRES_PASSWORD}
+    restart: always
+    volumes:
+      - alpha_ai_postgres_data:/var/lib/postgresql/data
+    networks:
+      - alpha_network
   kafka:
     image: apache/kafka:4.0.2
     container_name: alpha-kafka
@@ -45,6 +59,7 @@ services:
 
 volumes:
   alpha_redis_data:
+  alpha_ai_postgres_data:
   alpha_kafka_data:
 
 networks:

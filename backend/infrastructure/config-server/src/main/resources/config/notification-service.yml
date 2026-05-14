@@ -3,6 +3,8 @@ server:
 
 spring:
   data:
+    mongodb:
+      uri: ${MONGO_URI}
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
@@ -23,7 +25,8 @@ spring:
         spring.json.trusted.packages: "com.movieticket.*"
         spring.json.type.mapping: >
           otp_event:com.movieticket.notification.event.model.SendOTPEvent,
-          order_event:com.movieticket.notification.event.model.OrderSuccessfulEvent
+          order_event:com.movieticket.notification.event.model.OrderSuccessfulEvent,
+          review_status_notification_event:com.movieticket.notification.event.model.ReviewStatusNotificationEvent
 
   mail:
     host: smtp.gmail.com

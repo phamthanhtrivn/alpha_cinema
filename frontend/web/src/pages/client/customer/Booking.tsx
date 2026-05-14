@@ -171,7 +171,6 @@ export const Booking = () => {
 
     try {
       setLoadingSeatId(seat.seatId);
-
       const response = await checkoutService.determineTicketPrice({
         seatTypeId: seat.seatTypeId,
         projectionType: layout.projection,
