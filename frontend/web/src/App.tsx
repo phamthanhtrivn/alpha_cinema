@@ -36,7 +36,7 @@ import ManagerStaff from "./pages/employee/manager/StaffManagement";
 // STAFF
 import SellTickets from "./pages/employee/staff/SellTickets";
 import StaffDashboard from "./pages/employee/staff/StaffDashboard";
-import Moive from "./pages/employee/staff/Moive";
+import Movie from "./pages/employee/staff/Moive";
 import CheckTicket from "./pages/employee/staff/CheckTicket";
 
 // CLIENT
@@ -60,6 +60,7 @@ import { userService } from "./services/user.service";
 import { useEffect } from "react";
 import { Booking } from "./pages/client/customer/Booking";
 import { store } from "./store";
+import SellProduct from "./pages/employee/staff/SellProduct";
 
 function App() {
   const dispatch = useDispatch();
@@ -202,7 +203,8 @@ function App() {
                 <Route path="staff/dashboard" element={<StaffDashboard />} />
                 <Route path="staff/sell" element={<SellTickets />} />
                 <Route path="staff/check-ticket" element={<CheckTicket />} />
-                <Route path="staff/movies" element={<Moive />} />
+                <Route path="staff/movies" element={<Movie />} />
+                <Route path="staff/product" element={<SellProduct />} />
 
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>

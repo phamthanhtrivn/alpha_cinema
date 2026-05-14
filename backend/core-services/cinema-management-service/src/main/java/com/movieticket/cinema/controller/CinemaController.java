@@ -32,7 +32,7 @@ public class CinemaController {
         ApiResponse<List<Cinema>> api;
         try {
             String cinemaIdFromHeader = "ALL".equals(cinemaHeaderId) ? null : cinemaHeaderId;
-            List<Cinema> cinemas = cinemaService.getAllCinemas(cinemaHeaderId);
+            List<Cinema> cinemas = cinemaService.getAllCinemas(cinemaIdFromHeader);
             api = new ApiResponse<>(true, cinemas);
         } catch (Exception e) {
             api = new ApiResponse<>(false, e.getMessage());

@@ -28,13 +28,22 @@ public class EmailService {
     public boolean sendOrderSuccessfulEmail(OrderSuccessfulEvent event) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
+            // QUAN TRỌNG: Phải có true để hỗ trợ đính kèm ảnh Inline (CID)
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromEmail);
             helper.setTo(event.getCustomerEmail());
             helper.setSubject("🎬 Vé xem phim #" + event.getOrderId() + " đã xác nhận thành công");
 
-            helper.setText(buildOrderSuccessfulEmailHtml(event), true);
+            // 1. Tạo nội dung HTML
+            String htmlContent = buildOrderSuccessfulEmailHtml(event);
+            helper.setText(htmlContent, true);
+
+            // 2. Tạo hình ảnh QR code và đính kèm vào email với ID là "qrCodeImage"
+            byte[] qrCodeImage = generateQRCodeImage(event.getOrderId());
+            if (qrCodeImage != null) {
+                helper.addInline("qrCodeImage", new org.springframework.core.io.ByteArrayResource(qrCodeImage), "image/png");
+            }
 
             mailSender.send(message);
             return true;
@@ -44,7 +53,6 @@ public class EmailService {
             return false;
         }
     }
-
     // =========================
     // 🎟️ TEMPLATE VÉ (VIỆT HOÁ 100%)
     // =========================
@@ -165,12 +173,23 @@ public class EmailService {
             html.append("</table>");
         }
 
-        // QR
-        html.append("<div style='text-align:center;margin-top:25px;'>")
-                .append("<p><b>Mã QR vé điện tử</b></p>")
-                .append("<div style='border:2px dashed #034EA2;padding:12px;display:inline-block;border-radius:10px;'>")
-                .append(event.getQrCode() == null ? "Đang cập nhật mã QR..." : escape(event.getQrCode()))
+         // 2. Nhúng trực tiếp vào thẻ img
+        html.append("<div style='text-align:center; margin-top:30px; padding:20px; background:#f9f9f9; border-radius:15px;'>")
+                .append("<p style='margin:0 0 15px 0; color:#333; font-size:16px;'><b>Mã QR vé điện tử</b></p>")
+
+                // Khối chứa mã QR
+                .append("<div style='display:inline-block; padding:15px; background:#fff; border:1px solid #ddd; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05);'>")
+                .append("<img src='cid:qrCodeImage' alt='QR Code' style='display:block; width:200px; height:200px;' />")
                 .append("</div>")
+
+                // Thông tin mã đơn phía dưới
+                .append("<div style='margin-top:15px;'>")
+                .append("<span style='display:block; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:1px;'>Mã đơn hàng</span>")
+                .append("<b style='font-size:14px; color:#034EA2; font-family:monospace;'>").append(event.getOrderId()).append("</b>")
+                .append("</div>")
+
+                // Dòng ghi chú nhỏ
+                .append("<p style='font-size:12px; color:#e50914; margin-top:10px; font-style:italic;'>* Vui lòng đưa mã này cho nhân viên tại quầy vé</p>")
                 .append("</div>")
 
                 // FOOTER
@@ -183,6 +202,20 @@ public class EmailService {
         return html.toString();
     }
 
+    private byte[] generateQRCodeImage(String text) {
+        try {
+            com.google.zxing.qrcode.QRCodeWriter qrCodeWriter = new com.google.zxing.qrcode.QRCodeWriter();
+            // Kích thước 250x250 là chuẩn nhất để quét
+            com.google.zxing.common.BitMatrix bitMatrix = qrCodeWriter.encode(text, com.google.zxing.BarcodeFormat.QR_CODE, 250, 250);
+
+            java.io.ByteArrayOutputStream pngOutputStream = new java.io.ByteArrayOutputStream();
+            com.google.zxing.client.j2se.MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
+            return pngOutputStream.toByteArray();
+        } catch (Exception e) {
+            System.err.println("Lỗi tạo QR: " + e.getMessage());
+            return null;
+        }
+    }
 
     private String buildShowTimeText(OrderSuccessfulEvent event) {
         if (event.getShowStartTime() == null) return "Không có thông tin";
