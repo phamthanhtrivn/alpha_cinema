@@ -57,7 +57,7 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/customers/**, /api/employees/**
+            - Path=/api/users/**, /api/customers/**, /api/employees/**, /api/reviews/**
         # Route cho dịch vụ quản lý sản phẩm (suất chiếu, phim, combo,...)
         - id: product-service
           uri: lb://product-service
@@ -73,7 +73,16 @@ spring:
           uri: lb://payment-service
           predicates:
             - Path=/api/payments/**
-
+        # Route thông báo
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+        # Route chat
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/ai/**
 eureka:
   client:
     service-url:

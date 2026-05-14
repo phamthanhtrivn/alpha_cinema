@@ -73,7 +73,9 @@ public class Movie {
     @JoinTable(name = "movie_directors", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "artist_id"))
     private Set<Artist> directors;
 
-    private double avgRating;
+    private Long totalReviews = 0L;
+    private Double totalSumRating = 0.0;
+    private double avgRating = 0.0;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
