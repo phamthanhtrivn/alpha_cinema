@@ -144,7 +144,6 @@ export const CheckoutConfirm = () => {
     if (!sessionId) {
       return;
     }
-
     navigate("/");
   };
 

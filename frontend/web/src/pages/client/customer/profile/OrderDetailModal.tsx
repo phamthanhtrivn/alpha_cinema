@@ -12,6 +12,7 @@ import {
 import { formatCurrency } from '@/utils/formatCurrency';
 import { AgeBadge } from './ProfileUIComponents';
 import { Button } from '@/components/ui/button';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface OrderDetailModalProps {
   orderId: string | null;
@@ -193,14 +194,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ orderId, isOpen, on
 
                     {/* QR Code Centered */}
                     <div className="mt-auto pt-6 border-t border-slate-100 flex flex-col items-center justify-center gap-2">
-                      <div className="bg-white p-2 rounded-xl border-2 border-slate-50 shadow-inner">
-                        {order.qrCode ? (
-                          <img src={order.qrCode} alt="QR Code" className="w-32 h-32" />
-                        ) : (
-                          <div className="w-32 h-32 flex items-center justify-center bg-slate-50 rounded">
-                            <QrCode size={48} className="text-slate-200" />
-                          </div>
-                        )}
+                      <div className="bg-white p-2 rounded-xl border-2 border-slate-50 shadow-inner flex items-center justify-center w-32 h-32">
+                        {orderId && <QRCodeSVG value={orderId} size={112} />}
                       </div>
                     </div>
                   </div>

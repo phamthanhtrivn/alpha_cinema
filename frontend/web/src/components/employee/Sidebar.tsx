@@ -17,6 +17,7 @@ import {
   DollarSign,
   LogOut,
   Play,
+  ShoppingBag,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectRole, logout } from "@/store/slices/authSlice";
@@ -184,6 +185,18 @@ const Sidebar: React.FC = () => {
       path: "/employee/staff/movies",
       roles: ["STAFF"],
     },
+    {
+      icon: <Ticket size={18} />,
+      label: "Kiểm tra vé",
+      path: "/employee/staff/check-ticket",
+      roles: ["STAFF"],
+    },
+    {
+      icon: <ShoppingBag size={18} />,
+      label: "Bán sản phẩm",
+      path: "/employee/staff/product",
+      roles: ["STAFF"],
+    }
   ];
 
   const filteredMenu = menuItems.filter((item) => {
@@ -239,10 +252,11 @@ const Sidebar: React.FC = () => {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
+                    isActive
                       ? "bg-sky-600 text-white shadow"
                       : "text-gray-400 hover:bg-slate-800 hover:text-white"
-                    }`}
+                  }`}
                 >
                   {item.icon}
                   <span className="text-sm font-medium">{item.label}</span>

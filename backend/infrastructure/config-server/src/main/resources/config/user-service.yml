@@ -29,7 +29,11 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: true
-        spring.json.type.mapping: "otp_event:com.movieticket.user.event.model.SendOTPEvent"
+        spring.json.type.mapping: > 
+          otp_event:com.movieticket.user.event.model.SendOTPEvent,
+          review_moderation_event:com.movieticket.user.event.model.ReviewModerationEvent,
+          movie_rating_update_event:com.movieticket.user.event.model.MovieRatingUpdateEvent,
+          review_status_notification_event:com.movieticket.user.event.model.ReviewStatusNotificationEvent
     consumer:
       group-id: user-service
       auto-offset-reset: earliest
@@ -40,7 +44,9 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.use.type.headers: true
         spring.json.trusted.packages: "com.movieticket.*"
-        spring.json.type.mapping: "loyalty_event:com.movieticket.user.event.model.UserLoyaltyUpdateEvent"
+        spring.json.type.mapping: > 
+          loyalty_event:com.movieticket.user.event.model.UserLoyaltyUpdateEvent,
+          review_moderation_result_event:com.movieticket.user.event.model.ReviewModerationResultEvent
   mail:
     host: smtp.gmail.com
     port: 587
@@ -66,3 +72,8 @@ eureka:
 rsa:
   private-key-path: ${RSA_PRIVATE_PATH}
   public-key-path: ${RSA_PUBLIC_PATH}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

@@ -20,6 +20,13 @@ spring:
         format_sql: true
         # Dùng MySQLDialect để Hibernate biết cách sinh SQL phù hợp với MySQL
         dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 6000ms
+      connect-timeout: 2000ms
 
 eureka:
   client:
