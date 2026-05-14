@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Camera,
+  CameraOff,
   Film,
   Printer,
   ScanQrCode,
@@ -8,6 +10,7 @@ import {
   UtensilsCrossed,
   Loader2,
 } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -139,6 +142,8 @@ const mapApiToTicket = (
   };
 };
 
+const QR_SCANNER_REGION_ID = "qr-scanner-region";
+
 const CheckTicket: React.FC = () => {
   const [qrValue, setQrValue] = useState("");
   const [printedTimes, setPrintedTimes] = useState(0);
@@ -156,11 +161,115 @@ const CheckTicket: React.FC = () => {
     (state: { auth?: { cinemaId?: string } }) => state?.auth?.cinemaId,
   );
 
+  // ── QR Camera Scanner state ──
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scanHandledRef = useRef(false);
+  const scannedFromCameraRef = useRef(false);
+
   const hasData = Boolean(activeTicket);
   const selectedSeats = useMemo(() => seats.filter((s) => s.selected), [seats]);
   const showFoodSection = Boolean(
     activeTicket && activeTicket.foods.length > 0 && printedTimes === 0,
   );
+
+  // ── Stop camera scanner ──
+  const stopScanner = useCallback(async () => {
+    try {
+      if (scannerRef.current) {
+        const state = scannerRef.current.getState();
+        // Only stop if currently scanning (state 2 = SCANNING)
+        if (state === 2) {
+          await scannerRef.current.stop();
+        }
+        scannerRef.current.clear();
+        scannerRef.current = null;
+      }
+    } catch (err) {
+      console.warn("Error stopping QR scanner:", err);
+    }
+    setScanning(false);
+  }, []);
+
+  // ── Start camera scanner ──
+  const startScanner = useCallback(async () => {
+    // Reset the handled flag so a new scan can be processed
+    scanHandledRef.current = false;
+
+    // Clean up any previous instance
+    if (scannerRef.current) {
+      await stopScanner();
+    }
+
+    try {
+      const html5Qr = new Html5Qrcode(QR_SCANNER_REGION_ID);
+      scannerRef.current = html5Qr;
+      setScanning(true);
+
+      await html5Qr.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1,
+        },
+        (decodedText) => {
+          // Prevent handling the same scan multiple times
+          if (scanHandledRef.current) return;
+          scanHandledRef.current = true;
+
+          // Set the scanned orderId and flag it for auto-search
+          scannedFromCameraRef.current = true;
+          setQrValue(decodedText);
+
+          // Stop the scanner after successful scan
+          html5Qr
+            .stop()
+            .then(() => {
+              html5Qr.clear();
+              scannerRef.current = null;
+              setScanning(false);
+            })
+            .catch(console.warn);
+        },
+        // Ignore scan failures (no QR in frame)
+        undefined,
+      );
+    } catch (err) {
+      console.error("Failed to start QR scanner:", err);
+      setScanning(false);
+    }
+  }, [stopScanner]);
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        const sc = scannerRef.current;
+        try {
+          const state = sc.getState();
+          if (state === 2) {
+            sc.stop()
+              .then(() => sc.clear())
+              .catch(console.warn);
+          } else {
+            sc.clear();
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  // Auto-trigger search when QR is scanned from camera
+  useEffect(() => {
+    if (scannedFromCameraRef.current && qrValue.trim()) {
+      scannedFromCameraRef.current = false;
+      handleSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrValue]);
   
   const fetchCinemaInfo = async () => {
     if (!cinemaId) return;
@@ -322,6 +431,41 @@ const CheckTicket: React.FC = () => {
                       className="h-12 pl-10"
                     />
                   </div>
+
+                  {/* ── Camera QR Scanner ── */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={scanning ? stopScanner : startScanner}
+                    className={`w-full gap-2 ${
+                      scanning
+                        ? "border-red-300 text-red-600 hover:bg-red-50"
+                        : "border-orange-300 text-orange-600 hover:bg-orange-50"
+                    }`}
+                  >
+                    {scanning ? (
+                      <>
+                        <CameraOff className="h-4 w-4" />
+                        Tắt camera
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="h-4 w-4" />
+                        Quét QR bằng camera
+                      </>
+                    )}
+                  </Button>
+
+                  {/* Camera preview area */}
+                  <div
+                    id={QR_SCANNER_REGION_ID}
+                    className={`overflow-hidden rounded-lg border border-slate-200 bg-black ${
+                      scanning ? "block" : "hidden"
+                    }`}
+                    style={{ minHeight: scanning ? 280 : 0 }}
+                  />
+
                     <Button
                       disabled={loading}
                       onClick={handleSearch}
