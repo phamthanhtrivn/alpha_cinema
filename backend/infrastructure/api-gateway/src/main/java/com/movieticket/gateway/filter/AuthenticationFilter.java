@@ -3,10 +3,12 @@ package com.movieticket.gateway.filter;
 import com.movieticket.gateway.config.RouteValidator;
 import com.movieticket.gateway.utils.IpUtils;
 import com.movieticket.gateway.utils.JwtUtils;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -18,11 +20,16 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class AuthenticationFilter implements GlobalFilter, Order {
-    @Autowired
-    private RouteValidator routeValidator;
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final RouteValidator routeValidator;
+    private final JwtUtils jwtUtils;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String USER_BLACKLIST_PREFIX = "blacklist:user:";
+
+    public boolean isUserIdBlackList(String userId){
+        return Boolean.TRUE.equals(redisTemplate.hasKey(USER_BLACKLIST_PREFIX + userId));
+    }
 
     public static final List<String> CustomerEndpoints = List.of(
             "users/auth/register",
@@ -74,6 +81,10 @@ public class AuthenticationFilter implements GlobalFilter, Order {
             String userId = jwtUtils.extractUserId(token);
             String cinemaId = jwtUtils.extractCinemaId(token);
             String clientIp = IpUtils.resolveClientIp(request);
+
+            if(isUserIdBlackList(userId)){
+                return this.onError(exchange, "Tài khoản này đã bị khóa", HttpStatus.FORBIDDEN);
+            }
 
             ServerHttpRequest mutatedRequest = request.mutate()
                     .headers(headers -> {

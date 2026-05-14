@@ -25,6 +25,7 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final CreateEmployeeStrategyContext strategyContext;
     private final UpdateEmployeeStrategyContext updateStrategyContext;
+    private final JwtService jwtService;
 
     public Page<EmployeeResponseDto> getAllEmployees(HttpServletRequest request,
                                                      SearchEmployeeDto searchEmployeeDto,
@@ -116,6 +117,15 @@ public class EmployeeService {
         strategy.update(existing, dto);
 
         Employee updatedEmployee = employeeRepository.save(existing);
+
+        if(updatedEmployee.isStatus() == false) {
+            if(!jwtService.isUserIdBlackList(updatedEmployee.getId()))
+                jwtService.addBlackListUserId(updatedEmployee.getId());
+        }
+        else {
+            if(jwtService.isUserIdBlackList(updatedEmployee.getId()))
+                jwtService.deleteBlackListUserId(updatedEmployee.getId());
+        }
 
         return EmployeeUtil.toEmployeeResponseDto(updatedEmployee);
     }
