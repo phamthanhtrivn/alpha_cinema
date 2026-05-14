@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectAuth } from "@/store/slices/authSlice";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
-import type { EmployeeFilterParams, EmployeeRole } from "@/types/employee";
+import type { EmployeeFilterParams } from "@/types/employee";
 import { employeeService } from "@/services/employee.service";
 import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
 import { FilterSelect } from "@/components/employee/FilterSelect";
 import { genderOptions } from "@/constants/customer.constants";
 import type { Gender } from "@/types/customer";
-import { employeeRoleOptions } from "@/constants/employee.contants";
 import { Button } from "@/components/ui/button";
 
 import ManagementFilterBar from "@/components/employee/ManagementFilterBar";

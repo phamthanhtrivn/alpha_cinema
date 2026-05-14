@@ -23,6 +23,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectRole, logout } from "@/store/slices/authSlice";
 import { userService } from "@/services/user.service";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -203,18 +204,31 @@ const Sidebar: React.FC = () => {
   });
 
   const handleLogout = () => {
-    const handle = async () => {
-      const data = await userService.logout();
-      if (data.success) {
+    Swal.fire({
+      title: "Xác nhận đăng xuất",
+      text: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản nhân viên?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Đăng xuất",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#C70000",
+      cancelButtonColor: "#94a3b8",
+    }).then(async (result) => {
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      try {
+        await userService.logout();
         toast.success("Đăng xuất thành công");
+      } finally {
         dispatch(logout());
         navigate("/employee/login");
       }
-    };
-    handle();
+    });
   };
   return (
-    <aside className="w-64 bg-slate-900 text-white flex flex-col h-screen shadow-xl">
+    <aside className="min-w-62.5 bg-slate-900 text-white flex flex-col h-screen shadow-xl">
       {/* LOGO */}
       <div className="p-6 border-b border-slate-800">
         <Link
@@ -223,7 +237,7 @@ const Sidebar: React.FC = () => {
         >
           <Film />
           <span>
-            ALPHA <span className="text-gray-400 text-sm italic">ADMIN</span>
+            ALPHA <span className="text-gray-400 text-sm italic">{role}</span>
           </span>
         </Link>
       </div>

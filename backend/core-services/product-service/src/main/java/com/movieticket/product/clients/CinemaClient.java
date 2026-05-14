@@ -5,18 +5,24 @@ import com.movieticket.product.dto.RoomDetailDTO;
 import com.movieticket.product.dto.SeatResponseToProduct;
 import com.movieticket.product.dto.admin.response.CinemaServiceResponse;
 import com.movieticket.product.dto.admin.response.SelectionDTO;
+
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Component
 public class CinemaClient {
     private final WebClient webClient;
 
-    public CinemaClient(WebClient.Builder builder) {
-        this.webClient = builder.baseUrl("http://cinema-management-service").build();
+    public CinemaClient(
+            WebClient.Builder builder,
+            @Value("${external-services.cinema-service.base-url}") String cinemaServiceBaseUrl
+    ) {
+        this.webClient = builder.baseUrl(cinemaServiceBaseUrl).build();
     }
 
     public RoomDetailDTO getRoomDetail(String roomId) {

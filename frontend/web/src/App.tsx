@@ -60,6 +60,7 @@ import { userService } from "./services/user.service";
 import { useEffect } from "react";
 import { Booking } from "./pages/client/customer/Booking";
 import { store } from "./store";
+import Cinematic from "./pages/client/customer/Cinematic";
 import SellProduct from "./pages/employee/staff/SellProduct";
 
 function App() {
@@ -88,7 +89,7 @@ function App() {
     };
 
     fetchUser();
-  }, []);
+  }, [accessToken, dispatch]);
 
   return (
     <BrowserRouter>
@@ -102,15 +103,18 @@ function App() {
             <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
+            <Route path="/cinematic" element={<Cinematic />} />
           </Route>
 
           {/* CLIENT LOGIN */}
-          <Route path="/login" element={<ClientLogin />} />
+          <Route element={<ProtectedRoute type="guest" />}>
+            <Route path="/login" element={<ClientLogin />} />
 
-          <Route path="/register" element={<ClientResgister />} />
-          <Route path="/forget-password" element={<ForgetPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/register" element={<ClientResgister />} />
+            <Route path="/forget-password" element={<ForgetPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Route>
 
           {/* CUSTOMER ONLY */}
           <Route
@@ -128,7 +132,9 @@ function App() {
         {/* ================= EMPLOYEE ================= */}
         <Route path="/employee">
           {/* LOGIN */}
-          <Route path="login" element={<Login />} />
+          <Route element={<ProtectedRoute type="guest" />}>
+            <Route path="login" element={<Login />} />
+          </Route>
 
           {/* PROTECTED EMPLOYEE */}
           <Route element={<ProtectedRoute type="employee" />}>

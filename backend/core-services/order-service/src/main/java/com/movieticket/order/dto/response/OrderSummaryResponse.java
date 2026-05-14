@@ -34,6 +34,17 @@ public class OrderSummaryResponse {
     private double pointDiscount;
     private double promotionDiscount;
     private double totalPayment;
+    private String paymentId;
+    private String paymentMethod;
+    private String paymentStatus;
+    private Double paymentAmount;
+    private String paymentCurrency;
+    private String paymentCode;
+    private String providerTransactionId;
+    private LocalDateTime paidAt;
+    private LocalDateTime paymentCreatedAt;
+    private LocalDateTime paymentUpdatedAt;
+    private LocalDateTime paymentExpiredAt;
     private int seatCount;
     private int productCount;
     private String promotionCode;

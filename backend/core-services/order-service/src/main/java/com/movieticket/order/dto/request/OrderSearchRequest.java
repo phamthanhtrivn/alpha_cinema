@@ -17,4 +17,8 @@ public class OrderSearchRequest {
     private LocalDate toDate;
     private Double minTotalPayment;
     private Double maxTotalPayment;
+    private String paymentMethod;
+    private String paymentStatus;
+    private String paymentCode;
+    private String providerTransactionId;
 }
