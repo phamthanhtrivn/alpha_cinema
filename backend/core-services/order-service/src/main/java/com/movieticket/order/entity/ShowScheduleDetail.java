@@ -26,6 +26,7 @@ public class ShowScheduleDetail {
     private Order order;
 
     private String showScheduleId;
+    private String movieId;
     private String seatId;
     private String ticketPriceId;
     private double finalPrice;

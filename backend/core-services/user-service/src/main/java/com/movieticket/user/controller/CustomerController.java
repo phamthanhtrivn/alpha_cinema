@@ -13,6 +13,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
@@ -92,5 +95,13 @@ public class CustomerController {
             @Valid @RequestBody EmailVerifyReq req) {
         String newEmail = customerService.verifyAndUpdateEmail(userId, req);
         return ResponseEntity.ok(ApiResponse.success(newEmail, "Cập nhật Email thành công!"));
+    }
+
+    @PostMapping("/batch/names")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getCustomerNamesByIds(
+            @RequestBody List<String> customerIds
+    ) {
+        Map<String, String> result = customerService.getCustomerNamesByIds(customerIds);
+        return ResponseEntity.ok(ApiResponse.success(result, "Customer names retrieved successfully"));
     }
 }

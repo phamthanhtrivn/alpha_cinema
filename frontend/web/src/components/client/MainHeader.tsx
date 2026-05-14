@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, Menu, LogOut, UserCircle, History } from "lucide-react";
+import { User, Menu, LogOut, UserCircle, History } from "lucide-react";
 import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";

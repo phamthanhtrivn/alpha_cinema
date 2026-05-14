@@ -215,7 +215,7 @@ const Sidebar: React.FC = () => {
     });
   };
   return (
-    <aside className="w-64 bg-slate-900 text-white flex flex-col h-screen shadow-xl">
+    <aside className="min-w-62.5 bg-slate-900 text-white flex flex-col h-screen shadow-xl">
       {/* LOGO */}
       <div className="p-6 border-b border-slate-800">
         <Link

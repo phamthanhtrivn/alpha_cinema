@@ -121,6 +121,7 @@ public class ShowScheduleDetailService {
                     ShowScheduleDetailDTO dto = new ShowScheduleDetailDTO();
                     dto.setId(item.getId());
                     dto.setShowScheduleId(item.getShowScheduleId());
+                    dto.setMovieId(item.getMovieId());
                     dto.setSeatId(item.getSeatId());
                     dto.setShowSeatType(item.getShowSeatType());
                     return dto;

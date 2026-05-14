@@ -336,6 +336,8 @@ public class ShowScheduleService {
                             .translationType(schedule.getTranslationType())
                             .startTime(schedule.getStartTime())
                             .endTime(schedule.getEndTime())
+                            .availableSeat(schedule.getAvailableSeat())
+                            .status(schedule.isStatus())
                             .build();
                 })
                 .collect(Collectors.toList());

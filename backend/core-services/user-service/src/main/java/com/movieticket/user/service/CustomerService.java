@@ -20,8 +20,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -150,5 +154,34 @@ public class CustomerService {
         redisTemplate.delete(redisKey);
         log.info("User {} đã đổi email sang {} thành công", userId, newEmail);
         return newEmail;
+    }
+
+    public Map<String, String> getCustomerNamesByIds(List<String> customerIds) {
+        if (customerIds == null || customerIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<String> uniqueIds = customerIds.stream()
+                .filter(Objects::nonNull)
+                .filter(id -> !id.isBlank())
+                .distinct()
+                .toList();
+
+        if (uniqueIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return customerRepository.findAllById(uniqueIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        Customer::getId,
+                        customer -> {
+                            String fullName = customer.getFullName();
+                            return fullName == null || fullName.isBlank()
+                                    ? customer.getId()
+                                    : fullName;
+                        },
+                        (first, second) -> first
+                ));
     }
 }

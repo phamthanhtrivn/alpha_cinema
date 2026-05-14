@@ -3,6 +3,7 @@ package com.movieticket.order.client;
 import com.movieticket.order.dto.CinemaRoomExternalDTO;
 import com.movieticket.order.dto.client.SeatBatchLookupResponse;
 import com.movieticket.order.dto.client.SeatSnapshot;
+import com.movieticket.order.dto.client.SelectionOption;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -63,6 +64,20 @@ public class CinemaClient {
                                     (existing, replacement) -> existing // Xử lý nếu trùng key
                             ));
                 })
+                .onErrorReturn(Collections.emptyMap());
+    }
+
+    public Mono<Map<String, String>> getCinemaNamesByIds(List<String> cinemaIds) {
+        if (cinemaIds == null || cinemaIds.isEmpty()) {
+            return Mono.just(Collections.emptyMap());
+        }
+
+        return webClient.post()
+                .uri("/internal/cinemas/selections")
+                .bodyValue(cinemaIds.stream().filter(id -> id != null && !id.isBlank()).distinct().toList())
+                .retrieve()
+                .bodyToFlux(SelectionOption.class)
+                .collectMap(SelectionOption::getId, SelectionOption::getLabel)
                 .onErrorReturn(Collections.emptyMap());
     }
 

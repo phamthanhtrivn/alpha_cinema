@@ -9,6 +9,9 @@ export const OrderStatus = {
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
+export type PaymentMethod = "VNPAY" | "MOMO" | "CASH";
+export type OrderPaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "EXPIRED" | "CANCELLED";
+
 export interface OrderSearchParams {
   keyword?: string;
   orderId?: string;
@@ -20,6 +23,10 @@ export interface OrderSearchParams {
   toDate?: string;
   minTotalPayment?: number;
   maxTotalPayment?: number;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: OrderPaymentStatus;
+  paymentCode?: string;
+  providerTransactionId?: string;
   page?: number;
   size?: number;
   sortBy?: string;
@@ -48,6 +55,17 @@ export interface OrderSummary {
   pointDiscount: number;
   promotionDiscount: number;
   totalPayment: number;
+  paymentId?: string;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: OrderPaymentStatus;
+  paymentAmount?: number;
+  paymentCurrency?: string;
+  paymentCode?: string;
+  providerTransactionId?: string;
+  paidAt?: string;
+  paymentCreatedAt?: string;
+  paymentUpdatedAt?: string;
+  paymentExpiredAt?: string;
   seatCount: number;
   productCount: number;
   promotionCode?: string;
@@ -79,6 +97,7 @@ export interface OrderDetail extends OrderSummary {
   cinemaAddress?: string;
   roomNumber?: number;
   showEndTime?: string;
+  providerResponse?: string;
   qrCode?: string;
   pointsRedeemed: number;
   updatedAt?: string;

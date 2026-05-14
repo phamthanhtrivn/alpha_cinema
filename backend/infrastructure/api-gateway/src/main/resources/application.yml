@@ -67,7 +67,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/api/orders/**, /api/promotions/**, /api/show-schedule-details/**, /api/checkouts/**
+            - Path=/api/orders/**, /api/promotions/**, /api/show-schedule-details/**, /api/checkouts/**, /api/dashboard/**
         # Route cho dịch vụ thanh toán
         - id: payment-service
           uri: lb://payment-service
