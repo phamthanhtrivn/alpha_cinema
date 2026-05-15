@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -32,11 +33,11 @@ const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-2000 flex items-center justify-center p-4 overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 overflow-y-auto bg-black/60">
       {/* Overlay: Lớp nền mờ */}
       <div
-        className="fixed inset-0 bg-black/60 transition-opacity"
+        className="fixed inset-0 transition-opacity"
         onClick={onClose}
       />
 
@@ -50,7 +51,7 @@ const Modal: React.FC<ModalProps> = ({
         {showCloseButton && (
           <button
             onClick={onClose}
-            className="absolute hover:cursor-pointer right-4 top-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all z-2001"
+            className="absolute hover:cursor-pointer right-4 top-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all z-[2001]"
           >
             <X size={20} strokeWidth={2.5} />
           </button>
@@ -75,7 +76,8 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
