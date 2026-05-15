@@ -1,0 +1,15 @@
+CHÍNH SÁCH THANH TOÁN ALPHA CINEMA
+
+Alpha Cinema hỗ trợ thanh toán trực tuyến thông qua Ví MoMo và VNPay.
+
+Khách hàng cần đăng nhập trước khi thực hiện đặt vé hoặc mua vật phẩm trên website.
+
+Đối với đặt vé xem phim, khách hàng cần chọn phim, rạp, ngày chiếu, suất chiếu, ghế ngồi, đồ ăn vặt nếu có, mã giảm giá hoặc điểm thành viên nếu có, sau đó thực hiện thanh toán.
+
+Đối với mua vật phẩm, khách hàng có thể thêm vật phẩm vào giỏ hàng và thanh toán với quy trình tương tự như mua vé.
+
+Sau khi thanh toán thành công, hệ thống sẽ phát hành QR code tương ứng với vé xem phim hoặc sản phẩm đã mua.
+
+Khách hàng cần sử dụng QR code để nhận vé, vào rạp hoặc nhận sản phẩm tại rạp.
+
+Giao dịch đã thanh toán thành công sẽ được ghi nhận trong hệ thống và có thể xem lại trong phần lịch sử mua hàng của khách hàng.

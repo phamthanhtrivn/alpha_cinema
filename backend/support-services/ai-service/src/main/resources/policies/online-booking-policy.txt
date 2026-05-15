@@ -1,0 +1,13 @@
+CHÍNH SÁCH ĐẶT VÉ ONLINE ALPHA CINEMA
+
+Khách hàng muốn đặt vé xem phim trực tuyến bắt buộc phải đăng nhập vào hệ thống.
+
+Quy trình đặt vé online gồm các bước: tìm kiếm và chọn phim, chọn rạp, chọn ngày chiếu, chọn suất chiếu hợp lệ, chọn vị trí ghế, chọn đồ ăn vặt nếu có nhu cầu, nhập mã giảm giá hoặc điểm thành viên nếu có, sau đó thực hiện thanh toán.
+
+Phương thức thanh toán được hỗ trợ bao gồm Ví MoMo và VNPay.
+
+Sau khi thanh toán thành công, vé xem phim sẽ được gửi dưới dạng QR code qua email đặt vé. Khách hàng cũng có thể xem lại vé đã mua trong phần lịch sử đặt vé.
+
+Khi đến rạp, khách hàng cần trình QR code cho nhân viên kiểm tra để được vào xem phim.
+
+Vé sau khi đã được soát bằng QR code sẽ không còn hiệu lực.

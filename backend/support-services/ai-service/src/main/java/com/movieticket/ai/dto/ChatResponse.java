@@ -1,10 +1,16 @@
 package com.movieticket.ai.dto;
 
+import lombok.Builder;
+import lombok.Data;
+
 import java.util.List;
 
-public record ChatResponse(
-        String conversationId,
-        String answer,
-        List<CitationResponse> citations
-) {
+@Data
+@Builder
+public class ChatResponse {
+    private String conversationId;
+    private String answer;
+    private List<CitationResponse> citations;
+    private boolean shouldStartNewConversation;
+    private Integer conversationMessageCount;
 }
