@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { movieService } from '../../services/movie.service';
 import { Container, Section } from '../../components/common/Layout';
 import type { MoviePublicDetail } from '../../types/movie';
@@ -11,20 +11,22 @@ import {
     Loader2,
 } from 'lucide-react';
 import TrailerModal from '@/components/client/TrailerModel';
-import { useState, useMemo, useEffect } from 'react';
+import MovieShowtimes from '@/components/client/MovieShowtimes';
+import MovieReviews from '@/components/client/MovieReviews';
+import { useState, useRef } from 'react';
 import { showScheduleService } from '@/services/show-schedule.service';
-import type { CinemaShowtime } from '@/types/show-schedule';
-import { ALL_TRANSLATION } from '@/types/movie';
-import { formatDDMMYYYY, formatHHmm } from '@/utils/formatTime';
-import { cinemaService } from '@/services/cinema.service';
-import { useSelector } from 'react-redux';
-import { selectAuth } from '@/store/slices/authSlice';
+import { formatDDMMYYYY } from '@/utils/formatTime';
+import NowShowingMovies from '@/components/client/NowShowingMovies';
 
 const MovieDetail = () => {
-    const { user } = useSelector(selectAuth)
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [isTrailerOpen, setIsTrailerOpen] = useState<boolean>(false);
+    const reviewsRef = useRef<HTMLDivElement>(null);
+
+    const scrollToReviews = () => {
+        reviewsRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const {
         data: movie,
@@ -41,60 +43,6 @@ const MovieDetail = () => {
         queryFn: () => showScheduleService.getAvailableDateOnMovie(id!).then((res: any) => res.data),
         enabled: !!id,
     });
-
-    const dateTabs = useMemo(() => {
-        if (!availableDates) return [];
-        const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        return availableDates.map(dateStr => {
-            const date = new Date(dateStr);
-            const dayName = dateStr === todayStr ? 'Hôm Nay' : days[date.getDay()];
-            const dateNum = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
-            return { dateString: dateStr, dayName, dateNum };
-        });
-    }, [availableDates]);
-
-    const [selectedDate, setSelectedDate] = useState<string>('');
-
-    useEffect(() => {
-        if (dateTabs.length > 0 && !selectedDate) {
-            setSelectedDate(dateTabs[0].dateString);
-        }
-    }, [dateTabs, selectedDate]);
-
-    // Cinema Filter
-    const { data: cinemaOptions } = useQuery<{ id: string, label: string }[]>({
-        queryKey: ['cinema-options'],
-        queryFn: () => cinemaService.getCinemaOptions().then((res: any) => res.data),
-    });
-
-    const [selectedCinema, setSelectedCinema] = useState<string>('Tất cả rạp');
-
-    // Lấy dữ liệu Lịch chiếu theo Ngày
-    const { data: showtimes, isFetching: isFetchingShowtimes } = useQuery<CinemaShowtime[]>({
-        queryKey: ['movie-showtimes', id, selectedDate],
-        queryFn: () => showScheduleService.getMovieShowtimes(id!, selectedDate).then((res: any) => res.data),
-        enabled: !!id && !!selectedDate,
-        staleTime: 2 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-        placeholderData: keepPreviousData,
-    });
-
-    const filteredShowtimes = useMemo(() => {
-        if (!showtimes) return [];
-        if (selectedCinema === 'Tất cả rạp') return showtimes;
-        return showtimes.filter(s => s.cinemaName === selectedCinema);
-    }, [showtimes, selectedCinema]);
-
-    const handleBookingShowTime = (showTimeId: string) => {
-        if (!user) {
-            navigate("/login")
-        }
-        else {
-            navigate(`/booking/${showTimeId}?movieId=${id}`);
-        }
-    }
 
     if (isLoading) {
         return (
@@ -159,7 +107,7 @@ const MovieDetail = () => {
             </div>
 
             {/* 2. MAIN CONTENT SECTION */}
-            <Section className="max-w-6xl mx-auto relative z-20">
+            <Section className="mx-auto relative z-20">
                 <Container className="flex flex-col lg:flex-row gap-10">
                     <div className="flex-1">
 
@@ -189,10 +137,13 @@ const MovieDetail = () => {
                                     <div className="flex items-center gap-1.5"><Calendar size={16} color='orange' /> <span>{formatDDMMYYYY(movie.premiereDate?.toString())}</span></div>
                                 </div>
 
-                                <div className="flex items-center gap-2 mb-4">
+                                <div
+                                    className="flex items-center gap-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity w-fit"
+                                    onClick={scrollToReviews}
+                                >
                                     <Star size={20} fill="#f59e0b" className="text-orange-500" />
                                     <span className="text-xl font-black text-slate-800">{movie.avgRating}</span>
-                                    <span className="text-slate-400 text-xs">(152 votes)</span>
+                                    <span className="text-slate-400 text-xs">({movie.totalReviews} votes)</span>
                                 </div>
 
                                 <div className="text-sm">
@@ -221,106 +172,29 @@ const MovieDetail = () => {
                                 {movie.description}
                             </p>
                         </div>
-                        {/* Lịch chiếu */}
-                        <div className="mt-12">
-                            <div className="border-l-4 border-alpha-blue pl-4 mb-6">
-                                <h2 className="text-slate-800 font-medium text-lg">Lịch chiếu</h2>
-                            </div>
 
-                            {/* Thanh chọn ngày & Filter */}
-                            <div className="border-b-2 pb-2 border-alpha-blue mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                                {/* Scroll ngang cho Tabs ngày */}
-                                <div className="flex gap-2 scrollbar-hide w-full md:w-auto">
-                                    {dateTabs.map((tab) => {
-                                        const isActive = selectedDate === tab.dateString;
-                                        return (
-                                            <button
-                                                key={tab.dateString}
-                                                onClick={() => setSelectedDate(tab.dateString)}
-                                                className={`flex flex-col items-center rounded-md justify-center w-24 py-3 cursor-pointer transition-colors ${isActive
-                                                    ? 'bg-alpha-blue text-white'
-                                                    : 'bg-white text-slate-600 hover:text-alpha-blue'
-                                                    }`}
-                                            >
-                                                <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dayName}</span>
-                                                <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dateNum}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                        {/* Lịch chiếu - Chỉ hiển thị nếu có ngày chiếu khả dụng */}
+                        {availableDates && availableDates.length > 0 && (
+                            <MovieShowtimes movieId={id!} availableDates={availableDates} />
+                        )}
 
-                                {/* Dropdown bộ lọc (Mock UI) */}
-                                <div className="flex gap-4 pb-2 w-full md:w-auto">
-                                    <select
-                                        className="border border-slate-300 rounded-xs px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-alpha-blue w-full md:w-auto"
-                                        value={selectedCinema}
-                                        onChange={(e) => setSelectedCinema(e.target.value)}
-                                    >
-                                        <option>Tất cả rạp</option>
-                                        {cinemaOptions?.map(cinema => (
-                                            <option key={cinema.id} value={cinema.label}>{cinema.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Danh sách rạp & Giờ chiếu */}
-                            <div className="space-y-6 relative min-h-[100px]">
-                                {/* Overlay loading khi đang fetch (không thay thế nội dung) */}
-                                {isFetchingShowtimes && (
-                                    <div className="absolute inset-0 bg-white/70 z-10 flex justify-center pt-10 rounded-lg">
-                                        <Loader2 className="animate-spin text-alpha-blue" size={32} />
-                                    </div>
-                                )}
-
-                                {filteredShowtimes.length === 0 ? (
-                                    <div className="text-center py-10 text-slate-500 italic">
-                                        Không có lịch chiếu nào vào ngày này.
-                                    </div>
-                                ) : (
-                                    filteredShowtimes.map((cinema) => (
-                                        <div key={cinema.cinemaId} className="border-b border-slate-100 pb-6 last:border-0">
-                                            {/* Tên rạp */}
-                                            <h3 className="text-slate-800 font-medium mb-4">
-                                                {cinema.cinemaName}
-                                            </h3>
-
-                                            {/* Danh sách định dạng (2D/3D) */}
-                                            <div className="space-y-4">
-                                                {cinema.formats.map((format, idx) => (
-                                                    <div key={idx} className="flex flex-col sm:flex-row md:items-center lg:items-center sm:items-start gap-2 sm:gap-6">
-                                                        <span className="text-sm text-slate-700 w-32 shrink-0">
-                                                            {format.projection} {ALL_TRANSLATION.find(t => t.value === format.translation)?.label || format.translation}
-                                                        </span>
-                                                        <div className="flex flex-wrap gap-3">
-                                                            {format.showTimes.map((st) => (
-                                                                <button
-                                                                    key={st.id}
-                                                                    className="border hover:cursor-pointer border-slate-200 rounded-md px-5 py-2.5 text-sm text-slate-700 hover:bg-alpha-blue hover:text-white transition-all bg-white active:scale-95"
-                                                                    onClick={() => handleBookingShowTime(st.id)}
-                                                                >
-                                                                    {formatHHmm(st.time)}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                        {/* Đánh giá phim */}
+                        <div ref={reviewsRef}>
+                            <MovieReviews
+                                movieId={id!}
+                                movieName={movie.title}
+                                avgRating={movie.avgRating}
+                                totalReviews={movie.totalReviews}
+                            />
                         </div>
                     </div>
 
                     {/* CỘT PHẢI: Sidebar (Chỉ hiện trên Desktop) */}
-                    <div className="hidden lg:block w-[300px] shrink-0 pl-8">
+                    <div className="hidden lg:block w-[32%] shrink-0 pl-8">
                         <div className="border-l-4 border-alpha-blue pl-4 mb-6">
                             <h2 className="text-lg font-black uppercase text-slate-800">Phim đang chiếu</h2>
                         </div>
-                        <div className="space-y-4">
-                            <p className="text-xs text-slate-400 italic">Danh sách phim khác...</p>
-                        </div>
+                        <NowShowingMovies />
                     </div>
                 </Container>
             </Section>

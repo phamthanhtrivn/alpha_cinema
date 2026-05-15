@@ -76,6 +76,7 @@ public class Movie {
     private Long totalReviews = 0L;
     private Double totalSumRating = 0.0;
     private double avgRating = 0.0;
+    private Long lastEventTimestamp;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

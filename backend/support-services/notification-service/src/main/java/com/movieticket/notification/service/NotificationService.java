@@ -8,13 +8,16 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
 
-    public List<Notification> getNotificationsByCustomerId(String customerId) {
-        return notificationRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+    public Page<Notification> getNotificationsByCustomerId(String customerId, Pageable pageable) {
+        return notificationRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
     }
 
     public void deleteNotification(String id) {

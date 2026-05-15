@@ -12,6 +12,7 @@ import java.util.List;
 public interface ReviewMapper {
     // 1. Chuyển từ Entity sang Response DTO (Để trả về cho FE)
     @Mapping(source = "customer.id", target = "customerId")
+    @Mapping(source = "customer.fullName", target = "customerName")
     ReviewResponseDTO toResponse(Review review);
 
     // 2. Chuyển từ Request DTO sang Entity (Để lưu vào DB)
@@ -20,7 +21,7 @@ public interface ReviewMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "customer.id", source = "customerId")
-    @Mapping(target = "reviewType", ignore = true) // Cài đặt thủ công bằng FeignClient
+    @Mapping(target = "reviewType", ignore = true)
     Review toEntity(ReviewRequestDTO request);
 
     // 3. Mapping danh sách

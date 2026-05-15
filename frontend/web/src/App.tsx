@@ -50,6 +50,7 @@ import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
 import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
+import MoviesPage from "./pages/client/Movies";
 
 // REDIRECT
 import RoleRedirect from "./routes/RoleRedirect";
@@ -104,6 +105,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/cinematic" element={<Cinematic />} />
+            <Route path="/movies" element={<MoviesPage />} />
           </Route>
 
           {/* CLIENT LOGIN */}

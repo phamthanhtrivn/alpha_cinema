@@ -23,6 +23,9 @@ import com.movieticket.user.exception.BusinessException;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -85,7 +88,8 @@ public class ReviewService {
                 MovieRatingUpdateEvent event = new MovieRatingUpdateEvent(
                         review.getMovieId(),
                         stats.getTotalReviews(),
-                        stats.getTotalSumRating()
+                        stats.getTotalSumRating(),
+                        System.currentTimeMillis()
                 );
                 reviewProducer.sendMovieRatingUpdateEvent(event);
             }
@@ -116,8 +120,42 @@ public class ReviewService {
             }
         }
         
+        String movieId = review.getMovieId();
+        ReviewStatus status = review.getStatus();
+        
         // Xóa review trong DB
         reviewRepository.delete(review);
+        reviewRepository.flush(); // Đảm bảo query bên dưới không tính review vừa bị xóa
         log.info("Đã xóa bình luận {}", reviewId);
+
+        // Nếu review bị xóa là review đã được duyệt, cần cập nhật lại thông số rating cho phim
+        if (status == ReviewStatus.APPROVED) {
+            ReviewRepository.ReviewStats stats = reviewRepository.getReviewStatsByMovieId(movieId);
+            MovieRatingUpdateEvent event = new MovieRatingUpdateEvent(
+                    movieId,
+                    stats.getTotalReviews(),
+                    stats.getTotalSumRating(),
+                    System.currentTimeMillis()
+            );
+            reviewProducer.sendMovieRatingUpdateEvent(event);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasUserReviewedMovie(String customerId, String movieId) {
+        if (customerId == null || customerId.isEmpty()) return false;
+        return reviewRepository.existsByCustomerIdAndMovieId(customerId, movieId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDTO> getReviewsByMovieId(String movieId, Pageable pageable) {
+        return reviewRepository.findByMovieIdAndStatusOrderByCreatedAtDesc(movieId, ReviewStatus.APPROVED, pageable)
+                .map(reviewMapper::toResponse);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDTO> getReviewsByCustomerId(String customerId, Pageable pageable) {
+        return reviewRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable)
+                .map(reviewMapper::toResponse);
     }
 }
