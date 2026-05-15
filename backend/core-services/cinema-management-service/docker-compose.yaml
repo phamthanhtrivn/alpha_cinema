@@ -1,13 +1,13 @@
 services:
-  user-service:
+  cinema-management-service:
     build:
       context: ../..
-      dockerfile: core-services/user-service/Dockerfile
-    container_name: user-service
+      dockerfile: core-services/cinema-management-service/Dockerfile
+    container_name: cinema-management-service
     env_file:
       - ./.env
     ports:
-      - "8086:8086"
+      - "8081:8081"
     restart: always
     depends_on:
       - mysql-db

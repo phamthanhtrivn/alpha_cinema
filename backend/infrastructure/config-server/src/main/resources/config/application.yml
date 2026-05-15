@@ -8,4 +8,4 @@ eureka:
   client:
     service-url:
       # Địa chỉ của Eureka Server để các microservice gửi thông tin đăng ký
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://eureka-server:8761/eureka/

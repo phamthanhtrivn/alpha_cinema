@@ -1,7 +1,5 @@
 package com.movieticket.product.dto.client;
 
-import com.movieticket.product.entity.AgeType;
-import com.movieticket.product.entity.Artist;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

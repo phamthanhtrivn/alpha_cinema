@@ -5,6 +5,6 @@ eureka:
   client:
     service-url:
       # Nơi đăng ký với Eureka Server với tên là ai-service
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://eureka-server:8761/eureka/
   instance:
     prefer-ip-address: true
