@@ -24,6 +24,11 @@ export interface MovieSummaryResponse {
   genre: string[];
 }
 
+export interface SelectionDTO {
+  id: string;
+  label: string;
+}
+
 export interface MoviePublic {
   id: string;
   title: string;
@@ -31,6 +36,7 @@ export interface MoviePublic {
   premiereDate: Date;
   thumbnailUrl: string;
   trailerUrl: string;
+  bannerUrl: string;
   ageType: string;
   avgRating: number;
 }
@@ -48,6 +54,7 @@ export interface MoviePublicDetail {
   releaseYear: number;
   nationality: string;
   avgRating: number;
+  totalReviews: number;
   releaseStatus: ReleaseStatusType;
   genre: string[];
   actors: ArtistSummary[];
@@ -77,3 +84,15 @@ export const ALL_TRANSLATION = [
   { label: "Thuyết minh", value: "VOICE_OVER" },
 ];
 export const ALL_STATUS = ["UPCOMING", "NOW_SHOWING", "ENDED"];
+
+export interface MovieSearchDTO {
+  title?: string;
+  releaseStatus?: ReleaseStatusType;
+  nationality?: string;
+  ageTypeId?: string;
+  releaseYear?: number;
+  genre?: string;
+  artistId?: string;
+  projectionType?: string;
+  translationType?: string;
+}

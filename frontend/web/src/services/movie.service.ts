@@ -1,4 +1,5 @@
 import { apiClient } from "./api";
+import type { MovieSearchDTO } from "@/types/movie";
 
 export const movieService = {
   getAllMovies: async (params?: any) => {
@@ -39,13 +40,20 @@ export const movieService = {
     const response = await apiClient.get(`/movies/admin/suggestions`, { params: { title, size } });
     return response.data;
   },
-  clientGetMovie: async (releaseStatus: string, title: string) => {
-    const response = await apiClient.get(`/movies/public`, { params: { releaseStatus, title } });
+  clientGetMovie: async (dto: MovieSearchDTO, limit: number = 8, page: number = 0) => {
+    const response = await apiClient.get(`/movies/public`, { params: { ...dto, size: limit, page } });
+    return response.data;
+  },
+  clientGetNowShowingSuggestions: async () => {
+    const response = await apiClient.get(`/movies/public/suggestions`);
     return response.data;
   },
   clientGetDetailMovie: async (id: string) => {
     const response = await apiClient.get(`/movies/public/${id}`);
     return response.data;
+  },
+  getMoviesByIds: async (ids: string[]) => {
+    const response = await apiClient.get(`/movies/public/list`, { params: { ids: ids.join(",") } });
+    return response.data;
   }
-
 };

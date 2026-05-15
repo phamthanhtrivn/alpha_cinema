@@ -16,7 +16,12 @@ public interface MovieRepository extends JpaRepository<Movie, String>, JpaSpecif
             "FROM Movie m WHERE m.title LIKE %:query%")
     List<SelectionDTO> findMovieSuggestions(@Param("query") String query, Pageable pageable);
 
+    @Query("SELECT new com.movieticket.product.dto.admin.response.SelectionDTO(m.id, m.title) " +
+            "FROM Movie m WHERE m.releaseStatus = com.movieticket.product.enums.ReleaseStatus.NOW_SHOWING")
+    List<SelectionDTO> findAllNowShowingSuggestions();
+
     @Modifying
-    @Query("UPDATE Movie m SET m.totalReviews = :totalReviews, m.totalSumRating = :totalSumRating, m.avgRating = :avgRating WHERE m.id = :id AND (m.totalReviews IS NULL OR m.totalReviews <= :totalReviews)")
-    int updateRatingInfo(@Param("id") String id, @Param("totalReviews") Long totalReviews, @Param("totalSumRating") Double totalSumRating, @Param("avgRating") double avgRating);
+    @Query("UPDATE Movie m SET m.totalReviews = :totalReviews, m.totalSumRating = :totalSumRating, m.avgRating = :avgRating, m.lastEventTimestamp = :timestamp " +
+            "WHERE m.id = :id AND (m.lastEventTimestamp IS NULL OR m.lastEventTimestamp < :timestamp)")
+    int updateRatingInfo(@Param("id") String id, @Param("totalReviews") Long totalReviews, @Param("totalSumRating") Double totalSumRating, @Param("avgRating") double avgRating, @Param("timestamp") Long timestamp);
 }

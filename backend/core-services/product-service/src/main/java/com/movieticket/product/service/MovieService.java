@@ -85,6 +85,10 @@ public class MovieService {
         return movieRepository.findMovieSuggestions(query, pageable);
     }
 
+    public List<SelectionDTO> getNowShowingSuggestions() {
+        return movieRepository.findAllNowShowingSuggestions();
+    }
+
     @Transactional
     public MovieSummaryDTO createMovie(MovieCreateDTO dto, MultipartFile thumbnail) {
         Movie movie = movieMapper.toEntity(dto);
@@ -148,13 +152,21 @@ public class MovieService {
     }
 
     @Transactional
-    public void updateRatingInfo(String id, Long totalReviews, Double totalSumRating) {
+    public void updateRatingInfo(String id, Long totalReviews, Double totalSumRating, Long timestamp) {
         double avgRating = (totalReviews != null && totalReviews > 0) ? (totalSumRating / totalReviews) : 0.0;
-        int updated = movieRepository.updateRatingInfo(id, totalReviews, totalSumRating, avgRating);
+        int updated = movieRepository.updateRatingInfo(id, totalReviews, totalSumRating, avgRating, timestamp);
         if (updated > 0) {
             log.info("Cập nhật rating thành công cho phim: {}", id);
         } else {
-            log.warn("Bỏ qua cập nhật rating cho phim: {} (event.totalReviews <= current totalReviews)", id);
+            log.warn("Bỏ qua cập nhật rating cho phim: {}", id);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<MoviePublicDTO> getMoviesByIds(List<String> ids) {
+        List<Movie> movies = movieRepository.findAllById(ids);
+        return movies.stream()
+                .map(movieMapper::toResponsePublic)
+                .toList();
     }
 }
