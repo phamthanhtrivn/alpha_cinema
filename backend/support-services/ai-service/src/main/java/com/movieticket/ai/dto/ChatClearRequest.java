@@ -4,14 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ChatRequest {
-    @NotBlank(message = "Question is required")
-    private String question;
-
+public class ChatClearRequest {
+    @NotBlank(message = "Conversation id is required")
     private String conversationId;
 
     private String customerId;
 
     private String customerName;
-
 }
