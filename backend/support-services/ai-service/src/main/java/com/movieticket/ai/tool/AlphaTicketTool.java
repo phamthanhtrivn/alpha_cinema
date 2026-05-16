@@ -16,10 +16,10 @@ public class AlphaTicketTool {
 
     @Tool(description = "Lấy bảng giá vé theo loại ghế, định dạng chiếu và loại ngày. Quy tắc sử dụng dayType: WEEKDAY là từ thứ 2 đến thứ 6; WEEKEND_BEFORE_17 là thứ 7/chủ nhật trước 17:00; WEEKEND_AFTER_17 là thứ 7/chủ nhật từ 17:00 trở đi; HOLIDAY là ngày lễ/tết có trong bảng Holiday đang active.")
     public List<TicketPriceToolResponse> getTicketPrices(
-            @ToolParam(description = "Tên loại ghế, ví dụ: ghế thường, ghế đôi, VIP. Có thể để trống nếu người dùng hỏi bảng giá chung.")
+            @ToolParam(description = "Tên loại ghế, ví dụ: ghế thường, ghế đôi, VIP. Có thể để trống nếu người dùng hỏi bảng giá chung thì trả về tất cả loại ghế.")
             String seatTypeName,
 
-            @ToolParam(description = "Định dạng chiếu: 2D, 3D hoặc IMAX. Có thể để trống.")
+            @ToolParam(description = "Định dạng chiếu: 2D, 3D hoặc IMAX. Nếu người dùng không nói rõ thì có thể để trống hoặc tìm tất cả các định dạng phù hợp.")
             String projectionType,
 
             @ToolParam(description = "Loại ngày: WEEKDAY, WEEKEND_BEFORE_17, WEEKEND_AFTER_17 hoặc HOLIDAY. Nếu khách hàng đưa ngày/giờ cụ thể thì nên dùng determineTicketPrices thay vì tự đoán dayType.")
@@ -54,5 +54,16 @@ public class AlphaTicketTool {
             String showTime
     ) {
         return ticketServiceClient.determineTicketPrices(seatTypeName, projectionType, showTime);
+    }
+
+    @Tool(description = "Lấy bảng giá vé cho một suất chiếu cụ thể theo showTime và projectionType. Dùng khi người dùng hỏi giá vé cho một suất chiếu cụ thể nhưng không nói rõ loại ghế nào thì trả về toàn bộ các loại ghế có trong phòng chiếu đó, hoặc khi người dùng hỏi có những loại ghế nào với giá bao nhiêu cho suất chiếu đó.")
+    public List<TicketPriceToolResponse> getShowtimeTicketPrices(
+            @ToolParam(description = "Định dạng chiếu: 2D, 3D hoặc IMAX. Nếu người dùng không nói rõ thì có thể để trống để trả về tất cả định dạng phù hợp.")
+            String projectionType,
+
+            @ToolParam(description = "Thời gian chiếu theo định dạng ISO datetime, ví dụ: 2026-05-16T19:30:00.")
+            String showTime
+    ) {
+        return ticketServiceClient.getShowtimeTicketPrices(projectionType, showTime);
     }
 }

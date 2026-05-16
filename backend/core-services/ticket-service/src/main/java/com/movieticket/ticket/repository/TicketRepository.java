@@ -42,4 +42,16 @@ public interface TicketRepository extends JpaRepository<TicketPrice, String> {
     TicketPrice findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(String seatTypeId, ProjectionType projectionType, DayType dayType, boolean status);
 
     List<TicketPrice> findBySeatTypeIdAndDayTypeAndStatusOrderByProjectionTypeAsc(String seatTypeId, DayType dayType, boolean status);
+
+    @Query("SELECT tp " +
+            "FROM TicketPrice tp " +
+            "WHERE (:projectionType IS NULL OR tp.projectionType = :projectionType) " +
+            "AND tp.dayType = :dayType " +
+            "AND tp.status = :status " +
+            "ORDER BY tp.seatTypeId, tp.projectionType")
+    List<TicketPrice> findShowtimeTicketPrices(
+            @Param("projectionType") ProjectionType projectionType,
+            @Param("dayType") DayType dayType,
+            @Param("status") boolean status
+    );
 }

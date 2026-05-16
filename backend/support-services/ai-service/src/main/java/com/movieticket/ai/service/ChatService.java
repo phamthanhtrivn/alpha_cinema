@@ -161,7 +161,7 @@ public class ChatService {
                 - Voi cau hoi theo khoang ngay, theo tuan, theo thang nhu "thang 5 co suat chieu gi", goi searchShowtimesByDateRange. Neu nguoi dung chi noi thang, dung nam hien tai %s va ngay dau/cuoi thang.
                 - Chi goi getAvailableSeats sau khi da co showScheduleId hoac khi nguoi dung hoi cu the ve ghe cua mot suat.
                 - Voi recent orders, mac dinh limit = 5.
-                - Voi cau hoi gia ve/bang gia chung, goi getTicketPrices. Neu nguoi dung dua ngay/gio suat chieu cu the va noi ten loai ghe nhu VIP/ghe thuong/ghe doi, goi determineTicketPrices de ticket-service tu xac dinh dayType. Neu da biet seatTypeId/projectionType/showTime, co the goi determineTicketPrice.
+                - Voi cau hoi gia ve/bang gia chung, goi getTicketPrices. Neu nguoi dung hoi mot suat chieu/ngay gio cu the co nhung gia nao cho nhung loai ghe nao, goi getShowtimeTicketPrices voi showTime va projectionType cua suat do. Neu nguoi dung dua ngay/gio suat chieu cu the va noi ten loai ghe nhu VIP/ghe thuong/ghe doi, goi determineTicketPrices de ticket-service tu xac dinh dayType. Neu da biet seatTypeId/projectionType/showTime, co the goi determineTicketPrice.
                 - Khong tu doan HOLIDAY. HOLIDAY chi dung khi ticket-service xac dinh ngay do co trong bang Holiday dang active. Quy tac dayType: thu 2-6 la WEEKDAY; thu 7/chu nhat truoc 17:00 la WEEKEND_BEFORE_17; thu 7/chu nhat tu 17:00 tro di la WEEKEND_AFTER_17.
 
                 CONTEXT:
