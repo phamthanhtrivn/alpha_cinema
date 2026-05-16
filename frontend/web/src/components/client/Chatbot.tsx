@@ -15,7 +15,7 @@ type ChatMessage = {
   isTyping?: boolean;
 };
 
-const starterQuestions = [
+const fallbackStarterQuestions = [
   "Đặt vé như thế nào?",
   "Thanh toán online có những phương thức nào?",
   "Vé QR dùng như thế nào?",
@@ -40,6 +40,9 @@ export default function Chatbot() {
     localStorage.getItem(CHAT_CONVERSATION_STORAGE_KEY),
   );
   const [question, setQuestion] = useState("");
+  const [starterQuestions, setStarterQuestions] = useState<string[]>(
+    fallbackStarterQuestions,
+  );
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [shouldSuggestNewConversation, setShouldSuggestNewConversation] =
@@ -53,6 +56,34 @@ export default function Chatbot() {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [isOpen, messages]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadStarterQuestions = async () => {
+      try {
+        const popularQuestions = await aiChatService.getStarterQuestions();
+        const nextStarterQuestions = popularQuestions
+          .map((popularQuestion) => popularQuestion.question?.trim())
+          .filter((popularQuestion): popularQuestion is string => Boolean(popularQuestion))
+          .slice(0, 3);
+
+        if (isMounted && nextStarterQuestions.length > 0) {
+          setStarterQuestions(nextStarterQuestions);
+        }
+      } catch {
+        if (isMounted) {
+          setStarterQuestions(fallbackStarterQuestions);
+        }
+      }
+    };
+
+    void loadStarterQuestions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {

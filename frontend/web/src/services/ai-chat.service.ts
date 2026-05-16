@@ -52,7 +52,11 @@ export const aiChatService = {
     });
     return response.data.data;
   },
-  getPopularQuestions: async (limit: number = 10): Promise<PopularAiQuestion[]> => {
+  getStarterQuestions: async (): Promise<PopularAiQuestion[]> => {
+    const response = await apiClient.get("/ai/chat/starter-questions");
+    return response.data.data;
+  },
+  getPopularQuestions: async (limit: number = 3): Promise<PopularAiQuestion[]> => {
     const response = await apiClient.get("/ai/analytics/popular-questions", {
       params: { limit },
     });
