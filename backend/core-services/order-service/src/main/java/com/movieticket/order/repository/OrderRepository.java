@@ -17,6 +17,8 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecificationExecutor<Order> {
 	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
 	Optional<Order> findDetailedById(String id);
+	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
+	Optional<Order> findDetailedByIdAndCustomerId(String id, String customerId);
 
 	@EntityGraph(attributePaths = {"promotion", "orderDetails", "showScheduleDetails"})
 	List<Order> findDetailedByIdIn(Collection<String> ids);

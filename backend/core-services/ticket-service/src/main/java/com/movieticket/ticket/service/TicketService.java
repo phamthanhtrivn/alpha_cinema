@@ -59,6 +59,28 @@ public class TicketService {
         return TicketUtil.toTicketResponseDto(ticketPrice);
     }
 
+    public List<TicketResponseDto> resolveTicketPrices(DetermineTicketPriceDto determineDto) {
+        DayType dayType = dayTypeResolver.resolveDayType(determineDto.getShowTime());
+
+        if (determineDto.getProjectionType() != null) {
+            return List.of(resolveTicketPrice(determineDto));
+        }
+
+        List<TicketPrice> ticketPrices = ticketRepository.findBySeatTypeIdAndDayTypeAndStatusOrderByProjectionTypeAsc(
+                determineDto.getSeatTypeId(),
+                dayType,
+                true
+        );
+
+        if (ticketPrices.isEmpty()) {
+            throw new BusinessException("No active ticket price found for the given criteria");
+        }
+
+        return ticketPrices.stream()
+                .map(TicketUtil::toTicketResponseDto)
+                .toList();
+    }
+
     public TicketPrice getTicketPriceById(String id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy giá vé với id: " + id));

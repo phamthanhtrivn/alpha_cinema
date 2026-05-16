@@ -1,9 +1,17 @@
 package com.movieticket.ai.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
-public record ChatRequest(
-        String conversationId,
-        @NotBlank(message = "Message is required") String message
-) {
+@Data
+public class ChatRequest {
+    @NotBlank(message = "Question is required")
+    private String question;
+
+    private String conversationId;
+
+    private String customerId;
+
+    private String customerName;
+
 }

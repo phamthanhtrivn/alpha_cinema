@@ -15,6 +15,10 @@ public class DayTypeResolver {
     private final HolidayRepository holidayRepository;
 
     public DayType resolveDayType(LocalDateTime showTime) {
+        if (showTime == null) {
+            throw new IllegalArgumentException("showTime is required to resolve day type");
+        }
+
         LocalDate date = showTime.toLocalDate();
 
         if (holidayRepository.isHoliday(date)) {

@@ -61,7 +61,14 @@ public class MovieService {
 
     public Page<MoviePublicDTO> clientSearchMovie(MovieSearchDTO dto, Pageable pageable) {
         Specification<Movie> spec = Specification.where(MovieSpecification.hasTitle(dto.getTitle()))
-                .and(MovieSpecification.hasReleaseStatus(dto.getReleaseStatus()));
+                .and(MovieSpecification.hasReleaseStatus(dto.getReleaseStatus()))
+                .and(MovieSpecification.hasNationality(dto.getNationality()))
+                .and(MovieSpecification.hasAgeType(dto.getAgeTypeId()))
+                .and(MovieSpecification.hasReleaseYear(dto.getReleaseYear()))
+                .and(MovieSpecification.hasGenre(dto.getGenre()))
+                .and(MovieSpecification.hasArtist(dto.getArtistId()))
+                .and(MovieSpecification.hasProjectionType(dto.getProjectionType()))
+                .and(MovieSpecification.hasTranslationType(dto.getTranslationType()));
 
         Page<Movie> moviePage = movieRepository.findAll(spec, pageable);
         return moviePage.map(movieMapper::toResponsePublic);

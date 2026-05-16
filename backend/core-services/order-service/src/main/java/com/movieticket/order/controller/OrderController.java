@@ -92,6 +92,15 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(history, ""));
     }
 
+    @GetMapping("/my-orders/{orderId}")
+    public ResponseEntity<ApiResponse<OrderHistoryResponse>> getMyOrderDetail(
+            @PathVariable String orderId,
+            @RequestHeader("X-User-Id") String customerId
+    ) {
+        OrderHistoryResponse detail = orderService.getCustomerOrderDetail(orderId, customerId);
+        return ResponseEntity.ok(ApiResponse.success(detail, ""));
+    }
+
     @GetMapping("/customer/{orderId}")
     public ResponseEntity<ApiResponse<OrderHistoryResponse>> getOrderDetail(@PathVariable String orderId) {
         OrderHistoryResponse detail = orderService.getOrderDetail(orderId);
