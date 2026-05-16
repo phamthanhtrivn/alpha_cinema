@@ -11,4 +11,5 @@ public class MovieRatingUpdateEvent {
     private String movieId;
     private Long totalReviews;
     private Double totalSumRating;
+    private Long timestamp;
 }

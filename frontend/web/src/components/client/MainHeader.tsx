@@ -55,14 +55,17 @@ const MainHeader: React.FC = () => {
             <Link to="/" className="hover:text-alpha-blue transition-colors">
               Trang Chủ
             </Link>
-            <Link to="#" className="hover:text-alpha-blue transition-colors">
-              Lịch Chiếu
+            <Link to="/movies" className="hover:text-alpha-blue transition-colors">
+              Phim
             </Link>
             <Link
               to="/cinematic"
               className="hover:text-alpha-blue transition-colors"
             >
               Góc điện ảnh
+            </Link>
+            <Link to="#" className="hover:text-alpha-blue transition-colors">
+              Lịch Chiếu
             </Link>
             <Link to="#" className="hover:text-alpha-blue transition-colors">
               Khuyến Mãi

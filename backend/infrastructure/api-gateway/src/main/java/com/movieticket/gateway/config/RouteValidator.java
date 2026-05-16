@@ -26,7 +26,8 @@ public class RouteValidator {
             "/api/ai/chat",
             "/api/ai/chat/clear",
             "/api/ai/knowledge/ingest-policies",
-            "/api/ai/knowledge/search"
+            "/api/ai/knowledge/search",
+            "/api/reviews/public/"
     );
     
     public Predicate<ServerHttpRequest> isSecured =
