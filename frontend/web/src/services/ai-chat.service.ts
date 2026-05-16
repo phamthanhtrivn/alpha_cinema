@@ -15,6 +15,11 @@ export type AiChatResponse = {
   conversationMessageCount: number;
 };
 
+export type AiChatHistoryMessage = {
+  role: "assistant" | "user";
+  content: string;
+};
+
 export type PopularAiQuestion = {
   question: string;
   count: number;
@@ -49,6 +54,14 @@ export const aiChatService = {
       conversationId,
       customerId,
       customerName,
+    });
+    return response.data.data;
+  },
+  getConversationHistory: async (
+    conversationId: string,
+  ): Promise<AiChatHistoryMessage[]> => {
+    const response = await apiClient.get("/ai/chat/history", {
+      params: { conversationId },
     });
     return response.data.data;
   },

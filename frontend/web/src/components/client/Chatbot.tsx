@@ -1,10 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { useSelector } from "react-redux";
-import {
-  aiChatService,
-  type AiCitation,
-} from "../../services/ai-chat.service";
+import { aiChatService, type AiCitation } from "../../services/ai-chat.service";
 import { selectAuth } from "../../store/slices/authSlice";
 
 type ChatMessage = {
@@ -26,18 +23,46 @@ const initialMessages: ChatMessage[] = [
     id: "welcome",
     role: "assistant",
     content:
-      "Chào bạn, mình có thể hỗ trợ các câu hỏi về chính sách đặt vé, thanh toán, hoàn vé, QR, khuyến mãi và điểm thành viên của Alpha Cinema.",
+      "Chào bạn, mình có thể hỗ trợ đặt vé, thanh toán, hoàn vé, QR, khuyến mãi, điểm thành viên, giá vé, lịch chiếu, ghế trống, chi nhánh và tra cứu đơn hàng tại Alpha Cinema.",
   },
 ];
 
 const CHAT_CONVERSATION_STORAGE_KEY = "alpha-ai-conversation-id";
+const CHAT_LOCK_STORAGE_KEY = "alpha-ai-should-start-new-conversation";
+
+const getChatStorageKeys = (scope: string) => ({
+  conversationId: `${CHAT_CONVERSATION_STORAGE_KEY}:${scope}`,
+  lock: `${CHAT_LOCK_STORAGE_KEY}:${scope}`,
+});
+
+const loadStoredConversationId = (storageKey: string) => {
+  const scopedConversationId = localStorage.getItem(storageKey);
+  if (scopedConversationId) {
+    return scopedConversationId;
+  }
+
+  const legacyConversationId = localStorage.getItem(
+    CHAT_CONVERSATION_STORAGE_KEY,
+  );
+  if (legacyConversationId) {
+    localStorage.setItem(storageKey, legacyConversationId);
+    localStorage.removeItem(CHAT_CONVERSATION_STORAGE_KEY);
+  }
+
+  return legacyConversationId;
+};
 
 export default function Chatbot() {
   const { user } = useSelector(selectAuth);
+  const storageScope = user?.id ? `customer:${String(user.id)}` : "guest";
+  const storageKeys = useMemo(
+    () => getChatStorageKeys(storageScope),
+    [storageScope],
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState<string | null>(() =>
-    localStorage.getItem(CHAT_CONVERSATION_STORAGE_KEY),
+    loadStoredConversationId(storageKeys.conversationId),
   );
   const [question, setQuestion] = useState("");
   const [starterQuestions, setStarterQuestions] = useState<string[]>(
@@ -46,7 +71,7 @@ export default function Chatbot() {
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [shouldSuggestNewConversation, setShouldSuggestNewConversation] =
-    useState(false);
+    useState(() => localStorage.getItem(storageKeys.lock) === "true");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const isConversationLocked = shouldSuggestNewConversation;
@@ -59,13 +84,76 @@ export default function Chatbot() {
 
   useEffect(() => {
     let isMounted = true;
+    const storedConversationId = loadStoredConversationId(
+      storageKeys.conversationId,
+    );
+
+    setConversationId(storedConversationId);
+    setMessages(initialMessages);
+    setShouldSuggestNewConversation(
+      localStorage.getItem(storageKeys.lock) === "true",
+    );
+    setQuestion("");
+
+    if (!storedConversationId) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadConversationHistory = async () => {
+      try {
+        const history =
+          await aiChatService.getConversationHistory(storedConversationId);
+        if (!isMounted) {
+          return;
+        }
+
+        const restoredMessages: ChatMessage[] = history.map(
+          (message, index) => ({
+            id: `${storedConversationId}-${index}`,
+            role: message.role,
+            content: message.content,
+          }),
+        );
+
+        setMessages(
+          restoredMessages.length > 0
+            ? [initialMessages[0], ...restoredMessages]
+            : initialMessages,
+        );
+      } catch {
+        if (isMounted) {
+          setMessages(initialMessages);
+        }
+      }
+    };
+
+    void loadConversationHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [storageKeys.conversationId, storageKeys.lock]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      storageKeys.lock,
+      String(shouldSuggestNewConversation),
+    );
+  }, [shouldSuggestNewConversation, storageKeys.lock]);
+
+  useEffect(() => {
+    let isMounted = true;
 
     const loadStarterQuestions = async () => {
       try {
         const popularQuestions = await aiChatService.getStarterQuestions();
         const nextStarterQuestions = popularQuestions
           .map((popularQuestion) => popularQuestion.question?.trim())
-          .filter((popularQuestion): popularQuestion is string => Boolean(popularQuestion))
+          .filter((popularQuestion): popularQuestion is string =>
+            Boolean(popularQuestion),
+          )
           .slice(0, 3);
 
         if (isMounted && nextStarterQuestions.length > 0) {
@@ -157,7 +245,9 @@ export default function Chatbot() {
     }
 
     const activeConversationId = conversationId;
-    const hasMessagesToArchive = messages.some((message) => message.id !== "welcome");
+    const hasMessagesToArchive = messages.some(
+      (message) => message.id !== "welcome",
+    );
 
     if (!activeConversationId) {
       resetConversationUi();
@@ -204,7 +294,8 @@ export default function Chatbot() {
     setConversationId(null);
     setShouldSuggestNewConversation(false);
     setQuestion("");
-    localStorage.removeItem(CHAT_CONVERSATION_STORAGE_KEY);
+    localStorage.removeItem(storageKeys.conversationId);
+    localStorage.removeItem(storageKeys.lock);
   };
 
   const typeAssistantAnswer = (messageId: string, answer: string) => {
@@ -248,12 +339,11 @@ export default function Chatbot() {
     }
 
     setConversationId(nextConversationId);
-    localStorage.setItem(CHAT_CONVERSATION_STORAGE_KEY, nextConversationId);
+    localStorage.setItem(storageKeys.conversationId, nextConversationId);
   };
 
   const resolveCustomerId = () => {
-    const candidate =
-      user?.id ?? undefined;
+    const candidate = user?.id ?? undefined;
 
     if (candidate) {
       return String(candidate);
@@ -267,8 +357,7 @@ export default function Chatbot() {
       return "Khách vãng lai";
     }
 
-    const candidate =
-      user?.fullName ?? undefined;
+    const candidate = user?.fullName ?? undefined;
 
     if (candidate) {
       return String(candidate);
@@ -478,7 +567,12 @@ export default function Chatbot() {
               />
               <button
                 type="submit"
-                disabled={!question.trim() || isSending || isTyping || isConversationLocked}
+                disabled={
+                  !question.trim() ||
+                  isSending ||
+                  isTyping ||
+                  isConversationLocked
+                }
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-alpha-orange text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
                 aria-label="Gửi câu hỏi"
               >

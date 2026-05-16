@@ -3,6 +3,7 @@ package com.movieticket.ai.controller;
 import com.movieticket.ai.common.ApiResponse;
 import com.movieticket.ai.dto.ChatClearRequest;
 import com.movieticket.ai.dto.ChatClearResponse;
+import com.movieticket.ai.dto.ChatHistoryMessage;
 import com.movieticket.ai.dto.ChatRequest;
 import com.movieticket.ai.dto.ChatResponse;
 import com.movieticket.ai.dto.PopularQuestionResponse;
@@ -44,6 +45,14 @@ public class ChatController {
                 request.getCustomerName()
         );
         return ApiResponse.success(response, "Archived and cleared chat conversation successfully");
+    }
+
+    @GetMapping("/chat/history")
+    public ApiResponse<List<ChatHistoryMessage>> chatHistory(
+            @RequestParam String conversationId
+    ) {
+        List<ChatHistoryMessage> response = chatMemoryService.getConversationMessages(conversationId);
+        return ApiResponse.success(response, "Fetched chat history successfully");
     }
 
     @GetMapping("/chat/starter-questions")

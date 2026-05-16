@@ -50,6 +50,22 @@ public class ChatMemoryService {
                 .toList();
     }
 
+    public List<ChatHistoryMessage> getConversationMessages(String conversationId) {
+        if (conversationId == null || conversationId.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return chatMemory.get(conversationId)
+                    .stream()
+                    .map(this::toChatHistoryMessage)
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("Failed to load chat history from ChatMemory. conversationId={}, error={}", conversationId, ex.getMessage());
+            return List.of();
+        }
+    }
+
     public int countMessages(String conversationId) {
         return chatMemory.get(conversationId).size();
     }
