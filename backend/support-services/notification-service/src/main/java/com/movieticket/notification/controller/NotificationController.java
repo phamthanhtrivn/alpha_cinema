@@ -8,15 +8,24 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService notificationService;
 
-    @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<Notification>> getNotifications(@PathVariable String customerId) {
-        return ResponseEntity.ok(notificationService.getNotificationsByCustomerId(customerId));
+    @GetMapping("/customer")
+    public ResponseEntity<Page<Notification>> getNotifications(
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(notificationService.getNotificationsByCustomerId(userId, pageable));
     }
 
     @PutMapping("/{id}/read")

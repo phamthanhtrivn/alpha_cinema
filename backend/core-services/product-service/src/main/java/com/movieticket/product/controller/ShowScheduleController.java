@@ -4,6 +4,7 @@ import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.admin.request.ShowScheduleCreateDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleSearchDTO;
 import com.movieticket.product.dto.admin.request.ShowScheduleUpdateDTO;
+import com.movieticket.product.dto.admin.response.SelectionDTO;
 import com.movieticket.product.dto.admin.response.ShowScheduleLookupDto;
 import com.movieticket.product.dto.admin.response.ShowScheduleResDTO;
 import com.movieticket.product.dto.client.BookingLayoutDTO;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -135,6 +137,25 @@ public class ShowScheduleController {
             System.err.println("Lỗi khi lấy danh sách phim và suất chiếu: " + e.getMessage());
             return ApiResponse.fail("Lỗi khi lấy danh sách phim và suất chiếu: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/public/cinema-option-by-movie/{movieId}")
+    ResponseEntity<ApiResponse<List<SelectionDTO>>> getCinemaOptionByMovie(
+            @PathVariable String movieId
+    ) {
+        List<SelectionDTO> data =
+                showScheduleService.getCinemasByMovie(movieId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
+    }
+
+    @GetMapping("/public/active-date-for-movie-cinema")
+    ResponseEntity<ApiResponse<List<LocalDate>>> getCinemaOptionByMovie(
+            @Param("movieId") String movieId,
+            @Param("cinemaId") String cinemaId
+    ) {
+        List<LocalDate> data =
+                showScheduleService.getDatesByMovieAndCinema(movieId, cinemaId);
+        return ResponseEntity.ok(ApiResponse.success(data, ""));
     }
 
     @PostMapping("/batch")

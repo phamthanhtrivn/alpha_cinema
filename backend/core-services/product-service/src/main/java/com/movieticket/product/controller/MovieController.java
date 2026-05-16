@@ -110,10 +110,23 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/public/suggestions")
+    public ResponseEntity<ApiResponse<List<SelectionDTO>>> getNowShowingSuggestions() {
+        List<SelectionDTO> suggestions = movieService.getNowShowingSuggestions();
+        ApiResponse<List<SelectionDTO>> response = ApiResponse.success(suggestions, "");
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/public/{id}")
     public ResponseEntity<ApiResponse<MovieDetailPublicDTO>> getMovieDetail(@PathVariable String id) {
         MovieDetailPublicDTO movie = movieService.clientGetDetailMovie(id);
         ApiResponse<MovieDetailPublicDTO> response = ApiResponse.success(movie, "");
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/public/list")
+    public ResponseEntity<ApiResponse<List<MoviePublicDTO>>> getMoviesByIds(@RequestParam List<String> ids) {
+        List<MoviePublicDTO> movies = movieService.getMoviesByIds(ids);
+        return ResponseEntity.ok(ApiResponse.success(movies, "Lấy danh sách phim thành công"));
     }
 }
