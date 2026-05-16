@@ -55,6 +55,22 @@ spring:
         table-name: ai_knowledge_documents
         initialize-schema: false
 
+ai:
+  tool:
+    timeout-ms: ${AI_TOOL_TIMEOUT_MS:3000}
+
+external-services:
+  movie-service:
+    base-url: ${MOVIE_SERVICE_BASE_URL}
+  cinema-service:
+    base-url: ${CINEMA_SERVICE_BASE_URL}
+  user-service:
+    base-url: ${USER_SERVICE_BASE_URL}
+  order-service:
+    base-url: ${ORDER_SERVICE_BASE_URL}
+  ticket-service:
+    base-url: ${TICKET_SERVICE_BASE_URL}
+
 eureka:
   client:
     service-url:

@@ -16,6 +16,7 @@ public interface HolidayRepository extends JpaRepository<Holiday, String> {
         SELECT CASE WHEN COUNT(h) > 0 THEN true ELSE false END
         FROM Holiday h
         WHERE :date BETWEEN h.startDate AND h.endDate
+        AND h.status = true
     """)
     boolean isHoliday(@Param("date") LocalDate date);
 

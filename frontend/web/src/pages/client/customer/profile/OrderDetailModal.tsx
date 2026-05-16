@@ -13,7 +13,6 @@ import {
   Coffee,
   CreditCard,
   Calendar,
-  QrCode,
   AlertCircle,
   Film,
 } from "lucide-react";
