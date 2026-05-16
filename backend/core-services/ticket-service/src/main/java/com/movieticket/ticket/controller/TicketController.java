@@ -77,4 +77,11 @@ public class TicketController {
         ApiResponse<TicketResponseDto> response = ApiResponse.success(ticketPrice, "Ticket price determined successfully");
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/determine-ticket-prices")
+    public ResponseEntity<ApiResponse<List<TicketResponseDto>>> determineTicketPrices(@Valid @ModelAttribute DetermineTicketPriceDto determineDto) {
+        List<TicketResponseDto> ticketPrices = ticketService.resolveTicketPrices(determineDto);
+        ApiResponse<List<TicketResponseDto>> response = ApiResponse.success(ticketPrices, "Ticket prices determined successfully");
+        return ResponseEntity.ok(response);
+    }
 }

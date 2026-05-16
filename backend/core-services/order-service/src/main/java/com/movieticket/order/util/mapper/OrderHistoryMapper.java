@@ -3,6 +3,8 @@ package com.movieticket.order.util.mapper;
 import com.movieticket.order.dto.CinemaRoomExternalDTO;
 import com.movieticket.order.dto.client.*;
 import com.movieticket.order.entity.Order;
+import com.movieticket.order.entity.OrderDetail;
+import com.movieticket.order.entity.ShowScheduleDetail;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,6 +43,9 @@ public class OrderHistoryMapper {
                 .totalPayment(order.getTotalPayment())
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice()) // Thêm cả giá gốc nếu cần
+                .pointDiscount(order.getPointDiscount())
+                .promotionDiscount(order.getPromotionDiscount())
+                .promotionCode(order.getPromotion() == null ? null : order.getPromotion().getCode())
                 .createdAt(order.getCreatedAt())
                 .qrCode(order.getQrCode());
     }
@@ -53,7 +58,12 @@ public class OrderHistoryMapper {
             Map<String, ProductSnapshot> productMap) {
 
         // 1. Xử lý danh sách GHẾ (Lấy thông tin rạp + Giá từ đơn hàng)
-        List<SeatSnapshot> seatSnapshots = order.getShowScheduleDetails().stream()
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails() == null
+                ? List.of()
+                : order.getShowScheduleDetails();
+        List<OrderDetail> orderDetails = order.getOrderDetails() == null ? List.of() : order.getOrderDetails();
+
+        List<SeatSnapshot> seatSnapshots = showScheduleDetails.stream()
                 .map(detail -> {
                     // Tìm thông tin ghế "tĩnh" từ Cinema Service
                     SeatSnapshot s = seatMap.get(detail.getSeatId());
@@ -74,7 +84,7 @@ public class OrderHistoryMapper {
                 .toList();
 
         // 2. Xử lý danh sách BẮP NƯỚC (Lấy thông tin sản phẩm + Giá/Số lượng từ đơn hàng)
-        List<ProductSnapshot> productItems = order.getOrderDetails().stream()
+        List<ProductSnapshot> productItems = orderDetails.stream()
                 .map(detail -> {
                     ProductSnapshot p = productMap.get(detail.getProductId());
                     return ProductSnapshot.builder()

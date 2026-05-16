@@ -4,6 +4,7 @@ import com.movieticket.product.entity.Movie;
 import com.movieticket.product.dto.client.ShowScheduleView;
 import com.movieticket.product.dto.client.ShowTimeView;
 import com.movieticket.product.entity.ShowSchedule;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -76,4 +77,21 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT s FROM ShowSchedule s JOIN FETCH s.movie WHERE s.id IN :ids")
     List<ShowSchedule> findAllByIdWithMovie(@Param("ids") List<String> ids);
+
+    @Query("""
+            SELECT s FROM ShowSchedule s JOIN FETCH s.movie
+            WHERE s.status = true
+            AND s.startTime >= :start
+            AND s.startTime < :endExclusive
+            AND (:movieTitle IS NULL OR LOWER(s.movie.title) LIKE LOWER(CONCAT('%', :movieTitle, '%')))
+            AND (:cinemaId IS NULL OR s.cinemaId = :cinemaId)
+            ORDER BY s.startTime ASC
+            """)
+    List<ShowSchedule> findPublicSchedulesInRange(
+            @Param("start") LocalDateTime start,
+            @Param("endExclusive") LocalDateTime endExclusive,
+            @Param("movieTitle") String movieTitle,
+            @Param("cinemaId") String cinemaId,
+            Pageable pageable
+    );
 }

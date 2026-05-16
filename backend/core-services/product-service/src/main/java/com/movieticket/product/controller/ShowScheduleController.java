@@ -87,6 +87,20 @@ public class ShowScheduleController {
         return ResponseEntity.ok(ApiResponse.success(showScheduleService.getMovieShowtimes(movieId, date), ""));
     }
 
+    @GetMapping("/public/search")
+    public ResponseEntity<ApiResponse<List<ShowScheduleResDTO>>> searchPublicSchedules(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String movieTitle,
+            @RequestParam(required = false) String cinemaId,
+            @RequestParam(required = false, defaultValue = "50") Integer limit
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                showScheduleService.searchPublicSchedules(startDate, endDate, movieTitle, cinemaId, limit),
+                ""
+        ));
+    }
+
     @GetMapping("/booking-layout/{showScheduleId}")
     public ResponseEntity<ApiResponse<BookingLayoutDTO>> getLayout(@PathVariable String showScheduleId) {
         BookingLayoutDTO data = showScheduleService.getBookingLayout(showScheduleId);

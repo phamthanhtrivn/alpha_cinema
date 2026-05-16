@@ -9,15 +9,12 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: none
-    open-in-view: false
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
-      timeout: 6000ms
-      connect-timeout: 2000ms
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
     producer:
@@ -54,15 +51,25 @@ spring:
       pgvector:
         index-type: HNSW
         distance-type: COSINE_DISTANCE
-        dimensions: 768
+        dimensions: 3072
         table-name: ai_knowledge_documents
+        initialize-schema: false
 
-  system:
-    product-service-base-url: "${PRODUCT_SERVICE_BASE_URL}"
-    cinema-service-base-url: "${CINEMA_SERVICE_BASE_URL}"
-    order-service-base-url: "${ORDER_SERVICE_BASE_URL:http}"
-    review-service-base-url: "${USER_SERVICE_BASE_URL:http}"
-    request-timeout-seconds: "${AI_SYSTEM_REQUEST_TIMEOUT_SECONDS}"
+ai:
+  tool:
+    timeout-ms: ${AI_TOOL_TIMEOUT_MS:3000}
+
+external-services:
+  movie-service:
+    base-url: ${MOVIE_SERVICE_BASE_URL}
+  cinema-service:
+    base-url: ${CINEMA_SERVICE_BASE_URL}
+  user-service:
+    base-url: ${USER_SERVICE_BASE_URL}
+  order-service:
+    base-url: ${ORDER_SERVICE_BASE_URL}
+  ticket-service:
+    base-url: ${TICKET_SERVICE_BASE_URL}
 
 eureka:
   client:

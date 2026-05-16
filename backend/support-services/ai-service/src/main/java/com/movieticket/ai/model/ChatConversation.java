@@ -23,8 +23,14 @@ public class ChatConversation {
     @Column(length = 36)
     private String id;
 
-    @Column(name = "customer_id")
+    @Column(name = "customer_id", length = 100)
     private String customerId;
+
+    @Column(name = "customer_name", length = 255)
+    private String customerName;
+
+    @Column(name = "message_count", nullable = false)
+    private Integer messageCount = 0;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -32,18 +38,30 @@ public class ChatConversation {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public ChatConversation(String customerId) {
-        this.id = UUID.randomUUID().toString();
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    public ChatConversation(String id, String customerId, String customerName, Integer messageCount) {
+        this.id = id != null && !id.isBlank() ? id : UUID.randomUUID().toString();
         this.customerId = customerId;
+        this.customerName = customerName;
+        this.messageCount = messageCount;
+        this.archivedAt = Instant.now();
     }
 
     @PrePersist
     void prePersist() {
         Instant now = Instant.now();
-        createdAt = now;
-        updatedAt = now;
         if (id == null) {
             id = UUID.randomUUID().toString();
+        }
+        createdAt = now;
+        updatedAt = now;
+        if (archivedAt == null) {
+            archivedAt = now;
+        }
+        if (messageCount == null) {
+            messageCount = 0;
         }
     }
 

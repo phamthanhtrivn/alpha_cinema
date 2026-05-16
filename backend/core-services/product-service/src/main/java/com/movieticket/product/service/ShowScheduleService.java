@@ -28,6 +28,7 @@ import com.movieticket.product.util.mapper.ShowScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -233,6 +234,35 @@ public class ShowScheduleService {
 
         return rawDates.stream()
                 .map(java.sql.Date::toLocalDate)
+                .toList();
+    }
+
+    public List<ShowScheduleResDTO> searchPublicSchedules(
+            LocalDate startDate,
+            LocalDate endDate,
+            String movieTitle,
+            String cinemaId,
+            Integer limit
+    ) {
+        LocalDate effectiveStartDate = startDate == null ? LocalDate.now() : startDate;
+        LocalDate effectiveEndDate = endDate == null ? effectiveStartDate : endDate;
+        if (effectiveEndDate.isBefore(effectiveStartDate)) {
+            effectiveEndDate = effectiveStartDate;
+        }
+
+        int safeLimit = Math.max(1, Math.min(limit == null ? 50 : limit, 100));
+        String safeMovieTitle = movieTitle == null || movieTitle.isBlank() ? null : movieTitle.trim();
+        String safeCinemaId = cinemaId == null || cinemaId.isBlank() ? null : cinemaId.trim();
+
+        return showScheduleRepository.findPublicSchedulesInRange(
+                        effectiveStartDate.atStartOfDay(),
+                        effectiveEndDate.plusDays(1).atStartOfDay(),
+                        safeMovieTitle,
+                        safeCinemaId,
+                        PageRequest.of(0, safeLimit)
+                )
+                .stream()
+                .map(showScheduleMapper::toResDTO)
                 .toList();
     }
 
