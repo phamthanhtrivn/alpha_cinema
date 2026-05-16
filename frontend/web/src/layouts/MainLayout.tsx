@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import MainHeader from '../components/client/MainHeader';
 import MainFooter from '../components/client/MainFooter';
+import Chatbot from '../components/client/Chatbot';
 
 const MainLayout: React.FC = () => {
   
@@ -11,6 +12,7 @@ const MainLayout: React.FC = () => {
       <main className="flex-grow">
         <Outlet />
       </main>
+      <Chatbot />
       <MainFooter />
     </div>
   );

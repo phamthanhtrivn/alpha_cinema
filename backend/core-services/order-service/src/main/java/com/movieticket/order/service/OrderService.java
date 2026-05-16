@@ -334,6 +334,48 @@ public class OrderService {
             });
         }).block();
     }
+    
+    public OrderHistoryResponse getCustomerOrderDetail(String orderId, String customerId) {
+        Order order = orderRepository.findDetailedByIdAndCustomerId(orderId, customerId)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng cho khách hàng này"));
+
+        return buildOrderHistoryDetail(order);
+    }
+
+    private OrderHistoryResponse buildOrderHistoryDetail(Order order) {
+        if (order.getShowScheduleDetails() == null || order.getShowScheduleDetails().isEmpty()) {
+            throw new BusinessException("Order does not have show schedule details");
+        }
+
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
+        List<OrderDetail> orderDetails = order.getOrderDetails() == null ? List.of() : order.getOrderDetails();
+
+        String scheduleId = showScheduleDetails.get(0).getShowScheduleId();
+        List<String> seatIds = showScheduleDetails.stream().map(ShowScheduleDetail::getSeatId)
+                .distinct().toList();
+        List<String> productIds = orderDetails.stream().map(OrderDetail::getProductId).distinct()
+                .toList();
+
+        return Mono.zip(
+                productClient.getSchedulesBatch(List.of(scheduleId)),
+                cinemaClient.getSeatsByIds(seatIds),
+                productClient.getProducts(productIds)).flatMap(tuple -> {
+            ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null
+                    : tuple.getT1().get(0);
+            Map<String, SeatSnapshot> seatMap = tuple.getT2();
+            Map<String, ProductSnapshot> productMap = tuple.getT3();
+
+            String roomId = (schedule != null) ? schedule.getRoomId() : null;
+            List<String> roomIds = roomId == null || roomId.isBlank() ? List.of() : List.of(roomId);
+
+            return cinemaClient.getRoomsBatch(roomIds).map(rooms -> {
+                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
+
+                return orderHistoryMapper.toDetailResponse(order, schedule, room,
+                        seatMap, productMap);
+            });
+        }).block();
+    }
 
     public ReviewType getReviewTypeForCustomer(String customerId, String movieId) {
         List<OrderStatus> statuses = orderRepository.findOrderStatusesByCustomerAndMovie(customerId, movieId);

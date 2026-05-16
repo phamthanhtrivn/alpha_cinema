@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface TicketRepository extends JpaRepository<TicketPrice, String> {
     boolean existsBySeatTypeIdAndProjectionTypeAndDayType(String seatTypeId, ProjectionType projectionType, DayType dayType);
@@ -38,4 +40,6 @@ public interface TicketRepository extends JpaRepository<TicketPrice, String> {
     );
 
     TicketPrice findBySeatTypeIdAndProjectionTypeAndDayTypeAndStatus(String seatTypeId, ProjectionType projectionType, DayType dayType, boolean status);
+
+    List<TicketPrice> findBySeatTypeIdAndDayTypeAndStatusOrderByProjectionTypeAsc(String seatTypeId, DayType dayType, boolean status);
 }

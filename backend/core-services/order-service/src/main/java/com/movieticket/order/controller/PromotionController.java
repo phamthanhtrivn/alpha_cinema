@@ -2,6 +2,7 @@ package com.movieticket.order.controller;
 
 import com.movieticket.order.common.ApiResponse;
 import com.movieticket.order.dto.PromotionCreateRequest;
+import com.movieticket.order.dto.PromotionPublicResponse;
 import com.movieticket.order.dto.PromotionUpdateRequest;
 import com.movieticket.order.entity.Promotion;
 import com.movieticket.order.exception.BusinessException;
@@ -11,12 +12,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/promotions")
 public class PromotionController {
     @Autowired
     private PromotionService promotionService;
+
+    @GetMapping("/public/active")
+    public ApiResponse<List<PromotionPublicResponse>> getActivePromotions() {
+        return ApiResponse.success(promotionService.getActivePromotions(), "Lấy danh sách khuyến mãi đang áp dụng thành công");
+    }
+
     @GetMapping("/page")
     public ApiResponse<Page<Promotion>> getAllPromotions(
             @RequestParam(required = false) String code,
