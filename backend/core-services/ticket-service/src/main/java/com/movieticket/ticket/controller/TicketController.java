@@ -4,6 +4,7 @@ import com.movieticket.ticket.common.ApiResponse;
 import com.movieticket.ticket.dto.request.CreateTicketPriceDto;
 import com.movieticket.ticket.dto.request.DetermineTicketPriceDto;
 import com.movieticket.ticket.dto.request.SearchTicketPriceDto;
+import com.movieticket.ticket.dto.request.ShowtimeTicketPricesDto;
 import com.movieticket.ticket.dto.request.UpdateTicketPriceDto;
 import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
@@ -82,6 +83,13 @@ public class TicketController {
     public ResponseEntity<ApiResponse<List<TicketResponseDto>>> determineTicketPrices(@Valid @ModelAttribute DetermineTicketPriceDto determineDto) {
         List<TicketResponseDto> ticketPrices = ticketService.resolveTicketPrices(determineDto);
         ApiResponse<List<TicketResponseDto>> response = ApiResponse.success(ticketPrices, "Ticket prices determined successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/showtime-prices")
+    public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getShowtimeTicketPrices(@Valid @ModelAttribute ShowtimeTicketPricesDto showtimeDto) {
+        List<TicketResponseDto> ticketPrices = ticketService.resolveShowtimeTicketPrices(showtimeDto);
+        ApiResponse<List<TicketResponseDto>> response = ApiResponse.success(ticketPrices, "Showtime ticket prices retrieved successfully");
         return ResponseEntity.ok(response);
     }
 }

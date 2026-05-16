@@ -3,6 +3,7 @@ package com.movieticket.ticket.service;
 import com.movieticket.ticket.dto.request.CreateTicketPriceDto;
 import com.movieticket.ticket.dto.request.DetermineTicketPriceDto;
 import com.movieticket.ticket.dto.request.SearchTicketPriceDto;
+import com.movieticket.ticket.dto.request.ShowtimeTicketPricesDto;
 import com.movieticket.ticket.dto.request.UpdateTicketPriceDto;
 import com.movieticket.ticket.dto.response.TicketResponseDto;
 import com.movieticket.ticket.entity.TicketPrice;
@@ -74,6 +75,24 @@ public class TicketService {
 
         if (ticketPrices.isEmpty()) {
             throw new BusinessException("No active ticket price found for the given criteria");
+        }
+
+        return ticketPrices.stream()
+                .map(TicketUtil::toTicketResponseDto)
+                .toList();
+    }
+
+    public List<TicketResponseDto> resolveShowtimeTicketPrices(ShowtimeTicketPricesDto showtimeDto) {
+        DayType dayType = dayTypeResolver.resolveDayType(showtimeDto.getShowTime());
+
+        List<TicketPrice> ticketPrices = ticketRepository.findShowtimeTicketPrices(
+                showtimeDto.getProjectionType(),
+                dayType,
+                true
+        );
+
+        if (ticketPrices.isEmpty()) {
+            throw new BusinessException("No active ticket prices found for the given showtime");
         }
 
         return ticketPrices.stream()

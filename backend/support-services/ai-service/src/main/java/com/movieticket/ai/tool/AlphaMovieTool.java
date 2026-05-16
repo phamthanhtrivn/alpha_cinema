@@ -23,7 +23,7 @@ import java.util.List;
 public class AlphaMovieTool {
     private final MovieServiceClient movieServiceClient;
 
-    @Tool(description = "Lấy danh sách phim đang chiếu tại Alpha Cinema. Dùng khi người dùng hỏi hôm nay có phim gì hoặc Alpha Cinema có phim nào đang chiếu.")
+    @Tool(description = "Lấy danh sách phim đang chiếu tại Alpha Cinema. Dùng khi người dùng hỏi hiện tại đang có phim gì hoặc Alpha Cinema có phim nào đang chiếu.")
     public List<MovieToolResponse> getNowShowingMovies() {
         return movieServiceClient.getNowShowingMovies();
     }
