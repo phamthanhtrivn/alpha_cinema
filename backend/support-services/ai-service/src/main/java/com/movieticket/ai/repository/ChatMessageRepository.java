@@ -15,10 +15,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     long countByConversationId(String conversationId);
 
     @Query("""
-            select new com.movieticket.ai.dto.PopularQuestionResponse(m.content, count(m))
+            select new com.movieticket.ai.dto.PopularQuestionResponse(trim(m.content), count(m))
             from ChatMessage m
             where m.role = :role
-            group by m.content
+            and trim(m.content) <> ''
+            group by trim(m.content)
             order by count(m) desc
             """)
     List<PopularQuestionResponse> findPopularQuestions(ChatRole role, Pageable pageable);

@@ -28,7 +28,7 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
     private final ChatMemoryService chatMemoryService;
-    private final ChatMessageRepository chatMessageRepository;
+
 
     @PostMapping("/chat")
     public ApiResponse<ChatResponse> chat(@Valid @RequestBody ChatRequest request) {
@@ -46,15 +46,21 @@ public class ChatController {
         return ApiResponse.success(response, "Archived and cleared chat conversation successfully");
     }
 
-    @GetMapping("/analytics/popular-questions")
-    public ApiResponse<List<PopularQuestionResponse>> popularQuestions(
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        int safeLimit = Math.max(1, Math.min(limit, 50));
-        List<PopularQuestionResponse> response = chatMessageRepository.findPopularQuestions(
-                ChatRole.USER,
-                PageRequest.of(0, safeLimit)
-        );
-        return ApiResponse.success(response, "Fetched popular AI questions successfully");
+    @GetMapping("/chat/starter-questions")
+    public ApiResponse<List<PopularQuestionResponse>> starterQuestions() {
+        List<PopularQuestionResponse> response = chatService.getPopularQuestions();
+        return ApiResponse.success(response, "Fetched starter questions successfully");
     }
+
+//    @GetMapping("/analytics/popular-questions")
+//    public ApiResponse<List<PopularQuestionResponse>> popularQuestions(
+//            @RequestParam(defaultValue = "10") int limit
+//    ) {
+//        int safeLimit = Math.max(1, Math.min(limit, 50));
+//        List<PopularQuestionResponse> response = chatMessageRepository.findPopularQuestions(
+//                ChatRole.USER,
+//                PageRequest.of(0, safeLimit)
+//        );
+//        return ApiResponse.success(response, "Fetched popular AI questions successfully");
+//    }
 }

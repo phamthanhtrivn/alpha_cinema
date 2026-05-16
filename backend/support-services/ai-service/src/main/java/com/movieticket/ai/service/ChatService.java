@@ -1,9 +1,8 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.dto.ChatHistoryMessage;
-import com.movieticket.ai.dto.ChatRequest;
-import com.movieticket.ai.dto.ChatResponse;
-import com.movieticket.ai.dto.CitationResponse;
+import com.movieticket.ai.dto.*;
+import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.repository.ChatMessageRepository;
 import com.movieticket.ai.tool.AiCustomerContext;
 import com.movieticket.ai.tool.AlphaCinemaTool;
 import com.movieticket.ai.tool.AlphaCustomerTool;
@@ -14,6 +13,8 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class ChatService {
     private static final int MAX_CONTEXT_MESSAGES = 15;
     private static final int LONG_CONVERSATION_WARNING_MESSAGES = 24;
 
+    private final ChatMessageRepository chatMessageRepository;
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
     private final KnowledgeService knowledgeService;
@@ -224,5 +226,9 @@ public class ChatService {
         }
 
         return normalizedText.substring(0, 220) + "...";
+    }
+
+    public List<PopularQuestionResponse> getPopularQuestions() {
+        return chatMessageRepository.findPopularQuestions(ChatRole.USER, PageRequest.of(0, 3));
     }
 }
