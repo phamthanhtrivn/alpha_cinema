@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useLocation,
   useNavigate,
@@ -52,6 +52,7 @@ type ProductItem = {
 
 type LocationState = {
   session?: CheckoutSessionResponse;
+  bookingUrl?: string;
 };
 
 type MovieDetail = {
@@ -79,6 +80,7 @@ export const Checkout = () => {
   const [promotionCode, setPromotionCode] = useState("");
   const [pointsToRedeem, setPointsToRedeem] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const cancellingSessionRef = useRef(false);
 
   const { data: sessionData, isLoading: isSessionLoading } = useQuery({
     queryKey: ["checkout-session", sessionId],
@@ -118,29 +120,25 @@ export const Checkout = () => {
   });
 
   const session = initialSession || sessionData;
-  const maxRedeemPoints = session?.availableLoyaltyPoints ?? 0;
+  const bookingUrl = useMemo(() => {
+    const stateBookingUrl = (location.state as LocationState | null)
+      ?.bookingUrl;
+    if (stateBookingUrl) {
+      return stateBookingUrl;
+    }
+
+    const params = new URLSearchParams();
+    if (movieId) {
+      params.set("movieId", movieId);
+    }
+    const query = params.toString();
+    return query ? `/booking/${id}?${query}` : `/booking/${id}`;
+  }, [id, location.state, movieId]);
+  const availableLoyaltyPoints = session?.availableLoyaltyPoints ?? 0;
   const parsedPoints = pointsToRedeem ? Number(pointsToRedeem) : 0;
-  const redeemPoints = Math.min(Math.max(parsedPoints, 0), maxRedeemPoints);
-  const subtotal =
-    (session?.seatSubtotal ?? 0) + (session?.productSubtotal ?? 0);
-  const discountPercent =
-    session?.promotionDiscount && subtotal
-      ? Math.round((session.promotionDiscount / subtotal) * 100)
-      : 0;
   const { isExpired: isSessionExpired } = useBookingCountdown(
     session?.expiresAt,
   );
-
-  useEffect(() => {
-    if (session?.promotionCode) {
-      setPromotionCode(session.promotionCode);
-    }
-    if (session?.pointsRedeemed) {
-      setPointsToRedeem(
-        String(Math.min(session.pointsRedeemed, maxRedeemPoints)),
-      );
-    }
-  }, [session, maxRedeemPoints]);
 
   useEffect(() => {
     if (!productResponse?.length) return;
@@ -154,6 +152,31 @@ export const Checkout = () => {
       return next;
     });
   }, [productResponse]);
+
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    const cancelSessionOnBrowserBack = () => {
+      if (cancellingSessionRef.current) {
+        return;
+      }
+
+      cancellingSessionRef.current = true;
+      void checkoutService
+        .cancelSession(sessionId)
+        .catch(() => undefined)
+        .finally(() => {
+          cancellingSessionRef.current = false;
+        });
+    };
+
+    window.addEventListener("popstate", cancelSessionOnBrowserBack);
+    return () => {
+      window.removeEventListener("popstate", cancelSessionOnBrowserBack);
+    };
+  }, [sessionId]);
 
   const selectedProducts = useMemo(() => {
     return Object.entries(quantities)
@@ -178,6 +201,26 @@ export const Checkout = () => {
     0,
   );
   const totalBeforeDiscount = (session?.seatSubtotal ?? 0) + productSubtotal;
+  const payableBeforePoints = Math.max(
+    totalBeforeDiscount - (session?.promotionDiscount ?? 0),
+    0,
+  );
+  const maxRedeemPoints = Math.min(
+    availableLoyaltyPoints,
+    Math.floor(payableBeforePoints / 1000),
+  );
+  const redeemPoints = Math.min(Math.max(parsedPoints, 0), maxRedeemPoints);
+
+  useEffect(() => {
+    if (session?.promotionCode) {
+      setPromotionCode(session.promotionCode);
+    }
+    if (session?.pointsRedeemed) {
+      setPointsToRedeem(
+        String(Math.min(session.pointsRedeemed, maxRedeemPoints)),
+      );
+    }
+  }, [session, maxRedeemPoints]);
 
   const updateQuantity = (productId: string, delta: number) => {
     setQuantities((prev) => {
@@ -190,18 +233,28 @@ export const Checkout = () => {
   const goBackToBooking = async () => {
     if (sessionId) {
       try {
+        cancellingSessionRef.current = true;
         await checkoutService.cancelSession(sessionId);
       } catch {
         toast.error("Không thể hủy phiên thanh toán hiện tại.");
-        return;
+      } finally {
+        cancellingSessionRef.current = false;
       }
     }
 
-    navigate("/");
+    navigate(bookingUrl, {
+      replace: true,
+      state: { movieId },
+    });
   };
 
   const handleContinue = async () => {
     if (!sessionId || !session) return;
+
+    if (parsedPoints > maxRedeemPoints) {
+      toast.error("Số điểm muốn dùng vượt quá số tiền cần thanh toán.");
+      return;
+    }
 
     const request: UpdateCheckoutSessionRequest = {
       items: selectedProducts.map((product) => ({
@@ -443,7 +496,7 @@ export const Checkout = () => {
           </Card>
         </div>
 
-        <Card className="border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] sticky top-24 max-h-[calc(100vh-120px)] overflow-hidden flex flex-col">
+        <Card className="border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.06)] sticky top-24 h-fit">
           <div className="h-2 bg-alpha-orange" />
           <CardHeader className="space-y-4">
             <div className="flex gap-4">
@@ -513,7 +566,7 @@ export const Checkout = () => {
               Tóm tắt đơn đặt vé trước khi sáng bước xác nhận.
             </div>
           </CardHeader>
-          <CardContent className="space-y-5 overflow-y-auto pr-2">
+          <CardContent className="h-fit space-y-6">
             <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3">
               <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-400">
                 <Star size={14} className="text-alpha-orange" />
@@ -552,7 +605,7 @@ export const Checkout = () => {
                   <span>Mã giảm giá</span>
                   <span className="font-bold">
                     {promotionCode
-                      ? `${promotionCode} (-${discountPercent}%)`
+                      ? `${promotionCode}`
                       : "-"}
                   </span>
                 </div>

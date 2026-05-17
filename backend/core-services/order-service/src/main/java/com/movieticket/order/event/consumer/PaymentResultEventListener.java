@@ -11,6 +11,7 @@ import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import com.movieticket.order.model.cache.CheckoutSessionCache;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.service.ShowScheduleDetailService;
+import com.movieticket.order.util.LoyalPointUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -60,7 +61,7 @@ public class PaymentResultEventListener {
 
             orderRepository.save(order);
 
-            UserLoyaltyUpdateEvent loyaltyEvent = buildUserLoyaltyEventProducer(cache);
+            UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
             userLoyaltyEventProducer.publish(loyaltyEvent);
 
             OrderSuccessfulEvent orderEvent = buildOrderSuccessfulEvent(order, cache, event);
@@ -151,20 +152,7 @@ public class PaymentResultEventListener {
                 .build();
     }
 
-    private UserLoyaltyUpdateEvent buildUserLoyaltyEventProducer(CheckoutSessionCache cache) {
-        if (cache == null) {
-            return null;
-        }
 
-        return UserLoyaltyUpdateEvent.builder()
-                .eventId(UUID.randomUUID().toString())
-                .customerId(cache.getCustomerId())
-                .orderSpending(cache.getTotalPayment())
-                .pointsUsed(cache.getPointsRedeemed())
-                .orderId(cache.getOrderId())
-                .occurredAt(LocalDateTime.now())
-                .build();
-    }
 
     private CheckoutSessionCache getCheckoutCache(String orderId) {
         Object cached = redisTemplate.opsForValue().get(buildOrderCacheKey(orderId));

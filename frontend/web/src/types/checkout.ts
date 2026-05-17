@@ -89,6 +89,6 @@ export interface CheckoutConfirmResponse {
   seats: CheckoutSeatPaymentResponse[];
   products: CheckoutProductItemResponse[];
   paymentMethod: string;
-  paymentUrl: string;
+  paymentUrl?: string | null;
   totalPayment: number;
 }
