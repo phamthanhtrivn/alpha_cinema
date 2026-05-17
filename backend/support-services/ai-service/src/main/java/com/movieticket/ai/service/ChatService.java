@@ -1,6 +1,6 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.dto.*;
+import com.movieticket.ai.dto.response.*;
 import com.movieticket.ai.model.ChatRole;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import com.movieticket.ai.tool.AiCustomerContext;
@@ -14,7 +14,6 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;

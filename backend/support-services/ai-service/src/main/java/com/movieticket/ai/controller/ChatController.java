@@ -1,19 +1,16 @@
 package com.movieticket.ai.controller;
 
 import com.movieticket.ai.common.ApiResponse;
-import com.movieticket.ai.dto.ChatClearRequest;
-import com.movieticket.ai.dto.ChatClearResponse;
-import com.movieticket.ai.dto.ChatHistoryMessage;
-import com.movieticket.ai.dto.ChatRequest;
-import com.movieticket.ai.dto.ChatResponse;
-import com.movieticket.ai.dto.PopularQuestionResponse;
-import com.movieticket.ai.model.ChatRole;
-import com.movieticket.ai.repository.ChatMessageRepository;
+import com.movieticket.ai.dto.request.ChatClearRequest;
+import com.movieticket.ai.dto.response.ChatClearResponse;
+import com.movieticket.ai.dto.response.ChatHistoryMessage;
+import com.movieticket.ai.dto.response.ChatRequest;
+import com.movieticket.ai.dto.response.ChatResponse;
+import com.movieticket.ai.dto.response.PopularQuestionResponse;
 import com.movieticket.ai.service.ChatMemoryService;
 import com.movieticket.ai.service.ChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,16 +57,4 @@ public class ChatController {
         List<PopularQuestionResponse> response = chatService.getPopularQuestions();
         return ApiResponse.success(response, "Fetched starter questions successfully");
     }
-
-//    @GetMapping("/analytics/popular-questions")
-//    public ApiResponse<List<PopularQuestionResponse>> popularQuestions(
-//            @RequestParam(defaultValue = "10") int limit
-//    ) {
-//        int safeLimit = Math.max(1, Math.min(limit, 50));
-//        List<PopularQuestionResponse> response = chatMessageRepository.findPopularQuestions(
-//                ChatRole.USER,
-//                PageRequest.of(0, safeLimit)
-//        );
-//        return ApiResponse.success(response, "Fetched popular AI questions successfully");
-//    }
 }

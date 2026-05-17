@@ -1,4 +1,4 @@
-package com.movieticket.ai.dto;
+package com.movieticket.ai.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

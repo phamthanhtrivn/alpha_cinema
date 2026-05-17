@@ -18,6 +18,7 @@ import {
   LogOut,
   Play,
   ShoppingBag,
+  Bot,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectRole, logout } from "@/store/slices/authSlice";
@@ -131,6 +132,12 @@ const Sidebar: React.FC = () => {
       icon: <Tag size={18} />,
       label: "Loại ghế",
       path: "/employee/admin/seat-types",
+      roles: ["ADMIN"],
+    },
+    {
+      icon: <Bot size={18} />,
+      label: "AI Policy",
+      path: "/employee/admin/ai",
       roles: ["ADMIN"],
     },
 

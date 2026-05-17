@@ -1,6 +1,7 @@
 package com.movieticket.order.service;
 
 import com.movieticket.order.client.CinemaClient;
+import com.movieticket.order.client.AiDashboardClient;
 import com.movieticket.order.client.PaymentClient;
 import com.movieticket.order.client.ProductClient;
 import com.movieticket.order.client.ProductDashboardClient;
@@ -40,7 +41,7 @@ public class DashboardAnalyticsService {
     private static final List<OrderStatus> SUCCESS_STATUSES = List.of(OrderStatus.PAID, OrderStatus.CONFIRMED);
     private static final List<OrderStatus> FAILED_STATUSES = List.of(OrderStatus.FAILED, OrderStatus.CANCELLED, OrderStatus.EXPIRED);
     private static final List<ShowSeatType> BOOKED_SEAT_TYPES = List.of(ShowSeatType.LOCKED, ShowSeatType.SOLD, ShowSeatType.CHECKED_IN);
-    private static final DashboardDependencies EMPTY_DEPENDENCIES = new DashboardDependencies(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+    private static final DashboardDependencies EMPTY_DEPENDENCIES = new DashboardDependencies(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
 
     private final OrderRepository orderRepository;
     private final PromotionRepository promotionRepository;
@@ -51,6 +52,7 @@ public class DashboardAnalyticsService {
     private final UserDashboardClient userDashboardClient;
     private final ProductDashboardClient productDashboardClient;
     private final PaymentDashboardClient paymentDashboardClient;
+    private final AiDashboardClient aiDashboardClient;
 
     @Transactional(readOnly = true)
     public Map<String, Object> getAdminDashboard(String range, Integer year, Integer month, Integer week, String cinemaId) {
@@ -121,6 +123,7 @@ public class DashboardAnalyticsService {
                 ? userDashboardClient.getDashboardAsync(range, year, month, week, cinemaId)
                 : Mono.just(Map.<String, Object>of()),
                 paymentDashboardClient.getDashboardAsync(range, year, month, week),
+                aiDashboardClient.getDashboardAsync(range, year, month, week),
                 productClient.getProducts(productIds).defaultIfEmpty(Map.of()),
                 productClient.getSchedulesBatch(scheduleIds)
                         .map(schedules -> schedules.stream()
@@ -139,8 +142,9 @@ public class DashboardAnalyticsService {
                 tuple.getT4(),
                 tuple.getT5(),
                 tuple.getT6(),
+                tuple.getT7(),
                 cinemaNames,
-                tuple.getT7()
+                tuple.getT8()
         )))
                 .onErrorReturn(EMPTY_DEPENDENCIES)
                 .blockOptional()
@@ -148,6 +152,7 @@ public class DashboardAnalyticsService {
         Map<String, Object> productDashboard = dependencies.productDashboard();
         Map<String, Object> userDashboard = dependencies.userDashboard();
         Map<String, Object> paymentDashboard = dependencies.paymentDashboard();
+        Map<String, Object> aiDashboard = dependencies.aiDashboard();
 
         Map<String, Object> dashboard = row(
                 "revenue", revenue(scopedOrders),
@@ -159,7 +164,7 @@ public class DashboardAnalyticsService {
                 "loyalty", includeLoyalty ? userDashboard.getOrDefault("loyalty", emptyLoyalty()) : emptyLoyalty(),
                 "employees", includeEmployees ? enrichEmployees(userDashboard.get("employees"), scopedOrders, dependencies.cinemaNameMap()) : emptyEmployees(),
                 "reviews", includeReviews ? enrichReviews(userDashboard.get("reviews"), productDashboard) : emptyReviews(),
-                "ai", row("totalChats", 0, "successRate", 0, "popularQuestions", List.of(), "recentConversations", List.of()),
+                "ai", aiDashboard.isEmpty() ? emptyAiDashboard() : aiDashboard,
                 "systemHealth", List.of()
         );
         dashboard.put("overview", overview(dashboard, scopedOrders, promotions));
@@ -811,6 +816,23 @@ public class DashboardAnalyticsService {
         return row("totalEmployees", 0, "activeEmployees", 0, "inactiveEmployees", 0, "roles", List.of(), "topEmployees", List.of());
     }
 
+    private Map<String, Object> emptyAiDashboard() {
+        return row(
+                "totalConversations", 0,
+                "totalUserQuestions", 0,
+                "totalAssistantAnswers", 0,
+                "averageMessagesPerConversation", 0,
+                "guestConversations", 0,
+                "memberConversations", 0,
+                "popularQuestions", List.of(),
+                "questionTrend", List.of(),
+                "recentQuestions", List.of(),
+                "recentConversations", List.of(),
+                "totalChats", 0,
+                "successRate", 0
+        );
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> asMap(Object value) {
         if (value instanceof Map<?, ?> map) {
@@ -865,6 +887,7 @@ public class DashboardAnalyticsService {
             Map<String, Object> productDashboard,
             Map<String, Object> userDashboard,
             Map<String, Object> paymentDashboard,
+            Map<String, Object> aiDashboard,
             Map<String, ProductSnapshot> productMap,
             Map<String, ShowScheduleSnapshot> scheduleMap,
             Map<String, PaymentSnapshot> paymentMap,

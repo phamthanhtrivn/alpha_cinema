@@ -1,7 +1,7 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.dto.ChatClearResponse;
-import com.movieticket.ai.dto.ChatHistoryMessage;
+import com.movieticket.ai.dto.response.ChatClearResponse;
+import com.movieticket.ai.dto.response.ChatHistoryMessage;
 import com.movieticket.ai.model.ChatConversation;
 import com.movieticket.ai.model.ChatMessage;
 import com.movieticket.ai.model.ChatRole;

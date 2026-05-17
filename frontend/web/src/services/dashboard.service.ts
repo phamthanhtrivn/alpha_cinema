@@ -144,6 +144,12 @@ const mockDashboardData: AdminDashboardData = {
     ],
   },
   ai: {
+    totalConversations: 1842,
+    totalUserQuestions: 4210,
+    totalAssistantAnswers: 4168,
+    averageMessagesPerConversation: 4.6,
+    guestConversations: 612,
+    memberConversations: 1230,
     totalChats: 1842,
     successRate: 88.6,
     popularQuestions: [
@@ -151,9 +157,22 @@ const mockDashboardData: AdminDashboardData = {
       { question: "Có dùng điểm loyalty được không?", count: 248 },
       { question: "Vé đã thanh toán nhưng chưa có QR?", count: 194 },
     ],
+    questionTrend: [
+      { label: "T2", questions: 420 },
+      { label: "T3", questions: 486 },
+      { label: "T4", questions: 512 },
+      { label: "T5", questions: 608 },
+      { label: "T6", questions: 742 },
+      { label: "T7", questions: 811 },
+      { label: "CN", questions: 631 },
+    ],
+    recentQuestions: [
+      { id: 1, conversationId: "ai-431", question: "VNPAY thanh toán rồi nhưng chưa thấy vé?", createdAt: isoAt(20, 5) },
+      { id: 2, conversationId: "ai-430", question: "Có đổi ghế được không?", createdAt: isoAt(19, 48) },
+    ],
     recentConversations: [
-      { id: "ai-431", userName: "Minh Anh", topic: "Thanh toán VNPAY", status: "RESOLVED", createdAt: isoAt(20, 5) },
-      { id: "ai-430", userName: "Gia Huy", topic: "Đổi ghế", status: "ESCALATED", createdAt: isoAt(19, 48) },
+      { id: "ai-431", customerName: "Minh Anh", guest: false, messageCount: 8, createdAt: isoAt(20, 1), archivedAt: isoAt(20, 5), userName: "Minh Anh", topic: "Thanh toán VNPAY", status: "RESOLVED" },
+      { id: "ai-430", customerName: "Guest", guest: true, messageCount: 5, createdAt: isoAt(19, 44), archivedAt: isoAt(19, 48), userName: "Gia Huy", topic: "Đổi ghế", status: "ESCALATED" },
     ],
   },
   systemHealth: [
@@ -217,6 +236,8 @@ const mockDashboardData: AdminDashboardData = {
         discountValue: 22100000,
         revenueAfterDiscount: 186400000,
         status: "ACTIVE",
+        quota: 500,
+        remaining: 124,
       },
       {
         id: "promo2",
@@ -226,6 +247,8 @@ const mockDashboardData: AdminDashboardData = {
         discountValue: 13600000,
         revenueAfterDiscount: 94200000,
         status: "ACTIVE",
+        quota: 400,
+        remaining: 98,
       },
       {
         id: "promo3",
@@ -235,6 +258,8 @@ const mockDashboardData: AdminDashboardData = {
         discountValue: 7900000,
         revenueAfterDiscount: 63800000,
         status: "UPCOMING",
+        quota: 300,
+        remaining: 216,
       },
       {
         id: "promo4",
@@ -244,6 +269,8 @@ const mockDashboardData: AdminDashboardData = {
         discountValue: 15000000,
         revenueAfterDiscount: 42600000,
         status: "PAUSED",
+        quota: 200,
+        remaining: 152,
       },
     ],
   },
@@ -414,10 +441,19 @@ const applyRangeFilter = (
     },
     ai: {
       ...data.ai,
+      totalConversations: scaleNumber(data.ai.totalConversations, ratio),
+      totalUserQuestions: scaleNumber(data.ai.totalUserQuestions, ratio),
+      totalAssistantAnswers: scaleNumber(data.ai.totalAssistantAnswers, ratio),
+      guestConversations: scaleNumber(data.ai.guestConversations, ratio),
+      memberConversations: scaleNumber(data.ai.memberConversations, ratio),
       totalChats: scaleNumber(data.ai.totalChats, ratio),
       popularQuestions: data.ai.popularQuestions.map((question) => ({
         ...question,
         count: scaleNumber(question.count, ratio),
+      })),
+      questionTrend: data.ai.questionTrend.map((point) => ({
+        ...point,
+        questions: scaleNumber(point.questions, ratio),
       })),
     },
   };
@@ -555,10 +591,19 @@ const applyCinemaFilter = (
     },
     ai: {
       ...data.ai,
+      totalConversations: scaleNumber(data.ai.totalConversations, ratio),
+      totalUserQuestions: scaleNumber(data.ai.totalUserQuestions, ratio),
+      totalAssistantAnswers: scaleNumber(data.ai.totalAssistantAnswers, ratio),
+      guestConversations: scaleNumber(data.ai.guestConversations, ratio),
+      memberConversations: scaleNumber(data.ai.memberConversations, ratio),
       totalChats: scaleNumber(data.ai.totalChats, ratio),
       popularQuestions: data.ai.popularQuestions.map((question) => ({
         ...question,
         count: scaleNumber(question.count, ratio),
+      })),
+      questionTrend: data.ai.questionTrend.map((point) => ({
+        ...point,
+        questions: scaleNumber(point.questions, ratio),
       })),
     },
   };

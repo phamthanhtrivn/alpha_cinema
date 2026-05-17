@@ -1,6 +1,6 @@
 package com.movieticket.ai.repository;
 
-import com.movieticket.ai.dto.PopularQuestionResponse;
+import com.movieticket.ai.dto.response.PopularQuestionResponse;
 import com.movieticket.ai.model.ChatMessage;
 import com.movieticket.ai.model.ChatRole;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +15,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     long countByConversationId(String conversationId);
 
     @Query("""
-            select new com.movieticket.ai.dto.PopularQuestionResponse(trim(m.content), count(m))
+            select new com.movieticket.ai.dto.response.PopularQuestionResponse(trim(m.content), count(m))
             from ChatMessage m
             where m.role = :role
             and trim(m.content) <> ''
