@@ -53,6 +53,11 @@ import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
 import { PaymentFailed } from "./pages/client/customer/PaymentFailed";
 import { PaymentSuccess } from "./pages/client/customer/PaymentSuccess";
+import PrivacyPolicy from "./pages/client/PrivacyPolicy";
+import PaymentPolicy from "./pages/client/PaymentPolicy";
+import TermsAndConditions from "./pages/client/TermsAndConditions";
+import AboutUs from "./pages/client/AboutUs";
+import Recruitment from "./pages/client/Recruitment";
 import MoviesPage from "./pages/client/Movies";
 
 // REDIRECT
@@ -117,6 +122,11 @@ function App() {
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/cinematic" element={<Cinematic />} />
             <Route path="/movies" element={<MoviesPage />} />
+            <Route path="/chinh-sach-bao-mat" element={<PrivacyPolicy />} />
+            <Route path="/chinh-sach-thanh-toan" element={<PaymentPolicy />} />
+            <Route path="/dieu-khoan-chung" element={<TermsAndConditions />} />
+            <Route path="/ve-chung-toi" element={<AboutUs />} />
+            <Route path="/tuyen-dung" element={<Recruitment />} />
           </Route>
 
           {/* CLIENT LOGIN */}
