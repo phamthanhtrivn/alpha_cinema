@@ -1,6 +1,6 @@
 package com.movieticket.payment.service.strategy;
 
-import com.movieticket.payment.entity.PaymentStatus;
+import com.movieticket.payment.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 

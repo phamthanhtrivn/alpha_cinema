@@ -1,5 +1,7 @@
 package com.movieticket.payment.entity;
 
+import com.movieticket.payment.enums.PaymentMethod;
+import com.movieticket.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,6 +1,6 @@
 package com.movieticket.payment.dto.request;
 
-import com.movieticket.payment.entity.PaymentMethod;
+import com.movieticket.payment.enums.PaymentMethod;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

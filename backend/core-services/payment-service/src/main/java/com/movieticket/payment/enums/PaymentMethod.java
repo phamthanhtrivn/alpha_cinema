@@ -1,4 +1,4 @@
-package com.movieticket.payment.entity;
+package com.movieticket.payment.enums;
 
 
 public enum PaymentMethod {

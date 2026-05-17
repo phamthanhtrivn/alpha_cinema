@@ -3,7 +3,7 @@ package com.movieticket.payment.service.strategy;
 import com.movieticket.payment.dto.request.InitiatePaymentRequest;
 import com.movieticket.payment.dto.response.InitiatePaymentResponse;
 import com.movieticket.payment.entity.Payment;
-import com.movieticket.payment.entity.PaymentMethod;
+import com.movieticket.payment.enums.PaymentMethod;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
