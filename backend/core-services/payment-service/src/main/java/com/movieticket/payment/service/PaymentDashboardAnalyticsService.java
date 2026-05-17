@@ -1,8 +1,8 @@
 package com.movieticket.payment.service;
 
 import com.movieticket.payment.entity.Payment;
-import com.movieticket.payment.entity.PaymentMethod;
-import com.movieticket.payment.entity.PaymentStatus;
+import com.movieticket.payment.enums.PaymentMethod;
+import com.movieticket.payment.enums.PaymentStatus;
 import com.movieticket.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

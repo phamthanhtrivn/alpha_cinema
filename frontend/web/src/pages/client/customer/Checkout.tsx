@@ -81,6 +81,7 @@ export const Checkout = () => {
   const [pointsToRedeem, setPointsToRedeem] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const cancellingSessionRef = useRef(false);
+  const [goBackInProgress, setGoBackInProgress] = useState(false);
 
   const { data: sessionData, isLoading: isSessionLoading } = useQuery({
     queryKey: ["checkout-session", sessionId],
@@ -233,12 +234,14 @@ export const Checkout = () => {
   const goBackToBooking = async () => {
     if (sessionId) {
       try {
+        setGoBackInProgress(true);
         cancellingSessionRef.current = true;
         await checkoutService.cancelSession(sessionId);
       } catch {
         toast.error("Không thể hủy phiên thanh toán hiện tại.");
       } finally {
         cancellingSessionRef.current = false;
+        setGoBackInProgress(false);
       }
     }
 
@@ -301,10 +304,18 @@ export const Checkout = () => {
           </div>
           <p className="text-slate-500">Vui lòng thực hiện lại đơn đặt vé.</p>
           <Button
+            disabled={goBackInProgress}
             onClick={() => void goBackToBooking()}
-            className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600"
+            className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600 "
           >
-            Quay lại
+            {goBackInProgress ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                <span>Đang quay lại...</span>
+              </>
+            ) : (
+              "Quay lại"
+            )}
           </Button>
         </div>
       </div>
@@ -604,9 +615,7 @@ export const Checkout = () => {
                 <div className="flex justify-between gap-4">
                   <span>Mã giảm giá</span>
                   <span className="font-bold">
-                    {promotionCode
-                      ? `${promotionCode}`
-                      : "-"}
+                    {promotionCode ? `${promotionCode}` : "-"}
                   </span>
                 </div>
                 <div className="flex justify-between gap-4">

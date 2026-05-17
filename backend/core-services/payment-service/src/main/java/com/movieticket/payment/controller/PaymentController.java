@@ -3,6 +3,7 @@ package com.movieticket.payment.controller;
 import com.movieticket.payment.common.ApiResponse;
 import com.movieticket.payment.dto.request.InitiatePaymentRequest;
 import com.movieticket.payment.dto.response.InitiatePaymentResponse;
+import com.movieticket.payment.dto.response.PaymentResultResponse;
 import com.movieticket.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +39,12 @@ public class PaymentController {
     @RequestMapping(value = "/momo-pay-callback", method = {RequestMethod.GET, RequestMethod.POST})
     public void momoCallbackHandler(HttpServletRequest request, HttpServletResponse response) throws IOException {
         paymentService.handleMoMoCallback(request, response);
+    }
+
+    @GetMapping("/result")
+    public ResponseEntity<ApiResponse<PaymentResultResponse>> getPaymentResult(@RequestParam String token) {
+        PaymentResultResponse response = paymentService.getPaymentResult(token);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment result retrieved successfully"));
     }
 
     @PostMapping("/payment-by-cash")

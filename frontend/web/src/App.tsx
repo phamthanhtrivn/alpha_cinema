@@ -50,6 +50,8 @@ import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
 import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
+import { PaymentFailed } from "./pages/client/customer/PaymentFailed";
+import { PaymentSuccess } from "./pages/client/customer/PaymentSuccess";
 import MoviesPage from "./pages/client/Movies";
 
 // REDIRECT
@@ -100,8 +102,16 @@ function App() {
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
             <Route path="/booking/:id" element={<Booking />} />
-            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
-            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
+            <Route
+              path="/booking/:id/checkout/:sessionId"
+              element={<Checkout />}
+            />
+            <Route
+              path="/booking/:id/checkout/:sessionId/confirm"
+              element={<CheckoutConfirm />}
+            />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failed" element={<PaymentFailed />} />
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/cinematic" element={<Cinematic />} />
@@ -126,8 +136,16 @@ function App() {
           >
             <Route path="/profile" element={<Profile />} />
             <Route path="/booking/:id" element={<Booking />} />
-            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
-            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
+            <Route
+              path="/booking/:id/checkout/:sessionId"
+              element={<Checkout />}
+            />
+            <Route
+              path="/booking/:id/checkout/:sessionId/confirm"
+              element={<CheckoutConfirm />}
+            />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failed" element={<PaymentFailed />} />
           </Route>
         </Route>
 

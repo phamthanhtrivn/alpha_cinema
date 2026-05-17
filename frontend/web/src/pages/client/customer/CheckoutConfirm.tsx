@@ -68,6 +68,7 @@ export const CheckoutConfirm = () => {
   const [paymentMethod, setPaymentMethod] = useState("VNPAY");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<CheckoutConfirmResponse | null>(null);
+  const [goBackInProgress, setGoBackInProgress] = useState(false);
 
   const { data: sessionData, isLoading } = useQuery({
     queryKey: ["checkout-confirm-session", sessionId],
@@ -128,10 +129,13 @@ export const CheckoutConfirm = () => {
   const goBackToBooking = async () => {
     if (sessionId) {
       try {
+        setGoBackInProgress(true);
         await checkoutService.cancelSession(sessionId);
       } catch {
         toast.error("Không thể hủy phiên thanh toán hiện tại.");
         return;
+      } finally {
+        setGoBackInProgress(false);
       }
     }
 
@@ -167,7 +171,20 @@ export const CheckoutConfirm = () => {
       setResult(response.data);
       if (isZeroPayment) {
         toast.success("Đơn hàng 0đ đã được xác nhận thành công.");
-        navigate("/profile?tab=history", { replace: true });
+        navigate("/payment/success", {
+          replace: true,
+          state: {
+            allowPaymentResultPage: true,
+            paymentResult: {
+              orderId: response.data.orderId,
+              status: response.data.status,
+              success: true,
+              method: response.data.paymentMethod,
+              amount: response.data.totalPayment,
+              message: response.data.message,
+            },
+          },
+        });
         return;
       }
 
@@ -196,10 +213,18 @@ export const CheckoutConfirm = () => {
           </div>
           <p className="text-slate-500">Vui lòng thực hiện lại đơn đặt vé.</p>
           <Button
-            onClick={goBackToBooking}
-            className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600"
+            disabled={goBackInProgress}
+            onClick={() => void goBackToBooking()}
+            className="bg-alpha-blue text-white cursor-pointer hover:bg-blue-600 "
           >
-            Quay lại
+            {goBackInProgress ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                <span>Đang quay lại...</span>
+              </>
+            ) : (
+              "Quay lại"
+            )}
           </Button>
         </div>
       </div>
