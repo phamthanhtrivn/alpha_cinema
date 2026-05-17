@@ -1,4 +1,4 @@
-package com.movieticket.ai.dto;
+package com.movieticket.ai.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

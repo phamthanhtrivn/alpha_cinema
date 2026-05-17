@@ -23,6 +23,7 @@ import RoomManagement from "./pages/employee/admin/RoomManagement";
 import ScheduleManagement from "./pages/employee/admin/ScheduleManagement";
 import SeatManagement from "./pages/employee/admin/SeatManagement";
 import SeatTypeManagement from "./pages/employee/admin/SeatTypeManagement";
+import AiPolicyManagement from "./pages/employee/admin/AiPolicyManagement";
 
 // MANAGER
 import ManagerDashboard from "./pages/employee/manager/ManagerDashboard";
@@ -193,6 +194,7 @@ function App() {
                   path="admin/seat-types"
                   element={<SeatTypeManagement />}
                 />
+                <Route path="admin/ai" element={<AiPolicyManagement />} />
 
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>

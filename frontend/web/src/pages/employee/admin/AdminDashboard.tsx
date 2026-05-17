@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, FileSpreadsheet, LayoutDashboard } from "lucide-react";
 
+import { AiChatbotStats } from "@/components/employee/dashboard/AiChatbotStats";
 import { DashboardFilter } from "@/components/employee/dashboard/DashboardFilter";
 import { DashboardSectionToolbar } from "@/components/employee/dashboard/DashboardSectionToolbar";
 import { EmployeeStats } from "@/components/employee/dashboard/EmployeeStats";
@@ -59,6 +60,7 @@ const detailRoutes = {
   promotions: "/employee/admin/promotions",
   reviews: "/employee/admin/reviews",
   staff: "/employee/admin/staff",
+  ai: "/employee/admin/ai",
   dashboard: "/employee/admin/dashboard",
 };
 
@@ -664,6 +666,13 @@ const AdminDashboard = () => {
         AI chatbot stats sẽ làm sau theo yêu cầu.
         <AiChatbotStats data={dashboardData?.ai} isLoading={isLoading} detailPath={detailRoutes.customers} />
       */}
+      <ScrollableDashboardPanel minWidth="760px" maxHeight="760px">
+        <AiChatbotStats
+          data={dashboardData?.ai}
+          isLoading={isLoading}
+          detailPath={detailRoutes.ai}
+        />
+      </ScrollableDashboardPanel>
     </div>
   );
 };

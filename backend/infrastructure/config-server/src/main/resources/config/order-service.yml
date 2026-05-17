@@ -65,6 +65,8 @@ external-services:
     base-url: ${PAYMENT_SERVICE_BASE_URL}
   cinema-service:
     base-url: ${CINEMA_SERVICE_BASE_URL}
+  ai-service:
+    base-url: ${AI_SERVICE_BASE_URL}
 
 logging:
   level:
