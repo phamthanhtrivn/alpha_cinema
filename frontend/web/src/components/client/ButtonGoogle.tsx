@@ -15,8 +15,6 @@ const ButtonGoogle = () => {
 
   const handleGoogleAuth = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log(tokenResponse);
-
       setIsGoogleLoading(true);
       try {
         const data = await userService.google_login(tokenResponse.access_token);

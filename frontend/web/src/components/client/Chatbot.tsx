@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { useSelector } from "react-redux";
-import { aiChatService, type AiCitation } from "../../services/ai-chat.service";
+import {
+  aiChatService,
+  type AiChatStreamDone,
+  type AiCitation,
+} from "../../services/ai-chat.service";
 import { selectAuth } from "../../store/slices/authSlice";
+import { toast } from "react-toastify";
 
 type ChatMessage = {
   id: string;
@@ -29,6 +34,7 @@ const initialMessages: ChatMessage[] = [
 
 const CHAT_CONVERSATION_STORAGE_KEY = "alpha-ai-conversation-id";
 const CHAT_LOCK_STORAGE_KEY = "alpha-ai-should-start-new-conversation";
+const STREAM_TYPE_INTERVAL_MS = 10;
 
 const getChatStorageKeys = (scope: string) => ({
   conversationId: `${CHAT_CONVERSATION_STORAGE_KEY}:${scope}`,
@@ -70,11 +76,18 @@ export default function Chatbot() {
   );
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
   const [shouldSuggestNewConversation, setShouldSuggestNewConversation] =
     useState(() => localStorage.getItem(storageKeys.lock) === "true");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingIntervalRef = useRef<number | null>(null);
+  const streamAbortControllerRef = useRef<AbortController | null>(null);
+  const streamTextBufferRef = useRef("");
+  const pendingStreamDoneRef = useRef<AiChatStreamDone | null>(null);
   const isConversationLocked = shouldSuggestNewConversation;
+  const isBusy = isSending || isTyping || isStreaming || isClearing;
 
   useEffect(() => {
     if (isOpen) {
@@ -175,15 +188,89 @@ export default function Chatbot() {
 
   useEffect(() => {
     return () => {
-      if (typingIntervalRef.current) {
-        window.clearInterval(typingIntervalRef.current);
-      }
+      clearBufferedTypingInterval();
+      streamAbortControllerRef.current?.abort();
     };
   }, []);
 
+  const clearBufferedTypingInterval = () => {
+    if (typingIntervalRef.current) {
+      window.clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+  };
+
+  const resetStreamBuffer = () => {
+    clearBufferedTypingInterval();
+    streamTextBufferRef.current = "";
+    pendingStreamDoneRef.current = null;
+  };
+
+  const completeBufferedStream = (assistantMessageId: string) => {
+    const doneEvent = pendingStreamDoneRef.current;
+
+    resetStreamBuffer();
+    setMessages((currentMessages) =>
+      currentMessages.map((message) =>
+        message.id === assistantMessageId
+          ? {
+              ...message,
+              isTyping: false,
+            }
+          : message,
+      ),
+    );
+
+    if (doneEvent) {
+      setShouldSuggestNewConversation(doneEvent.shouldStartNewConversation);
+      if (doneEvent.shouldStartNewConversation) {
+        setQuestion("");
+      }
+    }
+
+    setIsSending(false);
+    setIsStreaming(false);
+    setIsTyping(false);
+    streamAbortControllerRef.current = null;
+  };
+
+  const startBufferedTyping = (assistantMessageId: string) => {
+    setIsTyping(true);
+
+    if (typingIntervalRef.current) {
+      return;
+    }
+
+    typingIntervalRef.current = window.setInterval(() => {
+      const nextBuffer = streamTextBufferRef.current;
+
+      if (!nextBuffer) {
+        if (pendingStreamDoneRef.current) {
+          completeBufferedStream(assistantMessageId);
+        }
+        return;
+      }
+
+      const nextCharacter = nextBuffer.slice(0, 1);
+      streamTextBufferRef.current = nextBuffer.slice(1);
+      setIsSending(false);
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message.id === assistantMessageId
+            ? {
+                ...message,
+                content: `${message.content}${nextCharacter}`,
+                isTyping: true,
+              }
+            : message,
+        ),
+      );
+    }, STREAM_TYPE_INTERVAL_MS);
+  };
+
   const askQuestion = async (nextQuestion: string) => {
     const normalizedQuestion = nextQuestion.trim();
-    if (!normalizedQuestion || isSending || isTyping || isConversationLocked) {
+    if (!normalizedQuestion || isBusy || isConversationLocked) {
       return;
     }
 
@@ -192,57 +279,124 @@ export default function Chatbot() {
       role: "user",
       content: normalizedQuestion,
     };
+    const assistantMessageId = crypto.randomUUID();
+    const controller = new AbortController();
 
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    resetStreamBuffer();
+    streamAbortControllerRef.current = controller;
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      userMessage,
+      {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        citations: [],
+        isTyping: true,
+      },
+    ]);
     setQuestion("");
     setIsSending(true);
+    setIsStreaming(true);
+    setIsTyping(true);
+    setStreamError(null);
 
     try {
       const customerId = resolveCustomerId();
-      const response = await aiChatService.askQuestion(
+      await aiChatService.askQuestionStream(
         normalizedQuestion,
         conversationId,
         customerId,
         resolveCustomerName(customerId),
+        {
+          onMeta: (event) => {
+            setActiveConversationId(event.conversationId);
+            setMessages((currentMessages) =>
+              currentMessages.map((message) =>
+                message.id === assistantMessageId
+                  ? { ...message, citations: event.citations }
+                  : message,
+              ),
+            );
+          },
+          onDelta: (delta) => {
+            streamTextBufferRef.current += delta;
+            startBufferedTyping(assistantMessageId);
+          },
+          onDone: (event) => {
+            pendingStreamDoneRef.current = event;
+            startBufferedTyping(assistantMessageId);
+          },
+          onError: (message) => {
+            resetStreamBuffer();
+            setStreamError(message);
+            setIsSending(false);
+            setIsStreaming(false);
+            setIsTyping(false);
+            streamAbortControllerRef.current = null;
+            setMessages((currentMessages) =>
+              currentMessages.map((currentMessage) =>
+                currentMessage.id === assistantMessageId
+                  ? {
+                      ...currentMessage,
+                      content: message,
+                      isTyping: false,
+                    }
+                  : currentMessage,
+              ),
+            );
+          },
+        },
+        controller.signal,
       );
-      const assistantMessageId = crypto.randomUUID();
-
-      setActiveConversationId(response.conversationId);
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          content: "",
-          citations: response.citations,
-          isTyping: true,
-        },
-      ]);
+    } catch (error) {
+      console.log(error);
+      toast.error(
+        "Đã có lỗi xảy ra khi kết nối đến Alpha AI. Vui lòng thử lại sau.",
+      );
+      resetStreamBuffer();
+      setStreamError(
+        "Mình đang không kết nối được Alpha AI. Bạn thử lại sau ít phút nhé.",
+      );
       setIsSending(false);
-      await typeAssistantAnswer(assistantMessageId, response.answer);
-      setShouldSuggestNewConversation(response.shouldStartNewConversation);
-      if (response.shouldStartNewConversation) {
-        setQuestion("");
-      }
-    } catch {
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content:
-            "Mình đang không kết nối được hệ thống. Bạn thử lại sau ít phút nhé.",
-        },
-      ]);
+      setIsStreaming(false);
     } finally {
-      setIsSending(false);
+      if (
+        !typingIntervalRef.current &&
+        !streamTextBufferRef.current &&
+        !pendingStreamDoneRef.current
+      ) {
+        setIsSending(false);
+        setIsStreaming(false);
+        setIsTyping(false);
+        streamAbortControllerRef.current = null;
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  isTyping: false,
+                }
+              : message,
+          ),
+        );
+      }
     }
   };
 
   const clearConversation = async () => {
-    if (isSending || isTyping) {
+    if (isClearing) {
       return;
     }
+
+    streamAbortControllerRef.current?.abort();
+    streamAbortControllerRef.current = null;
+    resetStreamBuffer();
+    setIsClearing(true);
+    setIsSending(false);
+    setIsStreaming(false);
+    setIsTyping(false);
+    setStreamError(null);
 
     const activeConversationId = conversationId;
     const hasMessagesToArchive = messages.some(
@@ -251,6 +405,7 @@ export default function Chatbot() {
 
     if (!activeConversationId) {
       resetConversationUi();
+      setIsClearing(false);
       return;
     }
 
@@ -286,51 +441,20 @@ export default function Chatbot() {
             "Mình đã mở cuộc trò chuyện mới trên giao diện, nhưng chưa lưu được cuộc trò chuyện cũ. Bạn thử lại sau nhé.",
         },
       ]);
+    } finally {
+      setIsClearing(false);
     }
   };
 
   const resetConversationUi = () => {
+    resetStreamBuffer();
     setMessages(initialMessages);
     setConversationId(null);
     setShouldSuggestNewConversation(false);
     setQuestion("");
+    setStreamError(null);
     localStorage.removeItem(storageKeys.conversationId);
     localStorage.removeItem(storageKeys.lock);
-  };
-
-  const typeAssistantAnswer = (messageId: string, answer: string) => {
-    setIsTyping(true);
-
-    return new Promise<void>((resolve) => {
-      let currentIndex = 0;
-
-      typingIntervalRef.current = window.setInterval(() => {
-        currentIndex += 1;
-        const nextContent = answer.slice(0, currentIndex);
-
-        setMessages((currentMessages) =>
-          currentMessages.map((message) =>
-            message.id === messageId
-              ? {
-                  ...message,
-                  content: nextContent,
-                  isTyping: currentIndex < answer.length,
-                }
-              : message,
-          ),
-        );
-
-        if (currentIndex >= answer.length) {
-          if (typingIntervalRef.current) {
-            window.clearInterval(typingIntervalRef.current);
-            typingIntervalRef.current = null;
-          }
-
-          setIsTyping(false);
-          resolve();
-        }
-      }, 14);
-    });
   };
 
   const setActiveConversationId = (nextConversationId: string) => {
@@ -375,10 +499,13 @@ export default function Chatbot() {
 
     if (lines.length === 0) {
       return (
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400" />
-          <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:120ms]" />
-          <span className="h-2 w-2 animate-pulse rounded-full bg-slate-400 [animation-delay:240ms]" />
+        <span className="inline-flex items-center gap-2 text-slate-500">
+          <span>Alpha AI đang trả lời</span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400 [animation-delay:120ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400 [animation-delay:240ms]" />
+          </span>
         </span>
       );
     }
@@ -454,12 +581,16 @@ export default function Chatbot() {
               <button
                 type="button"
                 onClick={() => void clearConversation()}
-                disabled={isSending || isTyping}
+                disabled={isClearing}
                 className="rounded-full p-2 text-slate-300 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                 aria-label="Xóa và lưu cuộc trò chuyện"
                 title="Xóa và lưu cuộc trò chuyện"
               >
-                <Trash2 size={17} />
+                {isClearing ? (
+                  <Loader2 size={17} className="animate-spin" />
+                ) : (
+                  <Trash2 size={17} />
+                )}
               </button>
               <button
                 type="button"
@@ -494,7 +625,7 @@ export default function Chatbot() {
               </div>
             ))}
 
-            {isSending && (
+            {isSending && !isStreaming && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-slate-100 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
                   <Loader2 size={16} className="animate-spin" />
@@ -518,11 +649,17 @@ export default function Chatbot() {
                 <button
                   type="button"
                   onClick={() => void clearConversation()}
-                  disabled={isSending || isTyping}
+                  disabled={isClearing}
                   className="mt-3 rounded-lg bg-alpha-orange px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300 cursor-pointer"
                 >
-                  Tạo cuộc trò chuyện mới
+                  {isClearing ? "Đang tạo..." : "Tạo cuộc trò chuyện mới"}
                 </button>
+              </div>
+            )}
+
+            {streamError && (
+              <div className="mb-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {streamError}
               </div>
             )}
 
@@ -532,7 +669,7 @@ export default function Chatbot() {
                   key={starterQuestion}
                   type="button"
                   onClick={() => askQuestion(starterQuestion)}
-                  disabled={isSending || isTyping || isConversationLocked}
+                  disabled={isBusy || isConversationLocked}
                   className="shrink-0 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-alpha-orange hover:text-alpha-orange disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {starterQuestion}
@@ -562,21 +699,16 @@ export default function Chatbot() {
                   }
                 }}
                 placeholder="Nhập câu hỏi cho Alpha AI..."
-                disabled={isConversationLocked}
+                disabled={isConversationLocked || isBusy}
                 className="max-h-28 min-h-11 flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-alpha-blue focus:ring-2 focus:ring-alpha-blue/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
               />
               <button
                 type="submit"
-                disabled={
-                  !question.trim() ||
-                  isSending ||
-                  isTyping ||
-                  isConversationLocked
-                }
+                disabled={!question.trim() || isBusy || isConversationLocked}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-alpha-orange text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
                 aria-label="Gửi câu hỏi"
               >
-                {isSending ? (
+                {isBusy ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <Send size={18} />
