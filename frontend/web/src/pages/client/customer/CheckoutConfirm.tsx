@@ -106,6 +106,7 @@ export const CheckoutConfirm = () => {
       : 0;
   const seatRows = useMemo(() => session?.seats ?? [], [session]);
   const productRows = useMemo(() => session?.items ?? [], [session]);
+  const isZeroPayment = (session?.totalPayment ?? 0) <= 0;
 
   const buildBookingUrl = () => {
     const params = new URLSearchParams();
@@ -152,9 +153,11 @@ export const CheckoutConfirm = () => {
 
     try {
       setSubmitting(true);
-      const response = await checkoutService.confirmSession(sessionId, {
-        paymentMethod,
-      });
+      const response = isZeroPayment
+        ? await checkoutService.confirmZeroPaymentSession(sessionId)
+        : await checkoutService.confirmSession(sessionId, {
+            paymentMethod,
+          });
 
       if (!response.success) {
         toast.error(response.message || "Không thể xác nhận đơn hàng.");
@@ -162,6 +165,12 @@ export const CheckoutConfirm = () => {
       }
 
       setResult(response.data);
+      if (isZeroPayment) {
+        toast.success("Đơn hàng 0đ đã được xác nhận thành công.");
+        navigate("/profile?tab=history", { replace: true });
+        return;
+      }
+
       if (response.data.paymentUrl) {
         window.location.assign(response.data.paymentUrl);
       }
@@ -410,60 +419,71 @@ export const CheckoutConfirm = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400">
-                Phương thức thanh toán
-              </label>
+            {!isZeroPayment ? (
+              <div className="space-y-2">
+                <label className="block text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Phương thức thanh toán
+                </label>
 
-              {/* Scroll container */}
-              <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
-                {PAYMENT_METHODS.map((method) => (
-                  <label
-                    key={method.value}
-                    className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${
-                      paymentMethod === method.value
-                        ? "border-alpha-orange bg-orange-50"
-                        : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
-                    }`}
-                  >
-                    {/* radio */}
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method.value}
-                      checked={paymentMethod === method.value}
-                      onChange={() => setPaymentMethod(method.value)}
-                      className="accent-orange-500 w-4 h-4"
-                    />
+                {/* Scroll container */}
+                <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
+                  {PAYMENT_METHODS.map((method) => (
+                    <label
+                      key={method.value}
+                      className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${
+                        paymentMethod === method.value
+                          ? "border-alpha-orange bg-orange-50"
+                          : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
+                      }`}
+                    >
+                      {/* radio */}
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method.value}
+                        checked={paymentMethod === method.value}
+                        onChange={() => setPaymentMethod(method.value)}
+                        className="accent-orange-500 w-4 h-4"
+                      />
 
-                    {/* logo */}
-                    <img
-                      src={method.img}
-                      alt={method.label}
-                      className="w-10 h-10 object-contain"
-                    />
+                      {/* logo */}
+                      <img
+                        src={method.img}
+                        alt={method.label}
+                        className="w-10 h-10 object-contain"
+                      />
 
-                    {/* content */}
-                    <div className="flex flex-col flex-1">
-                      <span className="font-bold text-slate-800">
-                        {method.label}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {method.desc}
-                      </span>
-                    </div>
+                      {/* content */}
+                      <div className="flex flex-col flex-1">
+                        <span className="font-bold text-slate-800">
+                          {method.label}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {method.desc}
+                        </span>
+                      </div>
 
-                    {/* check icon */}
-                    {paymentMethod === method.value && (
-                      <span className="text-alpha-orange font-bold">✓</span>
-                    )}
-                  </label>
-                ))}
+                      {/* check icon */}
+                      {paymentMethod === method.value && (
+                        <span className="text-alpha-orange font-bold">✓</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+
+                {/* hidden input để submit form nếu cần */}
+                <input
+                  type="hidden"
+                  name="paymentMethod"
+                  value={paymentMethod}
+                />
               </div>
-
-              {/* hidden input để submit form nếu cần */}
-              <input type="hidden" name="paymentMethod" value={paymentMethod} />
-            </div>
+            ) : (
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-semibold text-green-800">
+                Đơn hàng đã được giảm về 0đ. Hệ thống sẽ xác nhận thanh toán
+                thành công ngay khi bạn bấm xác nhận.
+              </div>
+            )}
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
@@ -509,7 +529,11 @@ export const CheckoutConfirm = () => {
               disabled={submitting}
               className="w-full bg-alpha-orange text-white hover:bg-orange-600 cursor-pointer"
             >
-              {submitting ? "Đang xác nhận..." : "Xác nhận và thanh toán"}{" "}
+              {submitting
+                ? "Đang xác nhận..."
+                : isZeroPayment
+                  ? "Xác nhận đơn 0đ"
+                  : "Xác nhận và thanh toán"}{" "}
               <ArrowRight size={16} />
             </Button>
 

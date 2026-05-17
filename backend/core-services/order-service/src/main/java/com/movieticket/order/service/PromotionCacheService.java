@@ -34,7 +34,7 @@ public class PromotionCacheService {
         }
 
         Promotion promotion = promotionRepository.findByCodeIgnoreCase(promotionCode.trim())
-                .orElseThrow(() -> new BusinessException("Promotion not found: " + promotionCode));
+                .orElseThrow(() -> new BusinessException("Khuyến mãi không tìm thấy: " + promotionCode));
         validatePromotion(toPromotionCache(promotion));
         return promotion;
     }
@@ -42,16 +42,16 @@ public class PromotionCacheService {
     private void validatePromotion(PromotionCache promotion) {
         LocalDateTime now = LocalDateTime.now();
         if (!promotion.isStatus()) {
-            throw new BusinessException("Promotion is inactive: " + promotion.getCode());
+            throw new BusinessException("Khuyến mãi không còn được sử dụng: " + promotion.getCode());
         }
         if (promotion.getStartDate() != null && now.isBefore(promotion.getStartDate())) {
-            throw new BusinessException("Promotion is not active yet: " + promotion.getCode());
+            throw new BusinessException("Khuyễn mãi chưa bắt đầu áp dụng: " + promotion.getCode());
         }
         if (promotion.getEndDate() != null && now.isAfter(promotion.getEndDate())) {
-            throw new BusinessException("Promotion has expired: " + promotion.getCode());
+            throw new BusinessException("Khuyến mãi đã hết hạn: " + promotion.getCode());
         }
         if (promotion.getRemainingQuantity() <= 0) {
-            throw new BusinessException("Promotion is out of stock: " + promotion.getCode());
+            throw new BusinessException("Khuyến mãi đã hết số lượng để áp dụng: " + promotion.getCode());
         }
     }
 

@@ -24,6 +24,11 @@ import com.movieticket.order.entity.Promotion;
 import com.movieticket.order.entity.ShowScheduleDetail;
 import com.movieticket.order.entity.ShowSeatType;
 import com.movieticket.order.enums.SessionStatus;
+import com.movieticket.order.event.model.OrderProductItem;
+import com.movieticket.order.event.model.OrderSuccessfulEvent;
+import com.movieticket.order.event.model.UserLoyaltyUpdateEvent;
+import com.movieticket.order.event.producer.OrderSuccessfulEventProducer;
+import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import com.movieticket.order.exception.BusinessException;
 import com.movieticket.order.model.cache.CheckoutProductItemCache;
 import com.movieticket.order.model.cache.CheckoutSessionCache;
@@ -33,6 +38,7 @@ import com.movieticket.order.model.cache.PromotionCache;
 import com.movieticket.order.model.cache.TicketPriceCache;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.repository.PromotionRepository;
+import com.movieticket.order.util.LoyalPointUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -55,6 +61,8 @@ public class CheckoutSessionService {
     private static final long SESSION_TTL_MINUTES = 10L;
     private static final long ORDER_CACHE_TTL_HOURS = 24L;
     private static final int POINT_VALUE_VND = 1_000;
+    private static final double ZERO_PAYMENT_EPSILON = 0.0001D;
+    private static final String ZERO_PAYMENT_METHOD = "POINTS";
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -64,6 +72,8 @@ public class CheckoutSessionService {
     private final CheckoutPartnerGateway checkoutPartnerGateway;
     private final PromotionCacheService promotionCacheService;
     private final TicketPriceCacheService ticketPriceCacheService;
+    private final OrderSuccessfulEventProducer orderSuccessfulEventProducer;
+    private final UserLoyaltyEventProducer userLoyaltyEventProducer;
 
     public CheckoutSessionResponse createSession(CreateCheckoutSessionRequest request) {
         String sessionId = UUID.randomUUID().toString();
@@ -156,12 +166,7 @@ public class CheckoutSessionService {
         showScheduleDetailService.validateSeatLocks(sessionId, seatValidationRequest);
         revalidateCheckoutValues(cache);
 
-        Promotion promotion = null;
-        if (cache.getPromotionCode() != null) {
-            promotion = promotionCacheService.getPromotionEntity(cache.getPromotionCode());
-            promotion.setRemainingQuantity(promotion.getRemainingQuantity() - 1);
-            promotionRepository.save(promotion);
-        }
+        Promotion promotion = applyPromotionUsage(cache);
 
         Order order = Order.builder()
                 .qrCode("")
@@ -214,6 +219,76 @@ public class CheckoutSessionService {
                 .build();
     }
 
+    @Transactional
+    public CheckoutConfirmResponse confirmZeroPaymentSession(String sessionId) {
+        CheckoutSessionCache cache = getSession(sessionId);
+        CreateShowScheduleDetailRequestDto seatValidationRequest = toSeatLockRequest(cache.getShowScheduleId(), cache.getSeats());
+
+        showScheduleDetailService.validateSeatLocks(sessionId, seatValidationRequest);
+
+        try {
+            revalidateCheckoutValues(cache);
+
+            if (cache.getTotalPayment() > ZERO_PAYMENT_EPSILON) {
+                throw new BusinessException("Đơn hàng vẫn còn số tiền cần thanh toán. Vui lòng chọn phương thức thanh toán online.");
+            }
+
+            Promotion promotion = applyPromotionUsage(cache);
+
+            Order order = Order.builder()
+                    .qrCode("")
+                    .customerId(cache.getCustomerId())
+                    .employeeId(null)
+                    .cinemaId(cache.getCinemaId())
+                    .totalPrice(cache.getSeatSubtotal() + cache.getProductSubtotal())
+                    .pointDiscount(cache.getPointDiscount())
+                    .promotionDiscount(cache.getPromotionDiscount())
+                    .promotion(promotion)
+                    .totalPayment(0D)
+                    .status(OrderStatus.PAID)
+                    .build();
+
+            List<OrderDetail> orderDetails = buildOrderDetails(order, cache.getItems());
+            List<ShowScheduleDetail> showScheduleDetails = buildShowScheduleDetails(
+                    order,
+                    cache.getShowScheduleId(),
+                    cache.getSeats(),
+                    cache.getMovieId()
+            );
+            showScheduleDetails.forEach(detail -> detail.setShowSeatType(ShowSeatType.SOLD));
+
+            order.setOrderDetails(orderDetails);
+            order.setShowScheduleDetails(showScheduleDetails);
+
+            Order savedOrder = orderRepository.save(order);
+            cache.setOrderId(savedOrder.getId());
+            cache.setStatus(SessionStatus.PAYMENT_SUCCESSFUL);
+
+            OrderSuccessfulEvent orderEvent = buildOrderSuccessfulEvent(savedOrder, cache);
+            if (orderEvent.getCustomerEmail() != null && !orderEvent.getCustomerEmail().isBlank()) {
+                orderSuccessfulEventProducer.publish(orderEvent);
+
+                UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
+                userLoyaltyEventProducer.publish(loyaltyEvent);
+            }
+
+            deleteCheckoutCache(cache);
+
+            return CheckoutConfirmResponse.builder()
+                    .orderId(savedOrder.getId())
+                    .status(savedOrder.getStatus().name())
+                    .message("Đơn hàng 0đ đã được xác nhận và thanh toán thành công.")
+                    .seats(toSeatItems(cache.getSeats()))
+                    .products(toProductItems(cache.getItems()))
+                    .paymentMethod(ZERO_PAYMENT_METHOD)
+                    .paymentUrl(null)
+                    .totalPayment(savedOrder.getTotalPayment())
+                    .build();
+        } finally {
+            showScheduleDetailService.releaseSeatLocks(sessionId, seatValidationRequest);
+        }
+    }
+
     public CheckoutSessionResponse getSessionDetail(String sessionId) {
         return toSessionResponse(getSession(sessionId));
     }
@@ -225,6 +300,16 @@ public class CheckoutSessionService {
                 toSeatLockRequest(cache.getShowScheduleId(), cache.getSeats())
         );
         deleteCheckoutCache(cache);
+    }
+
+    private Promotion applyPromotionUsage(CheckoutSessionCache cache) {
+        if (cache.getPromotionCode() == null) {
+            return null;
+        }
+
+        Promotion promotion = promotionCacheService.getPromotionEntity(cache.getPromotionCode());
+        promotion.setRemainingQuantity(promotion.getRemainingQuantity() - 1);
+        return promotionRepository.save(promotion);
     }
 
     private List<OrderDetail> buildOrderDetails(Order order, List<CheckoutProductItemCache> items) {
@@ -512,6 +597,18 @@ public class CheckoutSessionService {
         return 0;
     }
 
+    private void validateRequestedPoints(int requestedPoints, int availablePoints, double payableBeforePoints) {
+        if (requestedPoints < 0) {
+            throw new BusinessException("Số điểm muốn sử dụng không được nhỏ hơn 0");
+        }
+        if (requestedPoints > availablePoints) {
+            throw new BusinessException("Số điểm muốn sử dụng vượt quá điểm hiện có");
+        }
+        if (requestedPoints * POINT_VALUE_VND > payableBeforePoints + ZERO_PAYMENT_EPSILON) {
+            throw new BusinessException("Số điểm muốn sử dụng vượt quá số tiền cần thanh toán");
+        }
+    }
+
     private int calculateApplicablePoints(int requestedPoints, int availablePoints, double payableBeforePoints) {
         if (requestedPoints <= 0 || availablePoints <= 0 || payableBeforePoints <= 0D) {
             return 0;
@@ -524,7 +621,9 @@ public class CheckoutSessionService {
         PromotionCache promotion = promotionCacheService.getPromotion(cache.getPromotionCode());
         double baseAmount = cache.getSeatSubtotal() + cache.getProductSubtotal();
         double promotionDiscount = calculatePromotionDiscount(baseAmount, promotion);
-        int appliedPoints = calculateApplicablePoints(requestedPoints, customer.getLoyaltyPoint(), baseAmount - promotionDiscount);
+        double payableBeforePoints = Math.max(baseAmount - promotionDiscount, 0D);
+        validateRequestedPoints(requestedPoints, customer.getLoyaltyPoint(), payableBeforePoints);
+        int appliedPoints = calculateApplicablePoints(requestedPoints, customer.getLoyaltyPoint(), payableBeforePoints);
 
         cache.setPromotionDiscount(promotionDiscount);
         cache.setPointsRedeemed(appliedPoints);
@@ -612,6 +711,72 @@ public class CheckoutSessionService {
                         .subtotal(item.getSubtotal())
                         .build())
                 .toList();
+    }
+
+    private OrderSuccessfulEvent buildOrderSuccessfulEvent(Order order, CheckoutSessionCache cache) {
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
+        List<String> seatIds = showScheduleDetails == null
+                ? Collections.emptyList()
+                : showScheduleDetails.stream()
+                .map(ShowScheduleDetail::getSeatId)
+                .filter(seatId -> seatId != null && !seatId.isBlank())
+                .toList();
+
+        List<String> seatLabels = cache.getSeats() == null
+                ? Collections.emptyList()
+                : cache.getSeats().stream()
+                .map(seat -> seat.getSeatNumber() == null || seat.getSeatNumber().isBlank()
+                        ? seat.getSeatId()
+                        : seat.getSeatNumber())
+                .toList();
+
+        List<OrderProductItem> productItems = cache.getItems() == null
+                ? Collections.emptyList()
+                : cache.getItems().stream()
+                .map(item -> OrderProductItem.builder()
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .quantity(item.getQuantity())
+                        .price(item.getUnitPrice())
+                        .subTotal(item.getSubtotal())
+                        .build())
+                .toList();
+
+        LocalDateTime paidAt = LocalDateTime.now();
+
+        return OrderSuccessfulEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .sessionId(cache.getSessionId())
+                .orderId(order.getId())
+                .customerId(order.getCustomerId())
+                .customerName(cache.getCustomerName())
+                .customerEmail(cache.getCustomerEmail())
+                .cinemaId(order.getCinemaId())
+                .cinemaName(cache.getCinemaName())
+                .cinemaAddress(cache.getCinemaAddress())
+                .roomId(cache.getRoomId())
+                .roomNumber(cache.getRoomNumber())
+                .showScheduleId(cache.getShowScheduleId())
+                .movieId(cache.getMovieId())
+                .movieTitle(cache.getMovieTitle())
+                .showStartTime(cache.getShowStartTime())
+                .showEndTime(cache.getShowEndTime())
+                .projectionType(cache.getProjectionType())
+                .translationType(cache.getTranslationType())
+                .seatIds(seatIds)
+                .seatLabels(seatLabels)
+                .productItems(productItems)
+                .qrCode(order.getQrCode())
+                .totalPrice(order.getTotalPrice())
+                .pointDiscount(order.getPointDiscount())
+                .promotionDiscount(order.getPromotionDiscount())
+                .totalPayment(order.getTotalPayment())
+                .pointsRedeemed(cache.getPointsRedeemed())
+                .paymentMethod(ZERO_PAYMENT_METHOD)
+                .status("SUCCESS")
+                .paidAt(paidAt)
+                .occurredAt(paidAt)
+                .build();
     }
 
     private List<SeatItemResponse> toSeatItems(List<SeatRequestDto> seats) {
