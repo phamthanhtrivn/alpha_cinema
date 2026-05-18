@@ -90,5 +90,5 @@ volumes:
   
 networks:
   alpha_network:
-    name: backend_alpha_network
+    name: alpha_network
     driver: bridge

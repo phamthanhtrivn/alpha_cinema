@@ -1,0 +1,9 @@
+CHÍNH SÁCH ĐÁNH GIÁ PHIM ALPHA CINEMA
+
+Khách hàng sau khi xem phim có thể để lại đánh giá cho bộ phim.
+
+Đánh giá phim có thể bao gồm số sao, nội dung đánh giá và hình ảnh đánh giá.
+
+Khách hàng chưa mua vé hoặc chưa xem phim vẫn có thể thực hiện đánh giá và chia sẻ cảm nhận của mình về bộ phim.
+
+Nội dung đánh giá cần phù hợp với mục đích chia sẻ trải nghiệm và cảm nhận về phim.

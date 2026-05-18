@@ -1,6 +1,7 @@
 package com.movieticket.order.service;
 
 import com.movieticket.order.dto.PromotionCreateRequest;
+import com.movieticket.order.dto.PromotionPublicResponse;
 import com.movieticket.order.dto.PromotionUpdateRequest;
 import com.movieticket.order.entity.Promotion;
 import com.movieticket.order.exception.BusinessException;
@@ -11,6 +12,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PromotionService {
@@ -23,6 +27,19 @@ public class PromotionService {
             return promotionRepository.findByCodeContainingIgnoreCase(code.trim(), pageable);
         }
         return promotionRepository.findAll(pageable);
+    }
+
+    public List<PromotionPublicResponse> getActivePromotions() {
+        LocalDateTime now = LocalDateTime.now();
+        return promotionRepository
+                .findByStatusTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndRemainingQuantityGreaterThan(
+                        now,
+                        now,
+                        0
+                )
+                .stream()
+                .map(this::toPublicResponse)
+                .toList();
     }
 
     public Promotion createPromotion(PromotionCreateRequest promotionCreateRequest){
@@ -55,5 +72,16 @@ public class PromotionService {
         existingPromotion.setRemainingQuantity(existingPromotion.getRemainingQuantity() + (promotionUpdateRequest.getQuantity() - existingPromotion.getQuantity()));
         existingPromotion.setStatus(promotionUpdateRequest.getStatus());
         return promotionRepository.save(existingPromotion);
+    }
+
+    private PromotionPublicResponse toPublicResponse(Promotion promotion) {
+        return new PromotionPublicResponse(
+                promotion.getId(),
+                promotion.getCode(),
+                promotion.getDiscount(),
+                promotion.getStartDate(),
+                promotion.getEndDate(),
+                promotion.getRemainingQuantity()
+        );
     }
 }

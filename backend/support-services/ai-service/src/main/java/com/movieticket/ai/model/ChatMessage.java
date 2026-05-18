@@ -38,14 +38,17 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public ChatMessage(String conversationId, ChatRole role, String content) {
+    public ChatMessage(String conversationId, ChatRole role, String content, Instant createdAt) {
         this.conversationId = conversationId;
         this.role = role;
         this.content = content;
+        this.createdAt = createdAt;
     }
 
     @PrePersist
     void prePersist() {
-        createdAt = Instant.now();
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 }

@@ -17,6 +17,7 @@ public class OrderHistoryResponse {
     private double totalPayment;
     private double pointDiscount;
     private double promotionDiscount;
+    private String promotionCode;
     private String qrCode;
     private String cinemaName;
     private String roomNumber;
