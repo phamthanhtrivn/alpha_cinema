@@ -11,6 +11,9 @@ spring:
   profiles:
     # Sử dụng profile 'native' để đọc cấu hình từ file cục bộ (thay vì Git)
     active: native
+    group:
+      # Nếu môi trường bên ngoài ép profile 'prod', vẫn bật thêm 'native' để config-server không rơi về backend Git mặc định.
+      prod: native
   cloud:
     config:
       server:
@@ -22,4 +25,4 @@ eureka:
   client:
     service-url:
       # Đăng ký chính Config Server với Eureka
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}

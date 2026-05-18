@@ -1,0 +1,13 @@
+services:
+  config-server:
+    build:
+      context: ../..
+      dockerfile: infrastructure/config-server/Dockerfile
+    container_name: config-server
+    env_file:
+      - ./.env.docker
+    ports:
+      - "8888:8888"
+    restart: always
+    networks:
+      - alpha_network

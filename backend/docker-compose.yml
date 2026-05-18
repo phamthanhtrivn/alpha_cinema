@@ -1,4 +1,30 @@
+include:
+  - ./core-services/user-service/docker-compose.yaml
+  - ./core-services/ticket-service/docker-compose.yaml
+  - ./core-services/cinema-management-service/docker-compose.yaml
+  - ./core-services/payment-service/docker-compose.yaml
+  - ./core-services/product-service/docker-compose.yaml
+  - ./core-services/order-service/docker-compose.yaml
+  - ./infrastructure/eureka-server/docker-compose.yaml
+  - ./infrastructure/config-server/docker-compose.yaml
+  - ./infrastructure/api-gateway/docker-compose.yaml
+  - ./support-services/notification-service/docker-compose.yaml
+  - ./support-services/ai-service/docker-compose.yaml
+
 services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: alpha-mysql
+    ports:
+      - "3305:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d # Tự động tạo user_db, ticket_db...
+      - alpha_mysql_data:/var/lib/mysql
+    networks:
+      - alpha_network
+
   redis:
     image: redis:7
     container_name: alpha-redis
@@ -34,18 +60,18 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@alpha-kafka:9093
-      
+
       # Khai báo 2 listener: INTERNAL (cho Docker) và EXTERNAL (cho máy Local)
       KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
-      
+
       # Định nghĩa địa chỉ mà Kafka sẽ quảng bá ra ngoài
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://alpha-kafka:9092,EXTERNAL://localhost:9094
-      
+
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      
+
       # Cấu hình để tránh lỗi "Node 1 disconnected" do timeout
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -53,15 +79,16 @@ services:
 
     volumes:
       - alpha_kafka_data:/var/lib/kafka/data
-    networks: 
+    networks:
       - alpha_network
-
 
 volumes:
   alpha_redis_data:
   alpha_ai_postgres_data:
   alpha_kafka_data:
-
+  alpha_mysql_data:
+  
 networks:
   alpha_network:
+    name: alpha_network
     driver: bridge

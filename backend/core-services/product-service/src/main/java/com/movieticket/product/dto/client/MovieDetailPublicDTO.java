@@ -1,7 +1,5 @@
 package com.movieticket.product.dto.client;
 
-import com.movieticket.product.entity.AgeType;
-import com.movieticket.product.entity.Artist;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +12,6 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class MovieDetailPublicDTO {
     private String id;
     private String title;

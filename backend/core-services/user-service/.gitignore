@@ -37,3 +37,4 @@ Desktop.ini
 
 .env
 src/main/resources/keys/
+.env.docker

@@ -37,3 +37,4 @@ Desktop.ini
 
 .env
 /sample_data
+.env.docker

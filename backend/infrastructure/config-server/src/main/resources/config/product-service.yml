@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/alpha_product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3305}/alpha_product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
-    password: root
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       # Tự động cập nhật bảng trong DB khi code Entity thay đổi (phù hợp lúc dev)
@@ -43,7 +43,7 @@ eureka:
   client:
     service-url:
       # Nơi đăng ký với Eureka Server với tên là product-service
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
   instance:
     prefer-ip-address: true
 
@@ -55,6 +55,6 @@ cloudinary:
 
 external-services:
   cinema-service: 
-    base-url: http://cinema-management-service
+    base-url: ${CINEMA_SERVICE_BASE_URL}
   order-service:
-    base-url: http://order-service
+    base-url: ${ORDER_SERVICE_BASE_URL}

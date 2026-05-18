@@ -1,13 +1,13 @@
 services:
-  user-service:
+  order-service:
     build:
       context: ../..
-      dockerfile: core-services/user-service/Dockerfile
-    container_name: user-service
+      dockerfile: core-services/order-service/Dockerfile
+    container_name: order-service
     env_file:
       - ./.env.docker
     ports:
-      - "8086:8086"
+      - "8082:8082"
     restart: always
     depends_on:
       - mysql-db
