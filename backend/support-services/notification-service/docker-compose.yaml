@@ -1,0 +1,13 @@
+services:
+  notification-service:
+    build:
+      context: ../..
+      dockerfile: support-services/notification-service/Dockerfile
+    container_name: notification-service
+    env_file:
+      - ./.env.docker
+    ports:
+      - "8087:8087"
+    restart: always
+    networks:
+      - alpha_network
