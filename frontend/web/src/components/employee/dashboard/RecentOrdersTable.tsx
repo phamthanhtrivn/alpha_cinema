@@ -55,7 +55,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
         <TableRow>
           <TableHead>Mã đơn</TableHead>
           <TableHead>Khách hàng</TableHead>
-          <TableHead>Phim</TableHead>
+          <TableHead>Phim / sản phẩm</TableHead>
           <TableHead>Thanh toán</TableHead>
           <TableHead className="text-right">Tổng tiền</TableHead>
         </TableRow>

@@ -36,13 +36,17 @@ public interface ShowScheduleDetailRepository extends JpaRepository<ShowSchedule
     @Query("""
             select detail.showScheduleId, count(detail.id)
             from ShowScheduleDetail detail
+            join detail.order orderEntity
             where detail.showScheduleId in :showScheduleIds
-              and detail.showSeatType in :bookedSeatTypes
+              and detail.seatId is not null
+              and (detail.showSeatType is null or detail.showSeatType in :bookedSeatTypes)
+              and (orderEntity.status is null or orderEntity.status not in :releasedStatuses)
             group by detail.showScheduleId
             """)
     List<Object[]> countBookedSeatsByScheduleIds(
             @Param("showScheduleIds") Collection<String> showScheduleIds,
-            @Param("bookedSeatTypes") Collection<ShowSeatType> bookedSeatTypes
+            @Param("bookedSeatTypes") Collection<ShowSeatType> bookedSeatTypes,
+            @Param("releasedStatuses") Collection<OrderStatus> releasedStatuses
     );
 
     void deleteByOrder_Id(String orderId);

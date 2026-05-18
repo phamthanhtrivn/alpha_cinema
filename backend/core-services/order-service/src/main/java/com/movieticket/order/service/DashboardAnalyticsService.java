@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DashboardAnalyticsService {
 
+    private static final int POINT_VALUE_VND = 1_000;
     private static final List<OrderStatus> SUCCESS_STATUSES = List.of(OrderStatus.PAID, OrderStatus.CONFIRMED);
     private static final List<OrderStatus> FAILED_STATUSES = List.of(OrderStatus.FAILED, OrderStatus.CANCELLED, OrderStatus.EXPIRED);
     private static final List<ShowSeatType> BOOKED_SEAT_TYPES = List.of(ShowSeatType.LOCKED, ShowSeatType.SOLD, ShowSeatType.CHECKED_IN);
@@ -83,7 +85,8 @@ public class DashboardAnalyticsService {
             boolean moviesUseCinemaScope
     ) {
         LocalDateTime[] bounds = resolveBounds(range, year, month, week);
-        List<Order> cinemaScopedOrders = orderRepository.findAll().stream()
+        List<Order> allOrders = orderRepository.findAll();
+        List<Order> cinemaScopedOrders = allOrders.stream()
                 .filter(order -> cinemaId == null || cinemaId.isBlank() || cinemaId.equals(order.getCinemaId()))
                 .filter(order -> isInRange(order.getCreatedAt(), bounds))
                 .toList();
@@ -156,12 +159,12 @@ public class DashboardAnalyticsService {
 
         Map<String, Object> dashboard = row(
                 "revenue", revenue(scopedOrders),
-                "orders", orders(scopedOrders, paymentDashboard, dependencies.paymentMap(), dependencies.scheduleMap(), dependencies.customerNameMap()),
+                "orders", orders(scopedOrders, paymentDashboard, dependencies.paymentMap(), dependencies.scheduleMap(), dependencies.customerNameMap(), dependencies.productMap(), productDashboard),
                 "promotions", promotions(scopedOrders, promotions),
                 "products", products(scopedOrders, dependencies.productMap()),
                 "movies", movies(movieScopedOrders, productDashboard, dependencies.scheduleMap()),
-                "schedules", schedules(movieScopedOrders, productDashboard),
-                "loyalty", includeLoyalty ? userDashboard.getOrDefault("loyalty", emptyLoyalty()) : emptyLoyalty(),
+                "schedules", schedules(productDashboard, dependencies.scheduleMap()),
+                "loyalty", includeLoyalty ? enrichLoyalty(userDashboard.get("loyalty"), scopedOrders, allOrders) : emptyLoyalty(),
                 "employees", includeEmployees ? enrichEmployees(userDashboard.get("employees"), scopedOrders, dependencies.cinemaNameMap()) : emptyEmployees(),
                 "reviews", includeReviews ? enrichReviews(userDashboard.get("reviews"), productDashboard) : emptyReviews(),
                 "ai", aiDashboard.isEmpty() ? emptyAiDashboard() : aiDashboard,
@@ -285,7 +288,15 @@ public class DashboardAnalyticsService {
         );
     }
 
-    private Map<String, Object> orders(List<Order> orders, Map<String, Object> paymentDashboard, Map<String, PaymentSnapshot> paymentMap, Map<String, ShowScheduleSnapshot> scheduleMap, Map<String, String> customerNameMap) {
+    private Map<String, Object> orders(
+            List<Order> orders,
+            Map<String, Object> paymentDashboard,
+            Map<String, PaymentSnapshot> paymentMap,
+            Map<String, ShowScheduleSnapshot> scheduleMap,
+            Map<String, String> customerNameMap,
+            Map<String, ProductSnapshot> productMap,
+            Map<String, Object> productDashboard
+    ) {
         long total = Math.max(orders.size(), 1);
         long success = countStatus(orders, SUCCESS_STATUSES);
         List<Map<String, Object>> scopedPaymentMethods = summarizePaymentMethods(paymentMap);
@@ -295,6 +306,7 @@ public class DashboardAnalyticsService {
         Object paymentSuccessRate = scopedPaymentMethods.isEmpty()
                 ? (orders.isEmpty() ? 0 : paymentDashboard.getOrDefault("successRate", Math.round((success * 1000.0 / total)) / 10.0))
                 : scopedPaymentSuccessRate(paymentMap);
+        Map<String, String> movieLookup = movieLookup(productDashboard);
 
         List<Map<String, Object>> recentOrders = orders.stream()
                 .sorted(Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
@@ -304,7 +316,7 @@ public class DashboardAnalyticsService {
                     return row(
                             "id", order.getId(),
                             "customerName", customerNameMap.getOrDefault(order.getCustomerId(), order.getCustomerId()),
-                            "movieTitle", firstMovieLabel(order, scheduleMap),
+                            "movieTitle", firstOrderItemLabel(order, scheduleMap, movieLookup, productMap),
                             "paymentMethod", payment == null ? "-" : payment.getMethod(),
                             "paymentStatus", payment == null ? null : payment.getStatus(),
                             "paymentCode", payment == null ? null : payment.getPaymentCode(),
@@ -412,7 +424,8 @@ public class DashboardAnalyticsService {
     }
 
     private Map<String, Object> products(List<Order> orders, Map<String, ProductSnapshot> productMap) {
-        List<OrderDetail> details = successfulOrders(orders).stream()
+        List<Order> successfulOrders = successfulOrders(orders);
+        List<OrderDetail> details = successfulOrders.stream()
                 .flatMap(order -> safeOrderDetails(order).stream())
                 .toList();
 
@@ -428,7 +441,7 @@ public class DashboardAnalyticsService {
                     long revenue = Math.round(entry.getValue().stream().mapToDouble(OrderDetail::getSubTotal).sum());
                     return row(
                             "id", entry.getKey(),
-                            "name", product == null ? entry.getKey() : product.getName(),
+                            "name", productLabel(entry.getKey(), product),
                             "pictureUrl", product == null ? "" : product.getPictureUrl(),
                             "quantitySold", quantity,
                             "revenue", revenue
@@ -438,13 +451,20 @@ public class DashboardAnalyticsService {
                 .limit(5)
                 .toList();
 
-        int tickets = successfulOrders(orders).stream().mapToInt(order -> safeScheduleDetails(order).size()).sum();
         int productsSold = details.stream().mapToInt(OrderDetail::getQuantity).sum();
+        long ticketOrders = successfulOrders.stream()
+                .filter(order -> !safeScheduleDetails(order).isEmpty())
+                .count();
+        long ticketOrdersWithProducts = successfulOrders.stream()
+                .filter(order -> !safeScheduleDetails(order).isEmpty())
+                .filter(order -> safeOrderDetails(order).stream()
+                        .anyMatch(detail -> detail.getProductId() != null && detail.getQuantity() > 0))
+                .count();
 
         return row(
                 "totalRevenue", Math.round(details.stream().mapToDouble(OrderDetail::getSubTotal).sum()),
                 "itemsSold", productsSold,
-                "comboAttachRate", tickets == 0 ? 0 : Math.round(productsSold * 1000.0 / tickets) / 10.0,
+                "comboAttachRate", ticketOrders == 0 ? 0 : Math.round(ticketOrdersWithProducts * 1000.0 / ticketOrders) / 10.0,
                 "topProducts", topProducts,
                 "lowStockProducts", List.of()
         );
@@ -459,9 +479,10 @@ public class DashboardAnalyticsService {
                 .flatMap(order -> safeScheduleDetails(order).stream())
                 .toList();
         Map<String, List<ShowScheduleDetail>> byMovie = details.stream()
-                .filter(detail -> detail.getMovieId() != null)
-                .collect(Collectors.groupingBy(ShowScheduleDetail::getMovieId));
+                .filter(detail -> movieIdForDetail(detail, schedules) != null)
+                .collect(Collectors.groupingBy(detail -> movieIdForDetail(detail, schedules)));
 
+        Map<String, String> movieLookup = movieLookup(productDashboard);
         List<Map<String, Object>> movieRows = byMovie.entrySet().stream()
                 .map(entry -> {
                     String title = schedules.values().stream()
@@ -469,7 +490,7 @@ public class DashboardAnalyticsService {
                             .map(ShowScheduleSnapshot::getMovieTitle)
                             .filter(Objects::nonNull)
                             .findFirst()
-                            .orElse(entry.getKey());
+                            .orElseGet(() -> movieLookup.getOrDefault(entry.getKey(), entry.getKey()));
                     return row(
                             "id", entry.getKey(),
                             "title", title,
@@ -517,8 +538,11 @@ public class DashboardAnalyticsService {
         );
     }
 
-    private List<Map<String, Object>> schedules(List<Order> orders, Map<String, Object> productDashboard) {
-        List<Map<String, Object>> sourceSchedules = asMapList(productDashboard.get("schedules"));
+    private List<Map<String, Object>> schedules(
+            Map<String, Object> productDashboard,
+            Map<String, ShowScheduleSnapshot> schedules
+    ) {
+        List<Map<String, Object>> sourceSchedules = scheduleRows(productDashboard, schedules);
         Map<String, Long> soldBySchedule = bookedSeatCounts(sourceSchedules.stream()
                 .map(schedule -> stringValue(schedule.get("id")))
                 .filter(Objects::nonNull)
@@ -549,18 +573,59 @@ public class DashboardAnalyticsService {
                 .toList();
     }
 
+    private List<Map<String, Object>> scheduleRows(
+            Map<String, Object> productDashboard,
+            Map<String, ShowScheduleSnapshot> schedules
+    ) {
+        Map<String, Map<String, Object>> rows = new LinkedHashMap<>();
+        asMapList(productDashboard.get("schedules")).forEach(schedule -> {
+            String id = stringValue(schedule.get("id"));
+            if (id != null) {
+                rows.put(id, schedule);
+            }
+        });
+
+        schedules.values().forEach(schedule -> {
+            if (schedule.getId() != null) {
+                rows.putIfAbsent(schedule.getId(), row(
+                        "id", schedule.getId(),
+                        "movieId", schedule.getMovieId(),
+                        "cinemaId", schedule.getCinemaId(),
+                        "movieTitle", schedule.getMovieTitle(),
+                        "cinemaName", schedule.getCinemaId(),
+                        "roomName", schedule.getRoomId(),
+                        "startTime", schedule.getStartTime(),
+                        "endTime", schedule.getEndTime(),
+                        "status", schedule.isStatus() ? "ON_SALE" : "ENDED",
+                        "soldSeats", 0,
+                        "totalSeats", schedule.getAvailableSeat()
+                ));
+            }
+        });
+
+        return List.copyOf(rows.values());
+    }
+
     private Map<String, Long> bookedSeatCounts(List<String> scheduleIds) {
         if (scheduleIds == null || scheduleIds.isEmpty()) {
             return Map.of();
         }
 
-        return showScheduleDetailRepository.countBookedSeatsByScheduleIds(scheduleIds, BOOKED_SEAT_TYPES).stream()
+        return showScheduleDetailRepository.countBookedSeatsByScheduleIds(scheduleIds, BOOKED_SEAT_TYPES, FAILED_STATUSES).stream()
                 .filter(row -> row.length >= 2 && row[0] != null && row[1] instanceof Number)
                 .collect(Collectors.toMap(
                         row -> String.valueOf(row[0]),
                         row -> ((Number) row[1]).longValue(),
                         Long::sum
                 ));
+    }
+
+    private String movieIdForDetail(ShowScheduleDetail detail, Map<String, ShowScheduleSnapshot> schedules) {
+        if (detail.getMovieId() != null) {
+            return detail.getMovieId();
+        }
+        ShowScheduleSnapshot schedule = schedules.get(detail.getShowScheduleId());
+        return schedule == null ? null : schedule.getMovieId();
     }
 
     private List<Map<String, Object>> movieScheduleCapacityRows(
@@ -592,6 +657,16 @@ public class DashboardAnalyticsService {
         return List.copyOf(rows.values());
     }
 
+    private Map<String, String> movieLookup(Map<String, Object> productDashboard) {
+        return asMapList(asMap(productDashboard.get("movies")).get("lookup")).stream()
+                .filter(movie -> movie.get("id") != null)
+                .collect(Collectors.toMap(
+                        movie -> String.valueOf(movie.get("id")),
+                        movie -> String.valueOf(movie.getOrDefault("title", movie.get("id"))),
+                        (first, second) -> first
+                ));
+    }
+
     private List<Map<String, Object>> withMovieOccupancy(
             List<Map<String, Object>> movies,
             Map<String, Long> bookedByMovie,
@@ -617,6 +692,73 @@ public class DashboardAnalyticsService {
             return 0;
         }
         return Math.round(value * 1000.0 / total) / 10.0;
+    }
+
+    private Map<String, Object> enrichLoyalty(Object loyaltyObject, List<Order> scopedOrders, List<Order> allOrders) {
+        Map<String, Object> loyalty = new LinkedHashMap<>(asMap(loyaltyObject));
+        if (loyalty.isEmpty()) {
+            loyalty.putAll(emptyLoyalty());
+        }
+
+        List<Order> successfulScopedOrders = successfulOrders(scopedOrders);
+        Set<String> scopedOrderIds = successfulScopedOrders.stream()
+                .map(Order::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        long pointsRedeemed = successfulScopedOrders.stream()
+                .mapToLong(this::pointsRedeemed)
+                .sum();
+
+        loyalty.put("pointsIssued", pointsIssued(scopedOrderIds, allOrders));
+        loyalty.put("pointsRedeemed", pointsRedeemed);
+        return loyalty;
+    }
+
+    private long pointsIssued(Set<String> scopedOrderIds, List<Order> allOrders) {
+        if (scopedOrderIds.isEmpty()) {
+            return 0;
+        }
+
+        Map<String, List<Order>> ordersByCustomer = successfulOrders(allOrders).stream()
+                .filter(order -> order.getCustomerId() != null)
+                .collect(Collectors.groupingBy(Order::getCustomerId));
+
+        long totalIssued = 0;
+        for (List<Order> customerOrders : ordersByCustomer.values()) {
+            List<Order> sortedOrders = customerOrders.stream()
+                    .sorted(Comparator
+                            .comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(Order::getId, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                    .toList();
+
+            double cumulativeSpending = 0D;
+            for (Order order : sortedOrders) {
+                double orderSpending = Math.max(order.getTotalPayment(), 0D);
+                cumulativeSpending += orderSpending;
+                if (scopedOrderIds.contains(order.getId())) {
+                    totalIssued += earnedPoints(orderSpending, cumulativeSpending);
+                }
+            }
+        }
+
+        return totalIssued;
+    }
+
+    private long pointsRedeemed(Order order) {
+        return Math.round(Math.max(order.getPointDiscount(), 0D) / POINT_VALUE_VND);
+    }
+
+    private long earnedPoints(double orderSpending, double totalSpendingAfterOrder) {
+        double rate;
+        if (totalSpendingAfterOrder < 2_000_000D) {
+            rate = 0.03;
+        } else if (totalSpendingAfterOrder < 4_000_000D) {
+            rate = 0.05;
+        } else {
+            rate = 0.07;
+        }
+        return Math.round(Math.max(orderSpending, 0D) * rate / POINT_VALUE_VND);
     }
 
     @SuppressWarnings("unchecked")
@@ -706,15 +848,56 @@ public class DashboardAnalyticsService {
                 .collect(Collectors.toMap(ShowScheduleSnapshot::getId, Function.identity(), (first, second) -> first));
     }
 
-    private String firstMovieLabel(Order order, Map<String, ShowScheduleSnapshot> scheduleSnapshotMap) {
-        return safeScheduleDetails(order).stream()
-                .map(detail -> {
-                    ShowScheduleSnapshot snapshot = scheduleSnapshotMap.get(detail.getShowScheduleId());
-                    return snapshot != null ? snapshot.getMovieTitle() : null;
-                })
+    private String firstOrderItemLabel(
+            Order order,
+            Map<String, ShowScheduleSnapshot> scheduleSnapshotMap,
+            Map<String, String> movieLookup,
+            Map<String, ProductSnapshot> productMap
+    ) {
+        String movieLabel = safeScheduleDetails(order).stream()
+                .map(detail -> movieLabelForDetail(detail, scheduleSnapshotMap, movieLookup))
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElse("N/A");
+                .orElse(null);
+        if (movieLabel != null) {
+            return movieLabel;
+        }
+
+        List<String> productLabels = safeOrderDetails(order).stream()
+                .map(detail -> productLabel(detail.getProductId(), productMap.get(detail.getProductId())))
+                .filter(Objects::nonNull)
+                .distinct()
+                .limit(3)
+                .toList();
+
+        return productLabels.isEmpty() ? "N/A" : String.join(", ", productLabels);
+    }
+
+    private String movieLabelForDetail(
+            ShowScheduleDetail detail,
+            Map<String, ShowScheduleSnapshot> scheduleSnapshotMap,
+            Map<String, String> movieLookup
+    ) {
+        ShowScheduleSnapshot snapshot = scheduleSnapshotMap.get(detail.getShowScheduleId());
+        String title = cleanLabel(snapshot == null ? null : snapshot.getMovieTitle());
+        if (title != null) {
+            return title;
+        }
+
+        String movieId = detail.getMovieId() == null && snapshot != null ? snapshot.getMovieId() : detail.getMovieId();
+        return cleanLabel(movieLookup.get(movieId));
+    }
+
+    private String productLabel(String productId, ProductSnapshot product) {
+        String name = cleanLabel(product == null ? null : product.getName());
+        return name == null ? cleanLabel(productId) : name;
+    }
+
+    private String cleanLabel(String value) {
+        if (value == null || value.isBlank() || "N/A".equalsIgnoreCase(value)) {
+            return null;
+        }
+        return value;
     }
 
     private String promotionStatus(Promotion promotion, LocalDateTime now) {
