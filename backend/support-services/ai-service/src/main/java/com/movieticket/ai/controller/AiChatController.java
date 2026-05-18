@@ -15,6 +15,8 @@ import reactor.core.publisher.Flux;
 public class AiChatController {
     private final ChatService chatService;
 
+
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chatStream(@RequestParam String message) {
         return chatService.streamChat(message);

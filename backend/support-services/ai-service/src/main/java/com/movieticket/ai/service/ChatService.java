@@ -1,40 +1,37 @@
 package com.movieticket.ai.service;
 
+import com.movieticket.ai.common.ImageFetchUtil;
+import com.movieticket.ai.dto.ChatHistoryMessage;
 import com.movieticket.ai.dto.ChatRequest;
 import com.movieticket.ai.dto.ChatResponse;
 import com.movieticket.ai.dto.CitationResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.content.Media;
-import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Map;
-
-import com.movieticket.ai.common.ImageFetchUtil;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.core.io.Resource;
-import org.springframework.util.MimeTypeUtils;
-import reactor.core.publisher.Flux;
-import com.movieticket.ai.dto.ChatHistoryMessage;
 import com.movieticket.ai.tool.AiCustomerContext;
 import com.movieticket.ai.tool.AlphaCinemaTool;
 import com.movieticket.ai.tool.AlphaCustomerTool;
 import com.movieticket.ai.tool.AlphaMovieTool;
 import com.movieticket.ai.tool.AlphaTicketTool;
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
+import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+import org.springframework.ai.content.Media;
+import org.springframework.core.io.Resource;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-
-    private final ImageFetchUtil imageFetchUtil;
-
     private static final int MAX_POLICY_CONTEXTS = 5;
     private static final int MAX_CONTEXT_MESSAGES = 15;
     private static final int LONG_CONVERSATION_WARNING_MESSAGES = 24;
@@ -47,6 +44,7 @@ public class ChatService {
     private final AlphaCinemaTool alphaCinemaTool;
     private final AlphaCustomerTool alphaCustomerTool;
     private final AlphaTicketTool alphaTicketTool;
+     private final ImageFetchUtil imageFetchUtil;
 
     public Flux<String> streamChat(String message) {
         return chatClient.prompt()
@@ -55,10 +53,7 @@ public class ChatService {
                 .content();
     }
 
-    /**
-     * Hàm test để AI mô tả hình ảnh từ một URL
-     */
-    public String describeImage(String message, String imageUrl) {
+     public String describeImage(String message, String imageUrl) {
         Resource imageResource = imageFetchUtil.fetchImageAsResource(imageUrl);
         if (imageResource == null) {
             return "Không thể tải hình ảnh từ URL cung cấp.";
@@ -74,6 +69,8 @@ public class ChatService {
                 .call()
                 .content();
     }
+
+
 
     public ChatResponse answerCustomerQuestion(ChatRequest request) {
         String conversationId = chatMemoryService.resolveConversationId(request.getConversationId());
