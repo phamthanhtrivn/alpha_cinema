@@ -1,6 +1,5 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.common.ImageFetchUtil;
 import com.movieticket.ai.dto.ChatHistoryMessage;
 import com.movieticket.ai.dto.ChatRequest;
 import com.movieticket.ai.dto.ChatResponse;
@@ -11,23 +10,17 @@ import com.movieticket.ai.tool.AlphaCustomerTool;
 import com.movieticket.ai.tool.AlphaMovieTool;
 import com.movieticket.ai.tool.AlphaTicketTool;
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeTypeUtils;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
-import org.springframework.ai.content.Media;
-import org.springframework.core.io.Resource;
 
 @Service
 @RequiredArgsConstructor
@@ -44,33 +37,6 @@ public class ChatService {
     private final AlphaCinemaTool alphaCinemaTool;
     private final AlphaCustomerTool alphaCustomerTool;
     private final AlphaTicketTool alphaTicketTool;
-     private final ImageFetchUtil imageFetchUtil;
-
-    public Flux<String> streamChat(String message) {
-        return chatClient.prompt()
-                .user(message)
-                .stream()
-                .content();
-    }
-
-     public String describeImage(String message, String imageUrl) {
-        Resource imageResource = imageFetchUtil.fetchImageAsResource(imageUrl);
-        if (imageResource == null) {
-            return "Không thể tải hình ảnh từ URL cung cấp.";
-        }
-
-        UserMessage userMessage = UserMessage.builder()
-                .text(message)
-                .media(new Media(MimeTypeUtils.IMAGE_JPEG, imageResource))
-                .build();
-
-        return chatClient.prompt()
-                .messages(userMessage)
-                .call()
-                .content();
-    }
-
-
 
     public ChatResponse answerCustomerQuestion(ChatRequest request) {
         String conversationId = chatMemoryService.resolveConversationId(request.getConversationId());
@@ -78,7 +44,8 @@ public class ChatService {
                 conversationId,
                 request.getCustomerId(),
                 request.getCustomerName(),
-                LONG_CONVERSATION_WARNING_MESSAGES)) {
+                LONG_CONVERSATION_WARNING_MESSAGES
+        )) {
             conversationId = chatMemoryService.resolveConversationId(null);
         }
 
@@ -94,7 +61,8 @@ public class ChatService {
                     .system(buildSystemPrompt(policyDocuments, request))
                     .advisors(advisorSpec -> advisorSpec
                             .advisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
-                            .param(ChatMemory.CONVERSATION_ID, finalConversationId))
+                            .param(ChatMemory.CONVERSATION_ID, finalConversationId)
+                    )
                     .tools(alphaMovieTool, alphaCinemaTool, alphaCustomerTool, alphaTicketTool)
                     .user(request.getQuestion())
                     .call()
@@ -198,8 +166,7 @@ public class ChatService {
 
                 CONTEXT:
                 %s
-                """
-                .formatted(customerState, LocalDate.now(), LocalDate.now().getYear(), policyContext);
+                """.formatted(customerState, LocalDate.now(), LocalDate.now().getYear(), policyContext);
     }
 
     private String buildPolicyContext(List<Document> documents) {
@@ -214,7 +181,8 @@ public class ChatService {
                             index + 1,
                             metadata.getOrDefault("source", "unknown"),
                             metadata.getOrDefault("topic", "general"),
-                            document.getText());
+                            document.getText()
+                    );
                 })
                 .reduce("", (left, right) -> left + "\n" + right);
     }
