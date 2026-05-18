@@ -34,6 +34,6 @@ export interface CustomerProfile {
   gender: Gender;
   dateOfBirth: Date;
   customerType: CustomerType;
-  points: number;
+  loyaltyPoint: number;
   totalSpending: number;
 }

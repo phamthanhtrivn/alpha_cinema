@@ -5,7 +5,7 @@ services:
       dockerfile: infrastructure/eureka-server/Dockerfile
     container_name: eureka-server
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8761:8761"
     restart: always

@@ -5,7 +5,7 @@ services:
       dockerfile: support-services/notification-service/Dockerfile
     container_name: notification-service
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8087:8087"
     restart: always

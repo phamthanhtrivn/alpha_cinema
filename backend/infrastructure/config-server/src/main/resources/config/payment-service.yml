@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql-db:3306/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3305}/alpha_payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: ${DB_PASSWORD}
   jpa:
@@ -19,7 +19,7 @@ spring:
         # Dùng MySQLDialect để Hibernate biết cách sinh SQL phù hợp với MySQL
         dialect: org.hibernate.dialect.MySQLDialect
   kafka:
-    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -47,7 +47,7 @@ eureka:
   client:
     service-url:
       # Nơi đăng ký với Eureka Server với tên là payment-service
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
   instance:
     prefer-ip-address: true
 

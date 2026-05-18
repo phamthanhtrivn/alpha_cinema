@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Loader2, PlayCircle } from 'lucide-react';
 
 interface TrailerModalProps {
     isOpen: boolean;
@@ -8,6 +8,8 @@ interface TrailerModalProps {
 }
 
 const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, onClose, trailerUrl }) => {
+    const [isLoading, setIsLoading] = useState(true);
+
     // Hàm tách ID từ link Youtube
     const getEmbedUrl = (url: string) => {
         if (!url) return "";
@@ -17,10 +19,13 @@ const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, onClose, trailerUrl
         return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : "";
     };
 
+    const embedUrl = getEmbedUrl(trailerUrl);
+
     // Khóa cuộn trang khi đang mở Modal
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            setIsLoading(true); // Reset loading state when opening
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -33,30 +38,46 @@ const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, onClose, trailerUrl
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
             {/* Lớp nền mờ (Backdrop) */}
             <div
-                className="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity"
+                className="absolute inset-0 bg-black/75 transition-opacity"
                 onClick={onClose}
             />
 
             {/* Nội dung Modal */}
-            <div className="relative w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl z-10 animate-in zoom-in duration-300">
+            <div className="relative w-full max-w-7xl aspect-video rounded-md bg-black overflow-hidden shadow-2xl z-10 animate-in zoom-in duration-300">
 
-                {/* Nút đóng */}
-                <button
-                    onClick={onClose}
-                    className="absolute -top-12 right-0 md:-right-12 text-white hover:text-orange-500 transition-colors p-2"
-                >
-                    <X size={32} />
-                </button>
+                {embedUrl ? (
+                    <>
+                        {/* Loading State */}
+                        {isLoading && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-white gap-3">
+                                <Loader2 size={40} className="animate-spin text-alpha-orange" />
+                                <span className="text-sm font-medium animate-pulse">Đang tải trailer...</span>
+                            </div>
+                        )}
 
-                {/* Iframe Youtube */}
-                <iframe
-                    src={getEmbedUrl(trailerUrl)}
-                    title="YouTube video player"
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                ></iframe>
+                        {/* Iframe Youtube */}
+                        <iframe
+                            src={embedUrl}
+                            title="YouTube video player"
+                            className={`w-full h-full transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            onLoad={() => setIsLoading(false)}
+                        ></iframe>
+                    </>
+                ) : (
+                    /* Error / Unavailable State */
+                    <div className="absolute inset-0 flex flex-col items-center justify-center  px-6 text-center">
+                        <div className="w-20 h-20 rounded-full bg-orange-500/10 flex items-center justify-center mb-6">
+                            <PlayCircle size={48} className="text-alpha-orange opacity-50" />
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-2">Trailer chưa sẵn sàng</h3>
+                        <p className="text-slate-400 max-w-md leading-relaxed">
+                            <span className="text-alpha-orange font-semibold">AlphaCinema</span> sẽ cập nhật sớm nhất có thể.
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

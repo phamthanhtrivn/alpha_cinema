@@ -1,7 +1,9 @@
 package com.movieticket.order.service;
 
+import com.movieticket.order.client.PaymentClient;
 import com.movieticket.order.dto.client.CinemaSnapshot;
 import com.movieticket.order.dto.client.CustomerInformation;
+import com.movieticket.order.dto.client.PaymentSnapshot;
 import com.movieticket.order.dto.client.ProductSnapshot;
 import com.movieticket.order.dto.client.RoomSnapshot;
 import com.movieticket.order.dto.client.SeatSnapshot;
@@ -42,6 +44,7 @@ public class OrderManagementService {
     private final OrderDetailRepository orderDetailRepository;
     private final ShowScheduleDetailRepository showScheduleDetailRepository;
     private final CheckoutPartnerGateway checkoutPartnerGateway;
+    private final PaymentClient paymentClient;
 
     public Page<OrderSummaryResponse> searchOrders(
             OrderSearchRequest request,
@@ -53,6 +56,10 @@ public class OrderManagementService {
     ) {
         OrderSearchRequest normalizedRequest = request == null ? new OrderSearchRequest() : request;
         String effectiveCinemaId = resolveCinemaScope(cinemaHeaderId, normalizedRequest.getCinemaId());
+        boolean hasPaymentFilters = paymentClient.hasPaymentFilters(normalizedRequest);
+        List<String> paymentFilteredOrderIds = hasPaymentFilters
+                ? paymentClient.searchOrderIds(normalizedRequest)
+                : List.of();
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -60,17 +67,22 @@ public class OrderManagementService {
                 Sort.by(parseDirection(direction), normalizeSortBy(sortBy))
         );
 
-        Page<Order> orders = orderRepository.findAll(buildSpecification(normalizedRequest, effectiveCinemaId), pageable);
+        Page<Order> orders = orderRepository.findAll(
+                buildSpecification(normalizedRequest, effectiveCinemaId, hasPaymentFilters, paymentFilteredOrderIds),
+                pageable
+        );
         List<String> orderIds = orders.getContent().stream().map(Order::getId).filter(StringUtils::hasText).toList();
         Map<String, List<OrderDetail>> orderDetailsByOrderId = loadOrderDetails(orderIds);
         Map<String, List<ShowScheduleDetail>> showScheduleDetailsByOrderId = loadShowScheduleDetails(orderIds);
         Map<String, ShowScheduleSnapshot> showSchedulesById = loadShowSchedules(showScheduleDetailsByOrderId.values());
+        Map<String, PaymentSnapshot> paymentsByOrderId = loadPayments(orderIds);
 
         return orders.map(order -> toSummaryResponse(
                 order,
                 orderDetailsByOrderId,
                 showScheduleDetailsByOrderId,
-                showSchedulesById
+                showSchedulesById,
+                paymentsByOrderId
         ));
     }
 
@@ -86,11 +98,17 @@ public class OrderManagementService {
         List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_IdIn(List.of(orderId));
         List<ShowScheduleDetail> showScheduleDetails = showScheduleDetailRepository.findByOrder_IdIn(List.of(orderId));
         Map<String, ShowScheduleSnapshot> showSchedulesById = loadShowSchedules(Map.of(orderId, showScheduleDetails).values());
+        Map<String, PaymentSnapshot> paymentsByOrderId = loadPayments(List.of(orderId));
 
-        return toDetailResponse(order, orderDetails, showScheduleDetails, showSchedulesById);
+        return toDetailResponse(order, orderDetails, showScheduleDetails, showSchedulesById, paymentsByOrderId.get(orderId));
     }
 
-    private Specification<Order> buildSpecification(OrderSearchRequest request, String cinemaId) {
+    private Specification<Order> buildSpecification(
+            OrderSearchRequest request,
+            String cinemaId,
+            boolean hasPaymentFilters,
+            List<String> paymentFilteredOrderIds
+    ) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new java.util.ArrayList<>();
 
@@ -146,6 +164,14 @@ public class OrderManagementService {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("totalPayment"), request.getMaxTotalPayment()));
             }
 
+            if (hasPaymentFilters) {
+                if (paymentFilteredOrderIds == null || paymentFilteredOrderIds.isEmpty()) {
+                    predicates.add(criteriaBuilder.disjunction());
+                } else {
+                    predicates.add(root.get("id").in(paymentFilteredOrderIds));
+                }
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -154,12 +180,14 @@ public class OrderManagementService {
             Order order,
             Map<String, List<OrderDetail>> orderDetailsByOrderId,
             Map<String, List<ShowScheduleDetail>> showScheduleDetailsByOrderId,
-            Map<String, ShowScheduleSnapshot> showSchedulesById
+            Map<String, ShowScheduleSnapshot> showSchedulesById,
+            Map<String, PaymentSnapshot> paymentsByOrderId
     ) {
         List<OrderDetail> orderDetails = orderDetailsByOrderId.getOrDefault(order.getId(), List.of());
         List<ShowScheduleDetail> showScheduleDetails = showScheduleDetailsByOrderId.getOrDefault(order.getId(), List.of());
         String showScheduleId = extractShowScheduleId(showScheduleDetails);
         ShowScheduleSnapshot showSchedule = showScheduleId == null ? null : showSchedulesById.get(showScheduleId);
+        PaymentSnapshot payment = paymentsByOrderId.get(order.getId());
 
         return OrderSummaryResponse.builder()
                 .id(order.getId())
@@ -183,6 +211,17 @@ public class OrderManagementService {
                 .pointDiscount(order.getPointDiscount())
                 .promotionDiscount(order.getPromotionDiscount())
                 .totalPayment(order.getTotalPayment())
+                .paymentId(payment == null ? null : payment.getId())
+                .paymentMethod(payment == null ? null : payment.getMethod())
+                .paymentStatus(payment == null ? null : payment.getStatus())
+                .paymentAmount(payment == null ? null : payment.getAmount())
+                .paymentCurrency(payment == null ? null : payment.getCurrency())
+                .paymentCode(payment == null ? null : payment.getPaymentCode())
+                .providerTransactionId(payment == null ? null : payment.getProviderTransactionId())
+                .paidAt(payment == null ? null : payment.getPaidAt())
+                .paymentCreatedAt(payment == null ? null : payment.getCreatedAt())
+                .paymentUpdatedAt(payment == null ? null : payment.getUpdatedAt())
+                .paymentExpiredAt(payment == null ? null : payment.getExpiredAt())
                 .seatCount(countSeats(showScheduleDetails))
                 .productCount(countProducts(orderDetails))
                 .promotionCode(order.getPromotion() == null ? null : order.getPromotion().getCode())
@@ -226,11 +265,22 @@ public class OrderManagementService {
         return checkoutPartnerGateway.getShowScheduleSnapshots(showScheduleIds);
     }
 
+    private Map<String, PaymentSnapshot> loadPayments(List<String> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return paymentClient.getPaymentsByOrderIds(orderIds)
+                .blockOptional()
+                .orElse(Map.of());
+    }
+
     private OrderDetailResponse toDetailResponse(
             Order order,
             List<OrderDetail> orderDetails,
             List<ShowScheduleDetail> showScheduleDetails,
-            Map<String, ShowScheduleSnapshot> showSchedulesById
+            Map<String, ShowScheduleSnapshot> showSchedulesById,
+            PaymentSnapshot payment
     ) {
         java.util.concurrent.CompletableFuture<OrderContext> contextFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> buildContext(order, showScheduleDetails, showSchedulesById));
         java.util.concurrent.CompletableFuture<List<OrderDetailResponse.OrderProductResponse>> productsFuture = java.util.concurrent.CompletableFuture.supplyAsync(() -> buildProductResponses(orderDetails));
@@ -266,6 +316,18 @@ public class OrderManagementService {
                 .pointDiscount(order.getPointDiscount())
                 .promotionDiscount(order.getPromotionDiscount())
                 .totalPayment(order.getTotalPayment())
+                .paymentId(payment == null ? null : payment.getId())
+                .paymentMethod(payment == null ? null : payment.getMethod())
+                .paymentStatus(payment == null ? null : payment.getStatus())
+                .paymentAmount(payment == null ? null : payment.getAmount())
+                .paymentCurrency(payment == null ? null : payment.getCurrency())
+                .paymentCode(payment == null ? null : payment.getPaymentCode())
+                .providerTransactionId(payment == null ? null : payment.getProviderTransactionId())
+                .providerResponse(payment == null ? null : payment.getProviderResponse())
+                .paidAt(payment == null ? null : payment.getPaidAt())
+                .paymentCreatedAt(payment == null ? null : payment.getCreatedAt())
+                .paymentUpdatedAt(payment == null ? null : payment.getUpdatedAt())
+                .paymentExpiredAt(payment == null ? null : payment.getExpiredAt())
                 .qrCode(order.getQrCode())
                 .promotionCode(order.getPromotion() == null ? null : order.getPromotion().getCode())
                 .pointsRedeemed((int) Math.round(order.getPointDiscount() / 1000.0))

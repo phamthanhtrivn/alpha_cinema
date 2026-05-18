@@ -5,7 +5,7 @@ services:
       dockerfile: infrastructure/config-server/Dockerfile
     container_name: config-server
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8888:8888"
     restart: always

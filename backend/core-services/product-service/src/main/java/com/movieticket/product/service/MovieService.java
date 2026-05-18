@@ -16,6 +16,7 @@ import com.movieticket.product.specification.MovieSpecification;
 import com.movieticket.product.util.CloudinaryUtil;
 import com.movieticket.product.util.mapper.MovieMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 
 public class MovieService {
     private final MovieRepository movieRepository;
@@ -81,6 +83,10 @@ public class MovieService {
         Pageable pageable = PageRequest.of(0, size);
 
         return movieRepository.findMovieSuggestions(query, pageable);
+    }
+
+    public List<SelectionDTO> getNowShowingSuggestions() {
+        return movieRepository.findAllNowShowingSuggestions();
     }
 
     @Transactional
@@ -145,4 +151,22 @@ public class MovieService {
         movieRepository.delete(movie);
     }
 
+    @Transactional
+    public void updateRatingInfo(String id, Long totalReviews, Double totalSumRating, Long timestamp) {
+        double avgRating = (totalReviews != null && totalReviews > 0) ? (totalSumRating / totalReviews) : 0.0;
+        int updated = movieRepository.updateRatingInfo(id, totalReviews, totalSumRating, avgRating, timestamp);
+        if (updated > 0) {
+            log.info("Cập nhật rating thành công cho phim: {}", id);
+        } else {
+            log.warn("Bỏ qua cập nhật rating cho phim: {}", id);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<MoviePublicDTO> getMoviesByIds(List<String> ids) {
+        List<Movie> movies = movieRepository.findAllById(ids);
+        return movies.stream()
+                .map(movieMapper::toResponsePublic)
+                .toList();
+    }
 }

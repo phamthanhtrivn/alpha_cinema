@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql-db:3306/alpha_product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3305}/alpha_product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: ${DB_PASSWORD}
   jpa:
@@ -25,12 +25,25 @@ spring:
       password: ${REDIS_PASSWORD}
       timeout: 6000ms
       connect-timeout: 2000ms
-
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    consumer:
+      group-id: product-service
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.use.type.headers: true
+        spring.json.trusted.packages: "com.movieticket.*"
+        spring.json.type.mapping: > 
+          movie_rating_update_event:com.movieticket.product.event.model.MovieRatingUpdateEvent
 eureka:
   client:
     service-url:
       # Nơi đăng ký với Eureka Server với tên là product-service
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
   instance:
     prefer-ip-address: true
 
@@ -39,3 +52,9 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
+
+external-services:
+  cinema-service: 
+    base-url: ${CINEMA_SERVICE_BASE_URL}
+  order-service:
+    base-url: ${ORDER_SERVICE_BASE_URL}

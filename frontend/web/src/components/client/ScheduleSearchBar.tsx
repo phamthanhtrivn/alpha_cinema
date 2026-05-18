@@ -5,6 +5,7 @@ import { showScheduleService } from '../../services/show-schedule.service';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatHHmm } from '@/utils/formatTime';
+import type { SelectionDTO } from '@/types/movie';
 
 const ScheduleSearchBar: React.FC = () => {
     const navigate = useNavigate();
@@ -13,10 +14,10 @@ const ScheduleSearchBar: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [selectedShowtimeId, setSelectedShowtimeId] = useState<string>('');
 
-    // 1. Get NOW_SHOWING movies (will reuse cache from Home page if available)
-    const { data: movies = [] } = useQuery({
-        queryKey: ['movies', 'NOW_SHOWING'],
-        queryFn: () => movieService.clientGetMovie('NOW_SHOWING', '').then(res => res.data.content),
+    // 1. Get NOW_SHOWING movies suggestions
+    const { data: movies = [] } = useQuery<SelectionDTO[]>({
+        queryKey: ['movies-suggestions-now-showing'],
+        queryFn: () => movieService.clientGetNowShowingSuggestions().then(res => res.data),
         staleTime: 1000 * 60 * 5,
     });
 
@@ -40,8 +41,6 @@ const ScheduleSearchBar: React.FC = () => {
         queryFn: () => showScheduleService.getMovieShowtimeOnDate(selectedMovieId, selectedCinemaId, selectedDate).then(res => res.data),
         enabled: !!selectedMovieId && !!selectedCinemaId && !!selectedDate,
     });
-
-    console.log('showtimes', showtimesResponse);
 
     const showtimes = showtimesResponse || [];
 
@@ -74,7 +73,7 @@ const ScheduleSearchBar: React.FC = () => {
     );
 
     return (
-        <div className="hidden md:block max-w-7xl mx-auto px-4 -mt-12 relative z-50">
+        <div className="hidden md:block max-w-7xl mx-auto px-4 -mt-12 relative z-49">
             <div className="bg-white rounded-sm shadow-2xl flex flex-col md:flex-row items-stretch overflow-hidden border border-slate-100">
 
                 {/* Step 1: Movie */}
@@ -82,7 +81,7 @@ const ScheduleSearchBar: React.FC = () => {
                     <div className="flex items-center px-4 py-4 h-full pointer-events-none">
                         <StepNumber number={1} />
                         <div className="flex-1 text-sm text-slate-700 truncate pr-6">
-                            {movies.find((m: any) => m.id === selectedMovieId)?.title || 'Chọn phim'}
+                            {movies.find((m) => m.id === selectedMovieId)?.label || 'Chọn phim'}
                         </div>
                         <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-alpha-blue transition-colors" />
                     </div>
@@ -92,8 +91,8 @@ const ScheduleSearchBar: React.FC = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     >
                         <option value="" disabled>Chọn phim</option>
-                        {movies.map((movie: any) => (
-                            <option key={movie.id} value={movie.id}>{movie.title}</option>
+                        {movies.map((movie) => (
+                            <option key={movie.id} value={movie.id}>{movie.label}</option>
                         ))}
                     </select>
                 </div>

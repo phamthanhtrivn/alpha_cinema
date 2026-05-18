@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql-db:3306/alpha_user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3305}/alpha_user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: ${DB_PASSWORD}
   jpa:
@@ -23,13 +23,17 @@ spring:
       timeout: 6000ms
       connect-timeout: 2000ms
   kafka:
-    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9094}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: true
-        spring.json.type.mapping: "otp_event:com.movieticket.user.event.model.SendOTPEvent"
+        spring.json.type.mapping: > 
+          otp_event:com.movieticket.user.event.model.SendOTPEvent,
+          review_moderation_event:com.movieticket.user.event.model.ReviewModerationEvent,
+          movie_rating_update_event:com.movieticket.user.event.model.MovieRatingUpdateEvent,
+          review_status_notification_event:com.movieticket.user.event.model.ReviewStatusNotificationEvent
     consumer:
       group-id: user-service
       auto-offset-reset: earliest
@@ -40,7 +44,9 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.use.type.headers: true
         spring.json.trusted.packages: "com.movieticket.*"
-        spring.json.type.mapping: "loyalty_event:com.movieticket.user.event.model.UserLoyaltyUpdateEvent"
+        spring.json.type.mapping: > 
+          loyalty_event:com.movieticket.user.event.model.UserLoyaltyUpdateEvent,
+          review_moderation_result_event:com.movieticket.user.event.model.ReviewModerationResultEvent
   mail:
     host: smtp.gmail.com
     port: 587
@@ -59,10 +65,15 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
   instance:
     prefer-ip-address: true
 
 rsa:
   private-key-path: ${RSA_PRIVATE_PATH}
   public-key-path: ${RSA_PUBLIC_PATH}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

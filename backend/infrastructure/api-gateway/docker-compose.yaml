@@ -5,7 +5,7 @@ services:
       dockerfile: infrastructure/api-gateway/Dockerfile
     container_name: api-gateway
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8080:8080"
     restart: always

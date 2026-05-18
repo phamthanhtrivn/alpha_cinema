@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"customer_id", "movie_id"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -41,6 +43,8 @@ public class Review {
 
     @Enumerated(EnumType.STRING)
     private ReviewType reviewType;
+
+    private String moderationReason;
 
     @PrePersist
     protected void onCreate() {

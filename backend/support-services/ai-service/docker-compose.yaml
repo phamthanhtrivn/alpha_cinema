@@ -5,9 +5,9 @@ services:
       dockerfile: support-services/ai-service/Dockerfile
     container_name: ai-service
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8088:8088"
     restart: always
-  networks:
+    networks:
       - alpha_network

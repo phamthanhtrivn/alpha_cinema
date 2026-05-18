@@ -7,7 +7,7 @@ import {
 import type { UserRole } from "@/types/user";
 
 interface Props {
-  type: "public" | "client" | "employee";
+  type: "public" | "guest" | "client" | "employee";
   allowedRoles?: UserRole[];
 }
 
@@ -25,6 +25,21 @@ const ProtectedRoute = ({ type, allowedRoles }: Props) => {
     if (isAuth && EMPLOYEE_ROLES.includes(role)) {
       return <Navigate to="/employee/redirect" replace />;
     }
+    return <Outlet />;
+  }
+
+  // =========================
+  // GUEST ONLY ROUTE
+  // =========================
+  if (type === "guest") {
+    if (isAuth) {
+      if (EMPLOYEE_ROLES.includes(role)) {
+        return <Navigate to="/employee/redirect" replace />;
+      }
+
+      return <Navigate to="/" replace />;
+    }
+
     return <Outlet />;
   }
 

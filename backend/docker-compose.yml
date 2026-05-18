@@ -9,6 +9,7 @@ include:
   - ./infrastructure/config-server/docker-compose.yaml
   - ./infrastructure/api-gateway/docker-compose.yaml
   - ./support-services/notification-service/docker-compose.yaml
+  - ./support-services/ai-service/docker-compose.yaml
 
 services:
   mysql-db:
@@ -33,6 +34,20 @@ services:
     restart: always
     volumes:
       - alpha_redis_data:/data
+    networks:
+      - alpha_network
+  ai-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: alpha-ai-postgres
+    ports:
+      - "${AI_POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${AI_POSTGRES_DB}
+      POSTGRES_USER: ${AI_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AI_POSTGRES_PASSWORD}
+    restart: always
+    volumes:
+      - alpha_ai_postgres_data:/var/lib/postgresql/data
     networks:
       - alpha_network
   kafka:
@@ -69,6 +84,7 @@ services:
 
 volumes:
   alpha_redis_data:
+  alpha_ai_postgres_data:
   alpha_kafka_data:
   alpha_mysql_data:
   

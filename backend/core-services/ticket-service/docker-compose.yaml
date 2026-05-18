@@ -5,7 +5,7 @@ services:
       dockerfile: core-services/ticket-service/Dockerfile
     container_name: ticket-service
     env_file:
-      - ./.env
+      - ./.env.docker
     ports:
       - "8085:8085"
     restart: always

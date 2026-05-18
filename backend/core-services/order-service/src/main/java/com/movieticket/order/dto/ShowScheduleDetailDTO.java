@@ -9,6 +9,7 @@ import lombok.Setter;
 public class ShowScheduleDetailDTO {
     private Long id;
     private String showScheduleId;
+    private String movieId;
     private String seatId;
     private ShowSeatType showSeatType;
 }

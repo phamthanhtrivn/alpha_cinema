@@ -12,12 +12,12 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class MovieDetailPublicDTO {
     private String id;
     private String title;
     private int duration;
-    private int avgRating;
+    private Double avgRating;
+    private Long totalReviews;
     private LocalDate premiereDate;
     private String producer;
     private String description;
