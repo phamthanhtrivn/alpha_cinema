@@ -155,13 +155,13 @@ export function AiChatbotStats({ data, isLoading, detailPath }: AiChatbotStatsPr
             </div>
             <div className="space-y-4">
               <AudienceBar
-                label="Thanh vien"
+                label="Thành viên"
                 value={data.memberConversations}
                 percent={memberPercent}
                 className="bg-sky-500"
               />
               <AudienceBar
-                label="Guest"
+                label="Khach vãng lai"
                 value={data.guestConversations}
                 percent={guestPercent}
                 className="bg-slate-500"
@@ -196,7 +196,7 @@ export function AiChatbotStats({ data, isLoading, detailPath }: AiChatbotStatsPr
                   </div>
                 ))
               ) : (
-                <EmptyLine text="Chua co cau hoi pho bien." />
+                <EmptyLine text="Chưa có câu hỏi phổ biến." />
               )}
             </div>
           </div>
@@ -221,7 +221,7 @@ export function AiChatbotStats({ data, isLoading, detailPath }: AiChatbotStatsPr
                   </div>
                 ))
               ) : (
-                <EmptyLine text="Chua co cau hoi moi." />
+                <EmptyLine text="Chưa có câu hỏi gần đây." />
               )}
             </div>
           </div>
@@ -259,7 +259,7 @@ export function AiChatbotStats({ data, isLoading, detailPath }: AiChatbotStatsPr
                 </div>
               ))
             ) : (
-              <EmptyLine text="Chua co hoi thoai da luu." />
+              <EmptyLine text="Chưa có hội thoại đã lưu." />
             )}
           </div>
         </div>
