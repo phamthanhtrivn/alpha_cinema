@@ -74,10 +74,6 @@ external-services:
 eureka:
   client:
     service-url:
-<<<<<<< HEAD
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
-=======
-      defaultZone: http://localhost:8761/eureka/
->>>>>>> main
   instance:
     prefer-ip-address: true
