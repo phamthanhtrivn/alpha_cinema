@@ -1,4 +1,4 @@
-package com.movieticket.ai.model;
+package com.movieticket.ai.enums;
 
 public enum ChatRole {
     USER,

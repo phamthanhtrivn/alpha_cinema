@@ -1,7 +1,7 @@
 package com.movieticket.ai.service;
 
 import com.movieticket.ai.dto.response.*;
-import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.enums.ChatRole;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import com.movieticket.ai.tool.AiCustomerContext;
 import com.movieticket.ai.tool.AlphaCinemaTool;

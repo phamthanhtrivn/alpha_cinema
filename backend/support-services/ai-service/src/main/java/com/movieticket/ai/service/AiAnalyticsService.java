@@ -2,7 +2,7 @@ package com.movieticket.ai.service;
 
 import com.movieticket.ai.dto.response.AiDashboardResponse;
 import com.movieticket.ai.dto.response.PopularQuestionResponse;
-import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.enums.ChatRole;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
