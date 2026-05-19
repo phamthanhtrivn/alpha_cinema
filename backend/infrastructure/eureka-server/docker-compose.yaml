@@ -1,0 +1,13 @@
+services:
+  eureka-server:
+    build:
+      context: ../..
+      dockerfile: infrastructure/eureka-server/Dockerfile
+    container_name: eureka-server
+    env_file:
+      - ./.env.docker
+    ports:
+      - "8761:8761"
+    restart: always
+    networks:
+      - alpha_network
