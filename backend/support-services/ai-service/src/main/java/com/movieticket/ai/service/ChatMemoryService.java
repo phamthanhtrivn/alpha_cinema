@@ -4,7 +4,7 @@ import com.movieticket.ai.dto.response.ChatClearResponse;
 import com.movieticket.ai.dto.response.ChatHistoryMessage;
 import com.movieticket.ai.model.ChatConversation;
 import com.movieticket.ai.model.ChatMessage;
-import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.enums.ChatRole;
 import com.movieticket.ai.repository.ChatConversationRepository;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;

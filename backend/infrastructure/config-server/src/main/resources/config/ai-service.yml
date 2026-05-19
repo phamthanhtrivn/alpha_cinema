@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://${AI_POSTGRES_HOST:localhost}:${AI_POSTGRES_PORT:5433}/${AI_POSTGRES_DB:alpha_ai}
-    username: ${AI_POSTGRES_USER:alpha_ai}
-    password: ${AI_POSTGRES_PASSWORD:alpha_ai_password}
+    url: jdbc:postgresql://${AI_POSTGRES_HOST}:${AI_POSTGRES_PORT}/${AI_POSTGRES_DB}
+    username: ${AI_POSTGRES_USER}
+    password: ${AI_POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

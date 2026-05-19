@@ -1,29 +1,29 @@
-include:
-  - ./core-services/user-service/docker-compose.yaml
-  - ./core-services/ticket-service/docker-compose.yaml
-  - ./core-services/cinema-management-service/docker-compose.yaml
-  - ./core-services/payment-service/docker-compose.yaml
-  - ./core-services/product-service/docker-compose.yaml
-  - ./core-services/order-service/docker-compose.yaml
-  - ./infrastructure/eureka-server/docker-compose.yaml
-  - ./infrastructure/config-server/docker-compose.yaml
-  - ./infrastructure/api-gateway/docker-compose.yaml
-  - ./support-services/notification-service/docker-compose.yaml
-  - ./support-services/ai-service/docker-compose.yaml
+# include:
+#   - ./core-services/user-service/docker-compose.yaml
+#   - ./core-services/ticket-service/docker-compose.yaml
+#   - ./core-services/cinema-management-service/docker-compose.yaml
+#   - ./core-services/payment-service/docker-compose.yaml
+#   - ./core-services/product-service/docker-compose.yaml
+#   - ./core-services/order-service/docker-compose.yaml
+#   - ./infrastructure/eureka-server/docker-compose.yaml
+#   - ./infrastructure/config-server/docker-compose.yaml
+#   - ./infrastructure/api-gateway/docker-compose.yaml
+#   - ./support-services/notification-service/docker-compose.yaml
+#   - ./support-services/ai-service/docker-compose.yaml
 
 services:
-  mysql-db:
-    image: mysql:8.0
-    container_name: alpha-mysql
-    ports:
-      - "3305:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - ./init-db:/docker-entrypoint-initdb.d # Tự động tạo user_db, ticket_db...
-      - alpha_mysql_data:/var/lib/mysql
-    networks:
-      - alpha_network
+  # mysql-db:
+  #   image: mysql:8.0
+  #   container_name: alpha-mysql
+  #   ports:
+  #     - "3305:3306"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+  #   volumes:
+  #     - ./init-db:/docker-entrypoint-initdb.d # Tự động tạo user_db, ticket_db...
+  #     - alpha_mysql_data:/var/lib/mysql
+  #   networks:
+  #     - alpha_network
 
   redis:
     image: redis:7
@@ -86,7 +86,7 @@ volumes:
   alpha_redis_data:
   alpha_ai_postgres_data:
   alpha_kafka_data:
-  alpha_mysql_data:
+  # alpha_mysql_data:
   
 networks:
   alpha_network:

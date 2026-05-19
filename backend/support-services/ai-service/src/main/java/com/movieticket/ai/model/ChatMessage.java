@@ -1,5 +1,6 @@
 package com.movieticket.ai.model;
 
+import com.movieticket.ai.enums.ChatRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

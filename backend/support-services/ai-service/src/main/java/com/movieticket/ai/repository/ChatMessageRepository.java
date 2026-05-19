@@ -2,7 +2,7 @@ package com.movieticket.ai.repository;
 
 import com.movieticket.ai.dto.response.PopularQuestionResponse;
 import com.movieticket.ai.model.ChatMessage;
-import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.enums.ChatRole;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
-    List<ChatMessage> findByConversationIdOrderByCreatedAtAsc(String conversationId);
 
     long countByConversationId(String conversationId);
 
