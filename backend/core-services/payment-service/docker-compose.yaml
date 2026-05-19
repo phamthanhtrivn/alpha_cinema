@@ -1,13 +1,13 @@
 services:
-  user-service:
+  payment-service:
     build:
       context: ../..
-      dockerfile: core-services/user-service/Dockerfile
-    container_name: user-service
+      dockerfile: core-services/payment-service/Dockerfile
+    container_name: payment-service
     env_file:
       - ./.env.docker
     ports:
-      - "8086:8086"
+      - "8083:8083"
     restart: always
     depends_on:
       - mysql-db
