@@ -37,10 +37,18 @@ public class PaymentCashResultEventListenter {
             return;
         }
 
-        if ("FAILED".equalsIgnoreCase(event.getStatus())
-                || "CANCELLED".equalsIgnoreCase(event.getStatus())
-                || "EXPIRED".equalsIgnoreCase(event.getStatus())) {
-            orderService.deleteOrder(event.getOrderId());
+        if ("FAILED".equalsIgnoreCase(event.getStatus())) {
+            orderService.updateOrderStatus(event.getOrderId(), OrderStatus.FAILED);
+            return;
+        }
+
+        if ("CANCELLED".equalsIgnoreCase(event.getStatus())) {
+            orderService.updateOrderStatus(event.getOrderId(), OrderStatus.CANCELLED);
+            return;
+        }
+
+        if ("EXPIRED".equalsIgnoreCase(event.getStatus())) {
+            orderService.updateOrderStatus(event.getOrderId(), OrderStatus.EXPIRED);
         }
     }
 }

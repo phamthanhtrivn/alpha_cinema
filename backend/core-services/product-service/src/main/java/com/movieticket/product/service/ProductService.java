@@ -65,14 +65,9 @@ public class ProductService {
         Map<String, Product> productsById = productRepository.findAllById(distinctIds).stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
-        for (String id : distinctIds) {
-            if (!productsById.containsKey(id)) {
-                throw new BusinessException("Product not found with id: " + id);
-            }
-        }
-
         return distinctIds.stream()
                 .map(productsById::get)
+                .filter(product -> product != null)
                 .toList();
     }
 

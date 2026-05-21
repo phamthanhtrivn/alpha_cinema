@@ -27,15 +27,17 @@ public class ProductDashboardAnalyticsService {
     public Map<String, Object> getDashboard(String range, Integer year, Integer month, Integer week, String cinemaId) {
         LocalDateTime[] bounds = resolveBounds(range, year, month, week);
         List<Movie> movies = movieRepository.findAll();
-        List<ShowSchedule> schedules = showScheduleRepository.findAll().stream()
+        List<ShowSchedule> allSchedules = showScheduleRepository.findAll().stream()
                 .filter(schedule -> cinemaId == null || cinemaId.isBlank() || cinemaId.equals(schedule.getCinemaId()))
-                .filter(schedule -> isInRange(schedule.getStartTime(), bounds))
                 .sorted(Comparator.comparing(ShowSchedule::getStartTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        List<ShowSchedule> schedules = allSchedules.stream()
+                .filter(schedule -> isInRange(schedule.getStartTime(), bounds))
                 .toList();
 
         return row(
                 "movies", movies(movies),
-                "schedules", schedules(schedules)
+                "schedules", schedules(schedules.isEmpty() ? fallbackSchedules(allSchedules) : schedules)
         );
     }
 
@@ -70,6 +72,21 @@ public class ProductDashboardAnalyticsService {
                         "soldSeats", 0,
                         "totalSeats", schedule.getAvailableSeat()
                 ))
+                .toList();
+    }
+
+    private List<ShowSchedule> fallbackSchedules(List<ShowSchedule> schedules) {
+        LocalDateTime now = LocalDateTime.now();
+        List<ShowSchedule> upcomingSchedules = schedules.stream()
+                .filter(schedule -> schedule.getStartTime() == null || !schedule.getStartTime().isBefore(now))
+                .toList();
+
+        if (!upcomingSchedules.isEmpty()) {
+            return upcomingSchedules;
+        }
+
+        return schedules.stream()
+                .sorted(Comparator.comparing(ShowSchedule::getStartTime, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 

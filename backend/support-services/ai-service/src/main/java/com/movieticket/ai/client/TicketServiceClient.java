@@ -115,6 +115,43 @@ public class TicketServiceClient {
                 .toList();
     }
 
+    public List<TicketPriceToolResponse> getShowtimeTicketPrices(String projectionType, String showTime) {
+        if (!StringUtils.hasText(showTime)) {
+            return List.of();
+        }
+
+        List<SeatTypeApiResponse> seatTypes = cinemaServiceClient.getSeatTypes();
+        Map<String, SeatTypeApiResponse> seatTypeById = seatTypes.stream()
+                .collect(Collectors.toMap(SeatTypeApiResponse::id, Function.identity(), (left, right) -> left));
+
+        ApiEnvelope<List<TicketPriceApiResponse>> response = call(
+                "getShowtimeTicketPrices",
+                "projectionType=" + safeForLog(projectionType) + ", showTime=" + safeForLog(showTime),
+                ticketWebClient.get()
+                        .uri(uriBuilder -> {
+                            var builder = uriBuilder
+                                    .path("/api/tickets/showtime-prices")
+                                    .queryParam("showTime", showTime);
+                            if (StringUtils.hasText(projectionType)) {
+                                builder.queryParam("projectionType", normalizeProjectionType(projectionType));
+                            }
+                            return builder.build();
+                        })
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<ApiEnvelope<List<TicketPriceApiResponse>>>() {
+                        })
+        );
+
+        if (response == null || response.data() == null) {
+            return List.of();
+        }
+
+        return response.data().stream()
+                .map(ticketPrice -> toToolResponse(ticketPrice, seatTypeById.get(ticketPrice.seatTypeId())))
+                .limit(MAX_TICKET_PRICES)
+                .toList();
+    }
+
     private List<TicketPriceToolResponse> determineTicketPricesBySeatTypeId(
             String seatTypeId,
             String projectionType,

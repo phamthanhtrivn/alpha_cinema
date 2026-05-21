@@ -1,10 +1,10 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.dto.ChatClearResponse;
-import com.movieticket.ai.dto.ChatHistoryMessage;
+import com.movieticket.ai.dto.response.ChatClearResponse;
+import com.movieticket.ai.dto.response.ChatHistoryMessage;
 import com.movieticket.ai.model.ChatConversation;
 import com.movieticket.ai.model.ChatMessage;
-import com.movieticket.ai.model.ChatRole;
+import com.movieticket.ai.enums.ChatRole;
 import com.movieticket.ai.repository.ChatConversationRepository;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +48,22 @@ public class ChatMemoryService {
                 .stream()
                 .map(this::toChatHistoryMessage)
                 .toList();
+    }
+
+    public List<ChatHistoryMessage> getConversationMessages(String conversationId) {
+        if (conversationId == null || conversationId.isBlank()) {
+            return List.of();
+        }
+
+        try {
+            return chatMemory.get(conversationId)
+                    .stream()
+                    .map(this::toChatHistoryMessage)
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("Failed to load chat history from ChatMemory. conversationId={}, error={}", conversationId, ex.getMessage());
+            return List.of();
+        }
     }
 
     public int countMessages(String conversationId) {

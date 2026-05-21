@@ -67,9 +67,6 @@ const MainHeader: React.FC = () => {
             <Link to="#" className="hover:text-alpha-blue transition-colors">
               Lịch Chiếu
             </Link>
-            <Link to="#" className="hover:text-alpha-blue transition-colors">
-              Khuyến Mãi
-            </Link>
           </div>
 
           {/* 3. USER ACTIONS & SEARCH */}

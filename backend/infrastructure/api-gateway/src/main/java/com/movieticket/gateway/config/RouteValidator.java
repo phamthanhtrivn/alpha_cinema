@@ -23,6 +23,7 @@ public class RouteValidator {
             "api/promotions/public",
             "/api/payments/vn-pay-callback",
             "/api/payments/momo-pay-callback",
+            "/api/payments/result",
             "/api/ai/chat",
             "/api/ai/chat/clear",
             "/api/ai/knowledge/ingest-policies",

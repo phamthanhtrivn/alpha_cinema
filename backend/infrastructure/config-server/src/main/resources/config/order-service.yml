@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3305}/alpha_order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: ${DB_PASSWORD}
   jpa:
@@ -65,6 +65,8 @@ external-services:
     base-url: ${PAYMENT_SERVICE_BASE_URL}
   cinema-service:
     base-url: ${CINEMA_SERVICE_BASE_URL}
+  ai-service:
+    base-url: ${AI_SERVICE_BASE_URL}
 
 logging:
   level:

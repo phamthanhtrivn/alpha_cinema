@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 import { Container } from '../common/Layout';
 
 const MainFooter: React.FC = () => {
@@ -16,17 +17,16 @@ const MainFooter: React.FC = () => {
           <div>
             <h4 className="font-bold text-slate-100 mb-6 uppercase text-xs tracking-widest">Quy định & Điều khoản</h4>
             <ul className="text-sm space-y-3">
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Điều khoản chung</a></li>
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Chính sách thanh toán</a></li>
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Chính sách bảo mật</a></li>
+              <li><Link to="/dieu-khoan-chung" className="hover:text-alpha-blue transition-colors">Điều khoản chung</Link></li>
+              <li><Link to="/chinh-sach-thanh-toan" className="hover:text-alpha-blue transition-colors">Chính sách thanh toán</Link></li>
+              <li><Link to="/chinh-sach-bao-mat" className="hover:text-alpha-blue transition-colors">Chính sách bảo mật</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-slate-100 mb-6 uppercase text-xs tracking-widest">Liên kết</h4>
             <ul className="text-sm space-y-3">
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Về chúng tôi</a></li>
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Tuyển dụng</a></li>
-              <li><a href="#" className="hover:text-alpha-blue transition-colors">Liên hệ quảng cáo</a></li>
+              <li><Link to="/ve-chung-toi" className="hover:text-alpha-blue transition-colors">Về chúng tôi</Link></li>
+              <li><Link to="/tuyen-dung" className="hover:text-alpha-blue transition-colors">Tuyển dụng</Link></li>
             </ul>
           </div>
           <div>

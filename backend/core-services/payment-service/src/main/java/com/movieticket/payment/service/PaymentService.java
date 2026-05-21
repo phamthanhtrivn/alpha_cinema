@@ -2,9 +2,10 @@ package com.movieticket.payment.service;
 
 import com.movieticket.payment.dto.request.InitiatePaymentRequest;
 import com.movieticket.payment.dto.response.InitiatePaymentResponse;
+import com.movieticket.payment.dto.response.PaymentResultResponse;
 import com.movieticket.payment.entity.Payment;
-import com.movieticket.payment.entity.PaymentMethod;
-import com.movieticket.payment.entity.PaymentStatus;
+import com.movieticket.payment.enums.PaymentMethod;
+import com.movieticket.payment.enums.PaymentStatus;
 import com.movieticket.payment.event.model.PaymentResultEvent;
 import com.movieticket.payment.event.producer.PaymentCashResultEventProducer;
 import com.movieticket.payment.event.producer.PaymentResultEventProducer;
@@ -20,14 +21,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.security.MessageDigest;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +47,9 @@ public class PaymentService {
 
     @Value("${payment.frontend-base-url}")
     private String frontendUrl;
+
+    @Value("${payment.result-token-secret:movie-ticket-payment-result-secret}")
+    private String resultTokenSecret;
 
     @PostConstruct
     void init() {
@@ -94,8 +103,8 @@ public class PaymentService {
     private void handleCallback(PaymentMethod method, HttpServletRequest request, HttpServletResponse response) throws IOException {
         PaymentStrategy strategy = getStrategy(method);
         PaymentCallbackResult callbackResult = strategy.parseCallback(request);
-        processPaymentResult(callbackResult, method);
-        redirectToFrontend(response, callbackResult.getOrderId(), PaymentStatus.SUCCESS.equals(callbackResult.getStatus()));
+        PaymentStatus resultStatus = processPaymentResult(callbackResult, method);
+        redirectToFrontend(response, callbackResult.getOrderId(), resultStatus);
     }
 
     private Payment createPaymentFromInitiateRequest(String orderId, InitiatePaymentRequest request) {
@@ -120,7 +129,7 @@ public class PaymentService {
         return strategy;
     }
 
-    private void processPaymentResult(PaymentCallbackResult callbackResult, PaymentMethod method) {
+    private PaymentStatus processPaymentResult(PaymentCallbackResult callbackResult, PaymentMethod method) {
         String orderId = callbackResult.getOrderId();
         if (orderId == null || orderId.isBlank()) {
             throw new BusinessException("Order id is required in callback");
@@ -133,11 +142,11 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.EXPIRED);
             payment.setProviderResponse("Payment expired");
             paymentRepository.save(payment);
-            return;
+            return PaymentStatus.EXPIRED;
         }
 
         if (PaymentStatus.SUCCESS.equals(payment.getStatus())) {
-            return;
+            return PaymentStatus.SUCCESS;
         }
 
         payment.setMethod(method);
@@ -161,15 +170,100 @@ public class PaymentService {
                 .paidAt(saved.getPaidAt())
                 .occurredAt(LocalDateTime.now())
                 .build());
+        return saved.getStatus();
     }
 
-    private void redirectToFrontend(HttpServletResponse response, String orderId, boolean success) throws IOException {
-        String encodedOrderId = URLEncoder.encode(orderId == null ? "" : orderId, StandardCharsets.UTF_8);
-        if (success) {
-            response.sendRedirect(frontendUrl + "/profile?tab=history" + encodedOrderId);
+    private void redirectToFrontend(HttpServletResponse response, String orderId, PaymentStatus status) throws IOException {
+        String encodedToken = URLEncoder.encode(createResultToken(orderId, status), StandardCharsets.UTF_8);
+        if (PaymentStatus.SUCCESS.equals(status)) {
+            response.sendRedirect(frontendUrl + "/payment/success?token=" + encodedToken);
             return;
         }
-        response.sendRedirect(frontendUrl + "/payment/failed?orderId=" + encodedOrderId);
+        response.sendRedirect(frontendUrl + "/payment/failed?token=" + encodedToken);
+    }
+
+    @Transactional(readOnly = true)
+    public PaymentResultResponse getPaymentResult(String token) {
+        PaymentResultPayload payload = verifyResultToken(token);
+        Payment payment = paymentRepository.findByOrderId(payload.orderId())
+                .orElseThrow(() -> new BusinessException("Không tìm thấy thanh toán của đơn hàng"));
+
+        if (!payment.getStatus().name().equals(payload.status())) {
+            throw new BusinessException("Trạng thái thanh toán không hợp lệ");
+        }
+
+        return PaymentResultResponse.builder()
+                .orderId(payment.getOrderId())
+                .status(payment.getStatus().name())
+                .success(PaymentStatus.SUCCESS.equals(payment.getStatus()))
+                .method(payment.getMethod() == null ? null : payment.getMethod().name())
+                .amount(payment.getAmount())
+                .providerTransactionId(payment.getProviderTransactionId())
+                .message(payment.getProviderResponse())
+                .paidAt(payment.getPaidAt())
+                .build();
+    }
+
+    private String createResultToken(String orderId, PaymentStatus status) {
+        long expiresAt = LocalDateTime.now().plusMinutes(30).toEpochSecond(ZoneOffset.UTC);
+        String payload = String.join("|", orderId == null ? "" : orderId, status.name(), String.valueOf(expiresAt));
+        return base64Url(payload.getBytes(StandardCharsets.UTF_8)) + "." + base64Url(sign(payload));
+    }
+
+    private PaymentResultPayload verifyResultToken(String token) {
+        if (token == null || token.isBlank() || !token.contains(".")) {
+            throw new BusinessException("Liên kết kết quả thanh toán không hợp lệ");
+        }
+
+        String payload;
+        byte[] actualSignature;
+        try {
+            String[] parts = token.split("\\.", 2);
+            payload = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            actualSignature = Base64.getUrlDecoder().decode(parts[1]);
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException("Liên kết kết quả thanh toán không hợp lệ");
+        }
+
+        byte[] expectedSignature = sign(payload);
+
+        if (!MessageDigest.isEqual(expectedSignature, actualSignature)) {
+            throw new BusinessException("Liên kết kết quả thanh toán không hợp lệ");
+        }
+
+        String[] values = payload.split("\\|", 3);
+        if (values.length != 3 || values[0].isBlank() || values[1].isBlank()) {
+            throw new BusinessException("Liên kết kết quả thanh toán không hợp lệ");
+        }
+
+        long expiresAt;
+        try {
+            expiresAt = Long.parseLong(values[2]);
+        } catch (NumberFormatException ex) {
+            throw new BusinessException("Liên kết kết quả thanh toán không hợp lệ");
+        }
+        if (LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) > expiresAt) {
+            throw new BusinessException("Liên kết kết quả thanh toán đã hết hạn");
+        }
+
+        return new PaymentResultPayload(values[0], values[1]);
+    }
+
+    private byte[] sign(String payload) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(resultTokenSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            return mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new BusinessException("Không thể xác thực kết quả thanh toán");
+        }
+    }
+
+    private String base64Url(byte[] value) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);
+    }
+
+    private record PaymentResultPayload(String orderId, String status) {
     }
 
     public boolean paymentByCash(String orderId, Double totalPayment) {
