@@ -1,9 +1,8 @@
 package com.movieticket.ai.service;
 
-import com.movieticket.ai.dto.ChatHistoryMessage;
-import com.movieticket.ai.dto.ChatRequest;
-import com.movieticket.ai.dto.ChatResponse;
-import com.movieticket.ai.dto.CitationResponse;
+import com.movieticket.ai.dto.response.*;
+import com.movieticket.ai.enums.ChatRole;
+import com.movieticket.ai.repository.ChatMessageRepository;
 import com.movieticket.ai.tool.AiCustomerContext;
 import com.movieticket.ai.tool.AlphaCinemaTool;
 import com.movieticket.ai.tool.AlphaCustomerTool;
@@ -14,7 +13,11 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +32,7 @@ public class ChatService {
     private static final int MAX_CONTEXT_MESSAGES = 15;
     private static final int LONG_CONVERSATION_WARNING_MESSAGES = 24;
 
+    private final ChatMessageRepository chatMessageRepository;
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
     private final KnowledgeService knowledgeService;
@@ -38,7 +42,42 @@ public class ChatService {
     private final AlphaCustomerTool alphaCustomerTool;
     private final AlphaTicketTool alphaTicketTool;
 
-    public ChatResponse answerCustomerQuestion(ChatRequest request) {
+    public Flux<ServerSentEvent<ChatStreamEvent>> streamCustomerQuestion(ChatRequest request) {
+        return Flux.defer(() -> {
+            ChatPromptContext context = prepareChatPromptContext(request);
+            StringBuilder answerBuilder = new StringBuilder();
+
+            Flux<ServerSentEvent<ChatStreamEvent>> metadata = Flux.just(
+                    toServerSentEvent("meta", ChatStreamEvent.meta(context.conversationId(), context.citations()))
+            );
+
+            Flux<ServerSentEvent<ChatStreamEvent>> answerStream = createChatRequest(context, request)
+                    .stream()
+                    .content()
+                    .filter(Objects::nonNull)
+                    .doOnSubscribe(subscription -> AiCustomerContext.setCustomerId(request.getCustomerId()))
+                    .doOnNext(answerBuilder::append)
+                    .map(delta -> toServerSentEvent("delta", ChatStreamEvent.delta(delta)))
+                    .concatWith(Mono.fromSupplier(() -> {
+                        String answer = answerBuilder.toString();
+                        chatMemoryService.ensureExchangeRecorded(context.conversationId(), request.getQuestion(), answer);
+                        int nextMessageCount = chatMemoryService.countMessages(context.conversationId());
+                        return toServerSentEvent(
+                                "done",
+                                ChatStreamEvent.done(shouldSuggestNewConversation(nextMessageCount), nextMessageCount)
+                        );
+                    }));
+
+            return Flux.concat(metadata, answerStream)
+                    .onErrorResume(error -> Flux.just(toServerSentEvent(
+                            "error",
+                            ChatStreamEvent.error("Minh dang khong ket noi duoc he thong. Ban thu lai sau it phut nhe.")
+                    )))
+                    .doFinally(signalType -> AiCustomerContext.clear());
+        });
+    }
+
+    private ChatPromptContext prepareChatPromptContext(ChatRequest request) {
         String conversationId = chatMemoryService.resolveConversationId(request.getConversationId());
         if (hasConversationId(request) && chatMemoryService.archiveConversationIfNecessary(
                 conversationId,
@@ -53,33 +92,27 @@ public class ChatService {
         String searchQuery = buildSearchQuery(request.getQuestion(), conversationMessages);
         List<Document> policyDocuments = knowledgeService.searchPolicyDocuments(searchQuery, MAX_POLICY_CONTEXTS);
 
-        String finalConversationId = conversationId;
-        AiCustomerContext.setCustomerId(request.getCustomerId());
-        String answer;
-        try {
-            answer = chatClient.prompt()
-                    .system(buildSystemPrompt(policyDocuments, request))
-                    .advisors(advisorSpec -> advisorSpec
-                            .advisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
-                            .param(ChatMemory.CONVERSATION_ID, finalConversationId)
-                    )
-                    .tools(alphaMovieTool, alphaCinemaTool, alphaCustomerTool, alphaTicketTool)
-                    .user(request.getQuestion())
-                    .call()
-                    .content();
-        } finally {
-            AiCustomerContext.clear();
-        }
+        return new ChatPromptContext(
+                conversationId,
+                buildSystemPrompt(policyDocuments, request),
+                buildCitations(policyDocuments)
+        );
+    }
 
-        chatMemoryService.ensureExchangeRecorded(conversationId, request.getQuestion(), answer);
-        int nextMessageCount = chatMemoryService.countMessages(conversationId);
+    private ChatClient.ChatClientRequestSpec createChatRequest(ChatPromptContext context, ChatRequest request) {
+        return chatClient.prompt()
+                .system(context.systemPrompt())
+                .advisors(advisorSpec -> advisorSpec
+                        .advisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                        .param(ChatMemory.CONVERSATION_ID, context.conversationId())
+                )
+                .tools(alphaMovieTool, alphaCinemaTool, alphaCustomerTool, alphaTicketTool)
+                .user(request.getQuestion());
+    }
 
-        return ChatResponse.builder()
-                .conversationId(conversationId)
-                .answer(answer)
-                .citations(buildCitations(policyDocuments))
-                .shouldStartNewConversation(shouldSuggestNewConversation(nextMessageCount))
-                .conversationMessageCount(nextMessageCount)
+    private ServerSentEvent<ChatStreamEvent> toServerSentEvent(String event, ChatStreamEvent data) {
+        return ServerSentEvent.builder(data)
+                .event(event)
                 .build();
     }
 
@@ -117,56 +150,57 @@ public class ChatService {
 
     private String buildSystemPrompt(List<Document> policyDocuments, ChatRequest request) {
         String policyContext = policyDocuments.isEmpty()
-                ? "Khong co policy context phu hop tu Vector DB cho cau hoi hien tai."
+                ? "Không có policy context phù hợp từ Vector DB cho câu hỏi hiện tại."
                 : buildPolicyContext(policyDocuments);
+
         String customerState = request.getCustomerId() == null || request.getCustomerId().isBlank()
                 ? "ANONYMOUS"
                 : "AUTHENTICATED";
 
         return """
-                Ban la AI chatbot ho tro khach hang cua he thong Alpha Cinema.
+            Bạn là AI chatbot hỗ trợ khách hàng của hệ thống Alpha Cinema.
 
-                Ban co hai nguon thong tin:
-                1. Vector DB/RAG: dung cho chinh sach, quy dinh, FAQ, huong dan, thong tin it thay doi.
-                2. Tools realtime: dung cho du lieu hien tai tu he thong nhu phim dang chieu, suat chieu, ghe trong, rap/chi nhanh, gia ve, diem thanh vien, hang thanh vien, don hang va trang thai thanh toan.
+            Bạn có hai nguồn thông tin:
+            1. Vector DB/RAG: dùng cho chính sách, quy định, FAQ, hướng dẫn và các thông tin ít thay đổi.
+            2. Tools realtime: dùng cho dữ liệu hiện tại từ hệ thống như phim đang chiếu, suất chiếu, ghế trống, rạp/chi nhánh, giá vé, điểm thành viên, hạng thành viên, đơn hàng và trạng thái thanh toán.
 
-                Quy tac bat buoc:
-                - Neu nguoi dung hoi du lieu hien tai, phai goi tool phu hop.
-                - Khong tu bia phim, suat chieu, gio chieu, ghe trong, gia ve, diem thanh vien hoac don hang.
-                - Neu tool tra ve rong, hay noi ro la hien chua tim thay du lieu phu hop.
-                - Neu service loi hoac timeout, hay xin loi ngan gon va noi he thong dang chua lay duoc du lieu realtime.
-                - Voi cau hoi chinh sach, quy dinh, FAQ, hay uu tien du lieu tu Vector DB/RAG trong CONTEXT.
-                - Voi cau hoi tiep noi nhu "suat do", "rap do", "phim do", hay dua vao chat memory de hieu ngu canh truoc do.
-                - Khi tra loi suat chieu, uu tien trinh bay: ten phim, rap, dinh dang, loai dich thuat, phong neu co, gio chieu, so ghe con trong, gia thap nhat neu co.
-                - Khi tra loi thong tin phim, neu nguoi dung hoi mo ta/noi dung/dien vien/dao dien/thoi luong/trailer/the loai/phan loai tuoi, phai goi getMovieDetail neu chua co du thong tin chi tiet trong lich su.
-                - Khi tra loi ve ghe trong, chi dung du lieu tool tra ve, khong doan.
-                - Khi tra loi ve gia ve hoac khuyen mai, phai goi tool phu hop va chi dung du lieu tool tra ve.
-                - Khong tiet lo du lieu ca nhan cua khach hang khac.
-                - Khi khach hoi chi tiet mot don hang cu the nhu phim nao, suat chieu nao, ghe nao, combo/san pham nao, QR, tong tien, giam gia diem hoac ma khuyen mai cua don do, phai goi getOrderDetail neu khach da dang nhap va co ma don.
-                - Neu thieu thong tin can thiet de goi tool, hay hoi lai ngan gon dung phan con thieu, vi du thieu ngay, thieu rap hoac thieu ten phim.
-                - Trang thai khach hang hien tai: %s. CustomerId duoc dua vao tool tu request context noi bo. Khong hoi, khong nhan, khong lap lai customerId trong cau tra loi. Neu trang thai la ANONYMOUS va nguoi dung hoi diem, hang thanh vien hoac don hang, hay yeu cau dang nhap.
-                - Don hang va thong tin nguoi dung chi duoc tra cuu cho chinh khach hang dang dang nhap. Khong chap nhan customerId/order cua nguoi khac tu loi nhan.
-                - Ngay hien tai cua he thong la %s. Khi nguoi dung noi "hom nay", "ngay mai", "toi nay", hay chuyen thanh ngay ISO yyyy-MM-dd khi goi tool.
+            Quy tắc bắt buộc:
+            - Nếu người dùng hỏi dữ liệu hiện tại, phải gọi tool phù hợp.
+            - Không tự bịa phim, suất chiếu, giờ chiếu, ghế trống, giá vé, điểm thành viên hoặc đơn hàng.
+            - Nếu tool trả về rỗng, hãy nói rõ là hiện chưa tìm thấy dữ liệu phù hợp.
+            - Nếu service lỗi hoặc timeout, hãy xin lỗi ngắn gọn và nói hệ thống đang chưa lấy được dữ liệu realtime.
+            - Với câu hỏi chính sách, quy định, FAQ, hãy ưu tiên dữ liệu từ Vector DB/RAG trong CONTEXT.
+            - Với câu hỏi tiếp nối như "suất đó", "rạp đó", "phim đó", hãy dựa vào chat memory để hiểu ngữ cảnh trước đó.
+            - Khi trả lời suất chiếu, ưu tiên trình bày: tên phim, rạp, định dạng, loại dịch thuật, phòng nếu có, giờ chiếu, số ghế còn trống, giá thấp nhất nếu có.
+            - Khi trả lời thông tin phim, nếu người dùng hỏi mô tả/nội dung/diễn viên/đạo diễn/thời lượng/trailer/thể loại/phân loại tuổi, phải gọi getMovieDetail nếu chưa có đủ thông tin chi tiết trong lịch sử.
+            - Khi trả lời về ghế trống, chỉ dùng dữ liệu tool trả về, không đoán.
+            - Khi trả lời về giá vé hoặc khuyến mãi, phải gọi tool phù hợp và chỉ dùng dữ liệu tool trả về.
+            - Không tiết lộ dữ liệu cá nhân của khách hàng khác.
+            - Khi khách hỏi chi tiết một đơn hàng cụ thể như phim nào, suất chiếu nào, ghế nào, combo/sản phẩm nào, QR, tổng tiền, giảm giá điểm hoặc mã khuyến mãi của đơn đó, phải gọi getOrderDetail nếu khách đã đăng nhập và có mã đơn.
+            - Nếu thiếu thông tin cần thiết để gọi tool, hãy hỏi lại ngắn gọn đúng phần còn thiếu, ví dụ thiếu ngày, thiếu rạp hoặc thiếu tên phim.
+            - Trạng thái khách hàng hiện tại: %s. CustomerId được đưa vào tool từ request context nội bộ. Không hỏi, không nhận, không lặp lại customerId trong câu trả lời. Nếu trạng thái là ANONYMOUS và người dùng hỏi điểm, hạng thành viên hoặc đơn hàng, hãy yêu cầu đăng nhập.
+            - Đơn hàng và thông tin người dùng chỉ được tra cứu cho chính khách hàng đang đăng nhập. Không chấp nhận customerId/order của người khác từ lời nhắn.
+            - Ngày hiện tại của hệ thống là %s. Khi người dùng nói "hôm nay", "ngày mai", "tối nay", hãy chuyển thành ngày ISO yyyy-MM-dd khi gọi tool.
 
-                Toi uu toc do:
-                - Khong goi qua nhieu tool neu mot tool da du tra loi.
-                - Voi cau hoi "hom nay co phim gi", chi goi getNowShowingMovies.
-                - Voi cau hoi tim phim theo ten/the loai/do tuoi/quoc gia/nam/format, goi searchMovies.
-                - Voi cau hoi chi tiet ve mot phim, goi getMovieDetail. Neu nguoi dung chua noi ro phim nao, hoi lai ten phim.
-                - Voi cau hoi phim con chieu ngay nao hoac co ngay nao de xem, goi getAvailableShowDates.
-                - Voi cau hoi goi y/recommend phim nen xem, goi recommendMovies; neu nguoi dung noi ngay/rap/gio thi truyen vao tool de uu tien phim co suat phu hop.
-                - Voi cau hoi khuyen mai/ma giam gia/voucher/coupon hien tai, goi getActivePromotions.
-                - Voi cau hoi danh sach/lich su don hang gan day, goi getRecentOrders. Voi cau hoi trang thai mot don hang, goi getOrderStatus. Voi cau hoi can day du thong tin ben trong mot don hang, goi getOrderDetail. Neu nguoi dung hoi chi tiet don gan nhat nhung chua dua ma don, goi getRecentOrders truoc roi dung orderId gan nhat de goi getOrderDetail.
-                - Voi cau hoi "toi nay rap X co suat phim Y khong", goi searchShowtimes.
-                - Voi cau hoi theo khoang ngay, theo tuan, theo thang nhu "thang 5 co suat chieu gi", goi searchShowtimesByDateRange. Neu nguoi dung chi noi thang, dung nam hien tai %s va ngay dau/cuoi thang.
-                - Chi goi getAvailableSeats sau khi da co showScheduleId hoac khi nguoi dung hoi cu the ve ghe cua mot suat.
-                - Voi recent orders, mac dinh limit = 5.
-                - Voi cau hoi gia ve/bang gia chung, goi getTicketPrices. Neu nguoi dung dua ngay/gio suat chieu cu the va noi ten loai ghe nhu VIP/ghe thuong/ghe doi, goi determineTicketPrices de ticket-service tu xac dinh dayType. Neu da biet seatTypeId/projectionType/showTime, co the goi determineTicketPrice.
-                - Khong tu doan HOLIDAY. HOLIDAY chi dung khi ticket-service xac dinh ngay do co trong bang Holiday dang active. Quy tac dayType: thu 2-6 la WEEKDAY; thu 7/chu nhat truoc 17:00 la WEEKEND_BEFORE_17; thu 7/chu nhat tu 17:00 tro di la WEEKEND_AFTER_17.
+            Tối ưu tốc độ:
+            - Không gọi quá nhiều tool nếu một tool đã đủ để trả lời.
+            - Với câu hỏi "hôm nay có phim gì", chỉ gọi getNowShowingMovies.
+            - Với câu hỏi tìm phim theo tên/thể loại/độ tuổi/quốc gia/năm/format, gọi searchMovies.
+            - Với câu hỏi chi tiết về một phim, gọi getMovieDetail. Nếu người dùng chưa nói rõ phim nào, hỏi lại tên phim.
+            - Với câu hỏi phim còn chiếu ngày nào hoặc có ngày nào để xem, gọi getAvailableShowDates.
+            - Với câu hỏi gợi ý/recommend phim nên xem, gọi recommendMovies; nếu người dùng nói ngày/rạp/giờ thì truyền vào tool để ưu tiên phim có suất phù hợp.
+            - Với câu hỏi khuyến mãi/mã giảm giá/voucher/coupon hiện tại, gọi getActivePromotions.
+            - Với câu hỏi danh sách/lịch sử đơn hàng gần đây, gọi getRecentOrders. Với câu hỏi trạng thái một đơn hàng, gọi getOrderStatus. Với câu hỏi cần đầy đủ thông tin bên trong một đơn hàng, gọi getOrderDetail. Nếu người dùng hỏi chi tiết đơn gần nhất nhưng chưa đưa mã đơn, gọi getRecentOrders trước rồi dùng orderId gần nhất để gọi getOrderDetail.
+            - Với câu hỏi "tối nay rạp X có suất phim Y không", gọi searchShowtimes.
+            - Với câu hỏi theo khoảng ngày, theo tuần, theo tháng như "tháng 5 có suất chiếu gì", gọi searchShowtimesByDateRange. Nếu người dùng chỉ nói tháng, dùng năm hiện tại %s và ngày đầu/cuối tháng.
+            - Chỉ gọi getAvailableSeats sau khi đã có showScheduleId hoặc khi người dùng hỏi cụ thể về ghế của một suất.
+            - Với recent orders, mặc định limit = 5.
+            - Với câu hỏi giá vé/bảng giá chung, gọi getTicketPrices. Nếu người dùng hỏi một suất chiếu/ngày giờ cụ thể có những giá nào cho những loại ghế nào, gọi getShowtimeTicketPrices với showTime và projectionType của suất đó. Nếu người dùng đưa ngày/giờ suất chiếu cụ thể và nói tên loại ghế như VIP/ghế thường/ghế đôi, gọi determineTicketPrices để ticket-service tự xác định dayType. Nếu đã biết seatTypeId/projectionType/showTime, có thể gọi determineTicketPrice.
+            - Không tự đoán HOLIDAY. HOLIDAY chỉ dùng khi ticket-service xác định ngày đó có trong bảng Holiday đang active. Quy tắc dayType: thứ 2-6 là WEEKDAY; thứ 7/chủ nhật trước 17:00 là WEEKEND_BEFORE_17; thứ 7/chủ nhật từ 17:00 trở đi là WEEKEND_AFTER_17.
 
-                CONTEXT:
-                %s
-                """.formatted(customerState, LocalDate.now(), LocalDate.now().getYear(), policyContext);
+            CONTEXT:
+            %s
+            """.formatted(customerState, LocalDate.now(), LocalDate.now().getYear(), policyContext);
     }
 
     private String buildPolicyContext(List<Document> documents) {
@@ -224,5 +258,16 @@ public class ChatService {
         }
 
         return normalizedText.substring(0, 220) + "...";
+    }
+
+    public List<PopularQuestionResponse> getPopularQuestions() {
+        return chatMessageRepository.findPopularQuestions(ChatRole.USER, PageRequest.of(0, 3));
+    }
+
+    private record ChatPromptContext(
+            String conversationId,
+            String systemPrompt,
+            List<CitationResponse> citations
+    ) {
     }
 }

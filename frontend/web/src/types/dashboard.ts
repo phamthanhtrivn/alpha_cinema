@@ -138,16 +138,40 @@ export interface AiQuestionStat {
 
 export interface AiConversation {
   id: string;
-  userName: string;
-  topic: string;
-  status: "RESOLVED" | "ESCALATED";
+  customerName: string;
+  guest: boolean;
+  messageCount: number;
+  createdAt: string;
+  archivedAt: string;
+  userName?: string;
+  topic?: string;
+  status?: "RESOLVED" | "ESCALATED";
+}
+
+export interface AiQuestionTrendPoint {
+  label: string;
+  questions: number;
+}
+
+export interface AiRecentQuestion {
+  id: number;
+  conversationId: string;
+  question: string;
   createdAt: string;
 }
 
 export interface AiChatbotAnalytics {
+  totalConversations: number;
+  totalUserQuestions: number;
+  totalAssistantAnswers: number;
+  averageMessagesPerConversation: number;
+  guestConversations: number;
+  memberConversations: number;
   totalChats: number;
   successRate: number;
   popularQuestions: AiQuestionStat[];
+  questionTrend: AiQuestionTrendPoint[];
+  recentQuestions: AiRecentQuestion[];
   recentConversations: AiConversation[];
 }
 

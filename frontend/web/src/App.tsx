@@ -23,6 +23,7 @@ import RoomManagement from "./pages/employee/admin/RoomManagement";
 import ScheduleManagement from "./pages/employee/admin/ScheduleManagement";
 import SeatManagement from "./pages/employee/admin/SeatManagement";
 import SeatTypeManagement from "./pages/employee/admin/SeatTypeManagement";
+import AiPolicyManagement from "./pages/employee/admin/AiPolicyManagement";
 
 // MANAGER
 import ManagerDashboard from "./pages/employee/manager/ManagerDashboard";
@@ -50,6 +51,13 @@ import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
 import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
+import { PaymentFailed } from "./pages/client/customer/PaymentFailed";
+import { PaymentSuccess } from "./pages/client/customer/PaymentSuccess";
+import PrivacyPolicy from "./pages/client/PrivacyPolicy";
+import PaymentPolicy from "./pages/client/PaymentPolicy";
+import TermsAndConditions from "./pages/client/TermsAndConditions";
+import AboutUs from "./pages/client/AboutUs";
+import Recruitment from "./pages/client/Recruitment";
 import MoviesPage from "./pages/client/Movies";
 
 // REDIRECT
@@ -100,12 +108,25 @@ function App() {
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
             <Route path="/booking/:id" element={<Booking />} />
-            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
-            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
+            <Route
+              path="/booking/:id/checkout/:sessionId"
+              element={<Checkout />}
+            />
+            <Route
+              path="/booking/:id/checkout/:sessionId/confirm"
+              element={<CheckoutConfirm />}
+            />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failed" element={<PaymentFailed />} />
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/cinematic" element={<Cinematic />} />
             <Route path="/movies" element={<MoviesPage />} />
+            <Route path="/chinh-sach-bao-mat" element={<PrivacyPolicy />} />
+            <Route path="/chinh-sach-thanh-toan" element={<PaymentPolicy />} />
+            <Route path="/dieu-khoan-chung" element={<TermsAndConditions />} />
+            <Route path="/ve-chung-toi" element={<AboutUs />} />
+            <Route path="/tuyen-dung" element={<Recruitment />} />
           </Route>
 
           {/* CLIENT LOGIN */}
@@ -126,8 +147,16 @@ function App() {
           >
             <Route path="/profile" element={<Profile />} />
             <Route path="/booking/:id" element={<Booking />} />
-            <Route path="/booking/:id/checkout/:sessionId" element={<Checkout />} />
-            <Route path="/booking/:id/checkout/:sessionId/confirm" element={<CheckoutConfirm />} />
+            <Route
+              path="/booking/:id/checkout/:sessionId"
+              element={<Checkout />}
+            />
+            <Route
+              path="/booking/:id/checkout/:sessionId/confirm"
+              element={<CheckoutConfirm />}
+            />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/failed" element={<PaymentFailed />} />
           </Route>
         </Route>
 
@@ -175,6 +204,7 @@ function App() {
                   path="admin/seat-types"
                   element={<SeatTypeManagement />}
                 />
+                <Route path="admin/ai" element={<AiPolicyManagement />} />
 
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>

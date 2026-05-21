@@ -1,7 +1,7 @@
 package com.movieticket.payment.dto.response;
 
-import com.movieticket.payment.entity.PaymentMethod;
-import com.movieticket.payment.entity.PaymentStatus;
+import com.movieticket.payment.enums.PaymentMethod;
+import com.movieticket.payment.enums.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

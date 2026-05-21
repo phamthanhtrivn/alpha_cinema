@@ -21,7 +21,7 @@ public class AlphaCustomerTool {
     private final UserServiceClient userServiceClient;
     private final OrderServiceClient orderServiceClient;
 
-    @Tool(description = "Lấy điểm tích lũy và hạng thành viên của khách hàng đang đăng nhập. Dùng khi người dùng hỏi về điểm, hạng thành viên hoặc ưu đãi thành viên.")
+    @Tool(description = "Lấy điểm tích lũy và hạng thành viên của khách hàng đang đăng nhập. Dùng khi người dùng hỏi về điểm hoặc điểm tích lũy, hạng thành viên hoặc ưu đãi thành viên tại thời điểm hiện tại.")
     public CustomerMembershipToolResponse getCustomerMembership() {
         String customerId = AiCustomerContext.getCustomerId();
         return userServiceClient.getCustomerMembership(customerId);

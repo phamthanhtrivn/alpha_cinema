@@ -75,59 +75,80 @@ export function ShowScheduleOverview({
       <CardContent>
         {schedules.length ? (
           <div className="space-y-3">
-            {schedules.map((schedule) => {
-              const totalSeats = Math.max(schedule.totalSeats, schedule.soldSeats);
-              const occupancy = Math.round(
-                totalSeats > 0 ? (schedule.soldSeats / totalSeats) * 100 : 0,
-              );
-              const status = statusConfig[schedule.status];
+            {[...schedules]
+              .sort((a, b) => {
+                const totalSeatsA = Math.max(a.totalSeats, a.soldSeats);
+                const totalSeatsB = Math.max(b.totalSeats, b.soldSeats);
 
-              return (
-                <div
-                  key={schedule.id}
-                  className="rounded-md border border-slate-100 bg-slate-50 p-3"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-slate-900">
-                        {schedule.movieTitle}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {schedule.cinemaName} · {schedule.roomName} ·{" "}
-                        {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
-                      </div>
-                    </div>
-                    <Badge variant="outline" className={status.className}>
-                      {status.label}
-                    </Badge>
-                  </div>
+                const occupancyA =
+                  totalSeatsA > 0 ? (a.soldSeats / totalSeatsA) * 100 : 0;
 
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
-                    <span className="flex items-center gap-1 font-semibold">
-                      <Armchair size={13} />
-                      {schedule.soldSeats}/{totalSeats} ghế
-                    </span>
-                    <span className="font-black text-slate-900">
-                      {occupancy}%
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 rounded-full bg-white">
-                    <div
-                      className={`h-2 rounded-full ${
-                        occupancy >= 90 ? "bg-rose-500" : occupancy >= 75 ? "bg-amber-500" : "bg-indigo-500"
-                      }`}
-                      style={{ width: `${Math.min(occupancy, 100)}%` }}
-                    />
-                  </div>
-                  {schedule.status === "NEAR_FULL" && (
-                    <div className="mt-3 flex items-center gap-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
-                      <AlertTriangle size={13} />
-                      Suất này sắp hết ghế, cần theo dõi lưu lượng thanh toán.
+                const occupancyB =
+                  totalSeatsB > 0 ? (b.soldSeats / totalSeatsB) * 100 : 0;
+
+                return occupancyB - occupancyA;
+              })
+              .map((schedule) => {
+                const totalSeats = Math.max(
+                  schedule.totalSeats,
+                  schedule.soldSeats,
+                );
+                const occupancy = Math.round(
+                  totalSeats > 0 ? (schedule.soldSeats / totalSeats) * 100 : 0,
+                );
+                const status = statusConfig[schedule.status];
+
+                return (
+                  <div
+                    key={schedule.id}
+                    className="rounded-md border border-slate-100 bg-slate-50 p-3"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold text-slate-900">
+                          {schedule.movieTitle}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {schedule.cinemaName} · {schedule.roomName} ·{" "}
+                          {formatTime(schedule.startTime)} -{" "}
+                          {formatTime(schedule.endTime)}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className={status.className}>
+                        {status.label}
+                      </Badge>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Armchair size={13} />
+                        {schedule.soldSeats}/{totalSeats} ghế
+                      </span>
+                      <span className="font-black text-slate-900">
+                        {occupancy}%
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-white">
+                      <div
+                        className={`h-2 rounded-full ${
+                          occupancy >= 90
+                            ? "bg-rose-500"
+                            : occupancy >= 75
+                              ? "bg-amber-500"
+                              : "bg-indigo-500"
+                        }`}
+                        style={{ width: `${Math.min(occupancy, 100)}%` }}
+                      />
+                    </div>
+                    {schedule.status === "NEAR_FULL" && (
+                      <div className="mt-3 flex items-center gap-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+                        <AlertTriangle size={13} />
+                        Suất này sắp hết ghế, cần theo dõi lưu lượng thanh toán.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         ) : (
           <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-500">

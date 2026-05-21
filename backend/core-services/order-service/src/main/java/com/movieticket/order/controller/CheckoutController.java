@@ -68,6 +68,14 @@ public class CheckoutController {
         return ResponseEntity.ok(ApiResponse.success(response, "Draft order created successfully"));
     }
 
+    @PostMapping("/sessions/{sessionId}/confirm-zero-payment")
+    public ResponseEntity<ApiResponse<CheckoutConfirmResponse>> confirmZeroPaymentSession(
+            @PathVariable String sessionId
+    ) {
+        CheckoutConfirmResponse response = checkoutSessionService.confirmZeroPaymentSession(sessionId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Zero-payment order confirmed successfully"));
+    }
+
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<ApiResponse<Void>> cancelSession(@PathVariable String sessionId){
             checkoutSessionService.cancelSession(sessionId);

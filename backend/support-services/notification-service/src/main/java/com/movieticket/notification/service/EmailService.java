@@ -53,9 +53,7 @@ public class EmailService {
             return false;
         }
     }
-    // =========================
-    // 🎟️ TEMPLATE VÉ (VIỆT HOÁ 100%)
-    // =========================
+
     private String buildOrderSuccessfulEmailHtml(OrderSuccessfulEvent event) {
 
         List<String> seatLabels = event.getSeatLabels() == null
