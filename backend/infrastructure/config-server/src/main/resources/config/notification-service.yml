@@ -1,6 +1,7 @@
 server:
   port: 8087 # Port chạy service thông báo
-
+app:
+  frontend-url: ${FRONTEND_URL}
 spring:
   data:
     mongodb:
