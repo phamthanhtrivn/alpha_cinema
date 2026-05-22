@@ -1,5 +1,6 @@
 package com.movieticket.notification.event.consumer;
 
+import com.movieticket.notification.entity.Notification;
 import com.movieticket.notification.event.model.OrderSuccessfulEvent;
 import com.movieticket.notification.event.model.SendOTPEvent;
 import com.movieticket.notification.service.EmailService;
@@ -7,6 +8,7 @@ import com.movieticket.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +21,7 @@ public class OrderSuccessfulEventListener {
 
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @KafkaListener(
@@ -50,13 +53,17 @@ public class OrderSuccessfulEventListener {
         }
 
         try {
-            notificationService.createNotification(
+            Notification savedNotification = notificationService.createNotification(
                     event.getCustomerId(),
                     BOOKING_NOTIFICATION_TITLE,
                     "Email vé cho đơn hàng #" + event.getOrderId()
                             + " đã được gửi thành công đến " + event.getCustomerEmail() + ".",
                     BOOKING_NOTIFICATION_TYPE,
                     BOOKING_NOTIFICATION_URL
+            );
+            messagingTemplate.convertAndSend(
+                    "/topic/notifications/" + event.getCustomerId(),
+                    savedNotification
             );
         } catch (Exception ex) {
             System.err.println("Failed to save booking email notification for order "
