@@ -55,3 +55,14 @@ external-services:
     base-url: ${CINEMA_SERVICE_BASE_URL}
   product-service:
     base-url: ${PRODUCT_SERVICE_BASE_URL}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: ${EC2_PUBLIC_IP}
