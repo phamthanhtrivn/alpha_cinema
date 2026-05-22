@@ -10,4 +10,61 @@ eureka:
       # Địa chỉ của Eureka Server để các microservice gửi thông tin đăng ký
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
 
-
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10              # Số lượng cuộc gọi tối đa được ghi nhận để tính tỉ lệ lỗi
+        minimumNumberOfCalls: 5            # Số cuộc gọi tối thiểu trước khi tính toán tỉ lệ lỗi
+        permittedNumberOfCallsInHalfOpenState: 3 # Số cuộc gọi thử nghiệm ở trạng thái HALF_OPEN
+        automaticTransitionFromOpenToHalfOpenEnabled: true # Tự động chuyển từ OPEN -> HALF_OPEN sau khi hết thời gian chờ
+        waitDurationInOpenState: 10s       # Thời gian chờ ở trạng thái OPEN trước khi chuyển sang HALF_OPEN
+        failureRateThreshold: 50           # Tỉ lệ cuộc gọi lỗi tối đa cho phép (50%)
+        slowCallRateThreshold: 75          # Tỉ lệ cuộc gọi chậm tối đa cho phép (75%)
+        slowCallDurationThreshold: 10000ms  # Cuộc gọi được coi là chậm nếu vượt quá 2s
+    instances:
+      orderService:
+        baseConfig: default
+      userService:
+        baseConfig: default
+      productService:
+        baseConfig: default
+      cinemaService:
+        baseConfig: default
+      ticketService:
+        baseConfig: default
+      paymentService:
+        baseConfig: default
+      movieService:
+        baseConfig: default
+  retry:
+    configs:
+      default:
+        maxAttempts: 3                     # Thử lại tối đa 3 lần
+        waitDuration: 1s                   # Thời gian giữa các lần thử lại
+        enableExponentialBackoff: true     # Bật exponential backoff (tăng dần thời gian chờ)
+        exponentialMaxWaitDuration: 5s     # Thời gian chờ tối đa giữa các lần thử lại
+        exponentialBackoffMultiplier: 2   # Hệ số nhân (1s -> 2s -> 4s)
+        retryExceptions:
+          - org.springframework.web.client.RestClientException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      orderService:
+        baseConfig: default
+      userService:
+        baseConfig: default
+      productService:
+        baseConfig: default
+      cinemaService:
+        baseConfig: default
+      ticketService:
+        baseConfig: default
+      paymentService:
+        baseConfig: default
+      movieService:
+        baseConfig: default

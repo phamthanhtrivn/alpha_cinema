@@ -9,8 +9,35 @@ export const apiClient = axios.create({
   },
 });
 
+const RATE_LIMIT_MAX_REQUESTS = 10;
+const RATE_LIMIT_WINDOW_MS = 1000;
+const requestTimestamps: number[] = [];
+
+const waitForRateLimitSlot = async () => {
+  while (true) {
+    const now = Date.now();
+
+    while (
+      requestTimestamps.length > 0 &&
+      requestTimestamps[0] <= now - RATE_LIMIT_WINDOW_MS
+    ) {
+      requestTimestamps.shift();
+    }
+
+    if (requestTimestamps.length < RATE_LIMIT_MAX_REQUESTS) {
+      requestTimestamps.push(now);
+      return;
+    }
+
+    const waitTime = requestTimestamps[0] + RATE_LIMIT_WINDOW_MS - now;
+    await new Promise((resolve) => setTimeout(resolve, waitTime));
+  }
+};
+
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    await waitForRateLimitSlot();
+
     if (config.headers.Authorization) {
       return config;
     }

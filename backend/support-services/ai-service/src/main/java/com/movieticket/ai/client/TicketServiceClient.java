@@ -9,6 +9,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import java.math.BigDecimal;
 import java.text.Normalizer;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
+@CircuitBreaker(name = "ticketService")
+@Retry(name = "ticketService")
 public class TicketServiceClient {
     private static final int MAX_TICKET_PRICES = 20;
 
