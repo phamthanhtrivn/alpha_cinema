@@ -86,8 +86,8 @@ volumes:
   alpha_redis_data:
   alpha_ai_postgres_data:
   alpha_kafka_data:
-  # alpha_mysql_data:
-  
+    # alpha_mysql_data:
+
 networks:
   alpha_network:
     name: alpha_network

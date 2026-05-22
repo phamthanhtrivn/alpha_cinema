@@ -19,6 +19,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -77,6 +79,8 @@ public class SeatService {
         return seatRepository.saveAll(seatsToSave);
     }
 
+    @CircuitBreaker(name = "orderService")
+    @Retry(name = "orderService", fallbackMethod = "getAllSeatsByShowScheduleFallback")
     public List<SeatForShowScheduleResponse> getAllSeatsByShowSchedule(String showScheduleId, String roomID) {
         List<Seat> physicalSeats = seatRepository.findByRoomId(roomID);
 
@@ -120,6 +124,14 @@ public class SeatService {
         }).collect(Collectors.toList());
     }
 
+    public List<SeatForShowScheduleResponse> getAllSeatsByShowScheduleFallback(String showScheduleId, String roomID, Throwable throwable) {
+        System.err.println("Fallback trigger for getAllSeatsByShowSchedule: " + throwable.getMessage());
+        
+        // Ném ra một custom exception. 
+        // Hãy đảm bảo bạn có @ExceptionHandler để bắt lỗi này và trả về HTTP 503 cho Frontend
+        throw new RuntimeException("Hệ thống đặt vé hiện không thể tải sơ đồ ghế. Vui lòng thử lại sau.");
+    }
+    
     public List<SeatLookupDto> getSeatsByIds(List<String> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
