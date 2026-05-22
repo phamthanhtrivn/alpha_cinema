@@ -35,3 +35,14 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
   instance:
     prefer-ip-address: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: ${EC2_PUBLIC_IP}
