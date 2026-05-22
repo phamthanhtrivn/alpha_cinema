@@ -42,8 +42,8 @@ public class ReviewProducer {
     public void sendReviewStatusNotificationEvent(ReviewStatusNotificationEvent event) {
         try {
             log.info("Đang gửi ReviewStatusNotificationEvent sang Kafka cho review id: {}", event.getReviewId());
-            kafkaTemplate.send("review-events", event);
-            log.info("Đã gửi thành công lên topic: review-events");
+            kafkaTemplate.send("notification-events", event);
+            log.info("Đã gửi thành công lên topic: notification-events");
         } catch (Exception e) {
             log.error("Lỗi khi gửi ReviewStatusNotificationEvent sang Kafka: {}", e.getMessage());
         }
