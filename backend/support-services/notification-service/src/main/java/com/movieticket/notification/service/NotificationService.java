@@ -31,7 +31,7 @@ public class NotificationService {
         });
     }
 
-    public void createNotification(String customerId, String title, String content, String type, String url) {
+    public Notification createNotification(String customerId, String title, String content, String type, String url) {
         Notification notification = Notification.builder()
                 .customerId(customerId)
                 .title(title)
@@ -41,6 +41,6 @@ public class NotificationService {
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
-        notificationRepository.save(notification);
+        return notificationRepository.save(notification);
     }
 }
