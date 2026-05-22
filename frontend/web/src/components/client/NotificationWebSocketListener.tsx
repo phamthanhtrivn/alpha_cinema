@@ -70,6 +70,7 @@ const NotificationWebSocketListener: React.FC = () => {
             </div>,
           );
 
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
           queryClient.invalidateQueries({ queryKey: ["movie-reviews"] });
 
         } catch (error) {
