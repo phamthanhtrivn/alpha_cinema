@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { showScheduleService } from '@/services/show-schedule.service';
 import { cinemaService } from '@/services/cinema.service';
 import { formatHHmm } from '@/utils/formatTime';
@@ -29,12 +29,25 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
     }, [availableDates]);
 
     const [selectedDate, setSelectedDate] = useState<string>(dateTabs[0]?.dateString || '');
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (dateTabs.length > 0 && !selectedDate) {
             setSelectedDate(dateTabs[0].dateString);
         }
     }, [dateTabs, selectedDate]);
+
+    const scrollLeft = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: -208, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: 208, behavior: 'smooth' });
+        }
+    };
 
     // Cinema Filter
     const { data: cinemaOptions } = useQuery<{ id: string, label: string }[]>({
@@ -68,24 +81,48 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
 
             {/* Thanh chọn ngày & Filter */}
             <div className="border-b-2 pb-2 border-alpha-blue mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                {/* Scroll ngang cho Tabs ngày */}
-                <div className="flex gap-2 scrollbar-hide w-full md:w-auto overflow-x-auto">
-                    {dateTabs.map((tab) => {
-                        const isActive = selectedDate === tab.dateString;
-                        return (
-                            <button
-                                key={tab.dateString}
-                                onClick={() => setSelectedDate(tab.dateString)}
-                                className={`flex flex-col items-center rounded-md justify-center min-w-[96px] py-3 cursor-pointer transition-colors ${isActive
-                                    ? 'bg-alpha-blue text-white'
-                                    : 'bg-white text-slate-600 hover:text-alpha-blue border border-slate-100'
-                                    }`}
-                            >
-                                <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dayName}</span>
-                                <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dateNum}</span>
-                            </button>
-                        );
-                    })}
+                {/* Container giới hạn chiều ngang cố định và chứa 2 nút bấm Trái/Phải */}
+                <div className="flex items-center gap-1 w-full md:max-w-[500px] lg:max-w-[580px] shrink-0">
+                    {/* Nút mũi tên Trái */}
+                    <button
+                        onClick={scrollLeft}
+                        className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95 shrink-0 cursor-pointer text-slate-700 mr-1"
+                        aria-label="Scroll left"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    {/* Scroll ngang cho Tabs ngày */}
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex-1 flex gap-2 scrollbar-hide overflow-x-auto scroll-smooth min-w-0"
+                    >
+                        {dateTabs.map((tab) => {
+                            const isActive = selectedDate === tab.dateString;
+                            return (
+                                <button
+                                    key={tab.dateString}
+                                    onClick={() => setSelectedDate(tab.dateString)}
+                                    className={`flex flex-col items-center rounded-md justify-center min-w-[96px] py-3 shrink-0 cursor-pointer transition-colors ${isActive
+                                        ? 'bg-alpha-blue text-white'
+                                        : 'bg-white text-slate-600 hover:text-alpha-blue'
+                                        }`}
+                                >
+                                    <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dayName}</span>
+                                    <span className={`text-sm ${isActive ? 'font-medium' : ''}`}>{tab.dateNum}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Nút mũi tên Phải */}
+                    <button
+                        onClick={scrollRight}
+                        className="p-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95 shrink-0 cursor-pointer text-slate-700 ml-1"
+                        aria-label="Scroll right"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
                 </div>
 
                 {/* Dropdown bộ lọc */}
