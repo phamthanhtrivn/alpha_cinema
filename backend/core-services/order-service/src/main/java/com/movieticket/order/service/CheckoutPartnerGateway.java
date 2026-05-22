@@ -31,6 +31,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -73,6 +75,8 @@ public class CheckoutPartnerGateway {
     ) {
     }
 
+    @CircuitBreaker(name = "userService")
+    @Retry(name = "userService", fallbackMethod = "getCustomerInformationFallback")
     public CustomerInformation getCustomerInformation(String customerId) {
         return webClientBuilder.build()
                 .get()
@@ -88,6 +92,12 @@ public class CheckoutPartnerGateway {
                 .block();
     }
 
+    public CustomerInformation getCustomerInformationFallback(String customerId, Throwable throwable) {
+        throw new BusinessException("Dịch vụ thông tin khách hàng tạm thời không khả dụng. Vui lòng thử lại sau.");
+    }
+
+    @CircuitBreaker(name = "productService", fallbackMethod = "getShowScheduleSnapshotsFallback")
+    @Retry(name = "productService")
     public Map<String, ShowScheduleSnapshot> getShowScheduleSnapshots(List<String> showScheduleIds) {
         List<String> normalizedIds = normalizeDistinctIds(showScheduleIds);
         if (normalizedIds.isEmpty()) {
@@ -124,6 +134,12 @@ public class CheckoutPartnerGateway {
         }
     }
 
+    public Map<String, ShowScheduleSnapshot> getShowScheduleSnapshotsFallback(List<String> showScheduleIds, Throwable throwable) {
+        throw new BusinessException("Dịch vụ lịch chiếu phim tạm thời không khả dụng. Vui lòng thử lại sau.");
+    }
+
+    @CircuitBreaker(name = "cinemaService")
+    @Retry(name = "cinemaService", fallbackMethod = "getRoomSnapshotFallback")
     public RoomSnapshot getRoomSnapshot(String roomId) {
         return webClientBuilder.build()
                 .get()
@@ -140,6 +156,12 @@ public class CheckoutPartnerGateway {
                 .block();
     }
 
+    public RoomSnapshot getRoomSnapshotFallback(String roomId, Throwable throwable) {
+        throw new BusinessException("Dịch vụ phòng chiếu tạm thời không khả dụng. Vui lòng thử lại sau.");
+    }
+
+    @CircuitBreaker(name = "cinemaService")
+    @Retry(name = "cinemaService", fallbackMethod = "getCinemaSnapshotFallback")
     public CinemaSnapshot getCinemaSnapshot(String cinemaId) {
         return webClientBuilder.build()
                 .get()
@@ -154,6 +176,10 @@ public class CheckoutPartnerGateway {
                     return cinema;
                 })
                 .block();
+    }
+
+    public CinemaSnapshot getCinemaSnapshotFallback(String cinemaId, Throwable throwable) {
+        throw new BusinessException("Dịch vụ rạp phim tạm thời không khả dụng. Vui lòng thử lại sau.");
     }
 
     public CreateSessionSnapshot getCreateSessionSnapshot(String customerId, String showScheduleId) {
@@ -215,6 +241,8 @@ public class CheckoutPartnerGateway {
                 .block();
     }
 
+    @CircuitBreaker(name = "productService")
+    @Retry(name = "productService", fallbackMethod = "getProductsFallback")
     public Map<String, ProductCache> getProducts(List<String> productIds) {
         List<String> normalizedIds = normalizeDistinctIds(productIds);
         if (normalizedIds.isEmpty()) {
@@ -257,6 +285,12 @@ public class CheckoutPartnerGateway {
         }
     }
 
+    public Map<String, ProductCache> getProductsFallback(List<String> productIds, Throwable throwable) {
+        throw new BusinessException("Dịch vụ sản phẩm/bắp nước tạm thời không khả dụng. Vui lòng thử lại sau.");
+    }
+
+    @CircuitBreaker(name = "ticketService")
+    @Retry(name = "ticketService", fallbackMethod = "getTicketPricesFallback")
     public Map<String, TicketPriceCache> getTicketPrices(List<String> ticketPriceIds) {
         List<String> normalizedIds = normalizeDistinctIds(ticketPriceIds);
         if (normalizedIds.isEmpty()) {
@@ -292,7 +326,7 @@ public class CheckoutPartnerGateway {
                         ticketPrice.getProjectionType(),
                         ticketPrice.getDayType(),
                         ticketPrice.isStatus()
-                ));
+                  ));
             }
 
             return ticketPriceCacheById;
@@ -301,6 +335,12 @@ public class CheckoutPartnerGateway {
         }
     }
 
+    public Map<String, TicketPriceCache> getTicketPricesFallback(List<String> ticketPriceIds, Throwable throwable) {
+        throw new BusinessException("Dịch vụ giá vé tạm thời không khả dụng. Vui lòng thử lại sau.");
+    }
+
+    @CircuitBreaker(name = "cinemaService")
+    @Retry(name = "cinemaService", fallbackMethod = "getSeatsByIdsFallback")
     public Map<String, SeatSnapshot> getSeatsByIds(List<String> seatIds) {
         List<String> normalizedIds = normalizeDistinctIds(seatIds);
         if (normalizedIds.isEmpty()) {
@@ -327,6 +367,10 @@ public class CheckoutPartnerGateway {
         } catch (RestClientException ex) {
             throw new BusinessException("Unable to resolve seat information for checkout");
         }
+    }
+
+    public Map<String, SeatSnapshot> getSeatsByIdsFallback(List<String> seatIds, Throwable throwable) {
+        throw new BusinessException("Dịch vụ thông tin ghế tạm thời không khả dụng. Vui lòng thử lại sau.");
     }
 
     public PaymentInitiateSnapshot initiatePayment(String orderId, String paymentMethod, double amount, String bankCode, String userIp) {

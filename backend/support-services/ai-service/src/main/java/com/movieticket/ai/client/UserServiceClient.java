@@ -9,11 +9,15 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import java.time.Duration;
 
 @Component
 @Slf4j
+@CircuitBreaker(name = "userService")
+@Retry(name = "userService")
 public class UserServiceClient {
     private final WebClient userWebClient;
     private final Duration timeout;
