@@ -72,3 +72,14 @@ momo:
 payment:
   backend-base-url: ${BACKEND_BASE_URL}
   frontend-base-url: ${FRONTEND_BASE_URL}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: ${EC2_PUBLIC_IP}

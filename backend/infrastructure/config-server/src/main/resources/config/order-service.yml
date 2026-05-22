@@ -72,3 +72,14 @@ logging:
   level:
     org.springframework.kafka: DEBUG
     org.apache.kafka: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: ${EC2_PUBLIC_IP}
