@@ -15,6 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -22,6 +25,8 @@ import java.util.List;
 
 @Component
 @Slf4j
+@CircuitBreaker(name = "orderService")
+@Retry(name = "orderService")
 public class OrderServiceClient {
     private static final int DEFAULT_LIMIT = 5;
     private static final int MAX_LIMIT = 10;

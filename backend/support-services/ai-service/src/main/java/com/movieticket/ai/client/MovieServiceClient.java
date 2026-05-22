@@ -17,6 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,6 +33,8 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
+@CircuitBreaker(name = "movieService")
+@Retry(name = "movieService")
 public class MovieServiceClient {
     private static final int MAX_MOVIES = 12;
     private static final int MAX_SHOWTIMES = 20;
