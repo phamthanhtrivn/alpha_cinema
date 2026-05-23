@@ -66,9 +66,6 @@ services:
       - APP_NAME=user-service
       - RSA_PRIVATE_PATH=${RSA_PRIVATE_PATH}
       - RSA_PUBLIC_PATH=${RSA_PUBLIC_PATH}
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_user_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
     volumes:
       - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
@@ -83,11 +80,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=ticket-service
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_ticket_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8085:8085"
     restart: always
@@ -100,11 +92,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=cinema-management-service
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_cinema_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8081:8081"
     restart: always
@@ -117,11 +104,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=payment-service
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_payment_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8083:8083"
     restart: always
@@ -134,11 +116,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=product-service
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_product_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8084:8084"
     restart: always
@@ -151,11 +128,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=order-service
-      - SPRING_DATASOURCE_URL=jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_order_db?useSSL=true&certVerify=true&sslca=/app/keys/global-bundle.pem&serverTimezone=Asia/Ho_Chi_Minh
-      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8082:8082"
     restart: always
@@ -183,8 +155,6 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=ai-service
-    volumes:
-      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8088:8088"
     restart: always
