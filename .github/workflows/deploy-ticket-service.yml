@@ -1,0 +1,69 @@
+﻿name: Deploy Ticket Service
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/core-services/ticket-service/**'
+      - 'backend/docker-compose.prod.yml' # Chạy lại nếu file compose tổng thay đổi
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/core-services/ticket-service/Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/ticket-service:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Copy docker-compose.prod.yml to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.CORE_SERVICE_2 }}
+        username: ubuntu 
+        key: ${{ secrets.SSH_KEY_CORE_SERVICES }}
+        source: "backend/docker-compose.prod.yml"
+        target: "/home/ubuntu/alpha_cinema"
+        
+    - name: Deploy Docker Container on EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.CORE_SERVICE_2 }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_CORE_SERVICES }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          
+          # Đăng nhập Docker Hub ngay trên máy Core 2
+          sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          
+          # Dọn dẹp dứt điểm container và image cũ để chừa RAM với ổ cứng cho máy
+          sudo docker compose -f docker-compose.prod.yml stop ticket-service || true
+          sudo docker compose -f docker-compose.prod.yml rm -f ticket-service || true
+          sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/ticket-service:latest || true
+          
+          # Kéo bản mới nhất về và kích nổ chạy ngầm
+          sudo docker compose -f docker-compose.prod.yml pull ticket-service
+          sudo docker compose -f docker-compose.prod.yml up -d ticket-service

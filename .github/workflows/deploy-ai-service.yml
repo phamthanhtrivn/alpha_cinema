@@ -1,0 +1,67 @@
+﻿name: Deploy AI Service
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/support-services/ai-service/**'
+      - 'backend/docker-compose.prod.yml' # Bồi thêm cái này để file compose thay đổi nó cũng tự update
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/support-services/ai-service/Dockerfile
+        push: true
+        # Đổi tên image về dùng biến cho đồng bộ với file compose
+        tags: ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Copy docker-compose.prod.yml to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.AI_SERVICE_IP }} # <--- Bắn trúng đích máy AI (của Người 3)
+        username: ubuntu # <--- Điền cứng ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }} # <--- Chìa khóa Người 3
+        source: "backend/docker-compose.prod.yml"
+        target: "/home/ubuntu/alpha_cinema"
+        
+    - name: Deploy Docker Container on EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AI_SERVICE_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          
+          # Đăng nhập Docker, dọn rác và kéo hàng mới
+          sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          sudo docker compose -f docker-compose.prod.yml stop ai-service || true
+          sudo docker compose -f docker-compose.prod.yml rm -f ai-service || true
+          sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/ai-service:latest || true
+          
+          sudo docker compose -f docker-compose.prod.yml pull ai-service
+          sudo docker compose -f docker-compose.prod.yml up -d ai-service
