@@ -1,0 +1,69 @@
+﻿name: Deploy Cinema Management Service
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/core-services/cinema-management-service/**'
+      - 'backend/docker-compose.prod.yml' # Chạy lại nếu có cập nhật file compose
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/core-services/cinema-management-service/Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/cinema-management-service:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Copy docker-compose.prod.yml to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.CORE_SERVICE_1 }} # <--- Bắn trúng đích máy Core 1 của Người 2
+        username: ubuntu # <--- Điền cứng ubuntu
+        key: ${{ secrets.SSH_KEY_CORE_SERVICES }} # <--- Chìa khóa Người 2
+        source: "backend/docker-compose.prod.yml"
+        target: "/home/ubuntu/alpha_cinema"
+        
+    - name: Deploy Docker Container on EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.CORE_SERVICE_1 }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_CORE_SERVICES }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          
+          # Đăng nhập Docker, dọn rác cũ và kéo hàng mới
+          sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          
+          # Dọn dẹp bản cũ
+          sudo docker compose -f docker-compose.prod.yml stop cinema-management-service || true
+          sudo docker compose -f docker-compose.prod.yml rm -f cinema-management-service || true
+          sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/cinema-management-service:latest || true
+          
+          # Kéo bản mới và chạy
+          sudo docker compose -f docker-compose.prod.yml pull cinema-management-service
+          sudo docker compose -f docker-compose.prod.yml up -d cinema-management-service

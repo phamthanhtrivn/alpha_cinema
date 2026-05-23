@@ -28,7 +28,7 @@ spring:
         cors-configurations:
           "[/**]":
             allowedOrigins:
-              - "http://localhost:5173"
+               - "${FRONTEND_URL:http://localhost:5173}"
             allowedMethods:
               - GET
               - POST
@@ -99,3 +99,15 @@ logging:
 rsa:
   private-key-path: ${RSA_PRIVATE_PATH}
   public-key-path: ${RSA_PUBLIC_PATH}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    ip-address: ${EC2_PUBLIC_IP}
+

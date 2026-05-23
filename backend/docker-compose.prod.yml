@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # --- INFRASTRUCTURE SERVICES ---
+  # ==========================================
+  eureka-server:
+    image: htuan04/eureka-server:latest
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    restart: always
+
+  config-server:
+    image: htuan04/config-server:latest
+    container_name: config-server
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+    ports:
+      - "8888:8888"
+    restart: always
+
+  api-gateway:
+    image: htuan04/api-gateway:latest
+    container_name: api-gateway
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+    ports:
+      - "8080:8080"
+    restart: always
+
+  # ==========================================
+  # --- CORE SERVICES ---
+  # ==========================================
+  user-service:
+    image: htuan04/user-service:latest
+    container_name: user-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=user-service
+    ports:
+      - "8086:8086"
+    restart: always
+
+  ticket-service:
+    image: htuan04/ticket-service:latest
+    container_name: ticket-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=ticket-service
+    ports:
+      - "8085:8085"
+    restart: always
+
+  cinema-management-service:
+    image: htuan04/cinema-management-service:latest
+    container_name: cinema-management-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=cinema-management-service
+    ports:
+      - "8081:8081"
+    restart: always
+
+  payment-service:
+    image: htuan04/payment-service:latest
+    container_name: payment-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=payment-service
+    ports:
+      - "8083:8083"
+    restart: always
+
+  product-service:
+    image: htuan04/product-service:latest
+    container_name: product-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=product-service
+    ports:
+      - "8084:8084"
+    restart: always
+
+  order-service:
+    image: htuan04/order-service:latest
+    container_name: order-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=order-service
+    ports:
+      - "8082:8082"
+    restart: always
+
+  # ==========================================
+  # --- SUPPORT SERVICES ---
+  # ==========================================
+  notification-service:
+    image: htuan04/notification-service:latest
+    container_name: notification-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=notification-service
+    ports:
+      - "8087:8087"
+    restart: always
+
+  ai-service:
+    image: htuan04/ai-service:latest
+    container_name: ai-service
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - APP_NAME=ai-service
+    ports:
+      - "8088:8088"
+    restart: always
+
+  # --- GIỮ LẠI REDIS VÀ KAFKA (Vì chạy Docker trên EC2 hạ tầng) ---
+  redis:
+    image: redis:7-alpine
+    container_name: alpha-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    restart: always
+
+  kafka:
+    image: apache/kafka:4.0.2
+    container_name: alpha-kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093 # Sửa thành localhost vì chạy nội bộ cụm Kafka
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://${KAFKA_PUBLIC_IP}:9094 # <--- Truyền Elastic IP của máy Kafka vào đây
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
