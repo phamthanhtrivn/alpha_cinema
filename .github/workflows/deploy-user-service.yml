@@ -2,7 +2,7 @@ name: Deploy User Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/user-service/**'
       - 'backend/docker-compose.prod.yml' # Tự động chạy lại nếu file compose tổng có update

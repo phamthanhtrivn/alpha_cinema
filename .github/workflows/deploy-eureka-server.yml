@@ -2,7 +2,7 @@ name: Deploy Eureka Server
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/infrastructure/eureka-server/**'
       - 'backend/docker-compose.prod.yml'
