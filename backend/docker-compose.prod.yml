@@ -29,6 +29,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - RSA_PRIVATE_PATH=${RSA_PRIVATE_PATH}
+      - RSA_PUBLIC_PATH=${RSA_PUBLIC_PATH}
+    volumes:
+      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8080:8080"
     restart: always
@@ -44,6 +48,10 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=user-service
+      - RSA_PRIVATE_PATH=${RSA_PRIVATE_PATH}
+      - RSA_PUBLIC_PATH=${RSA_PUBLIC_PATH}
+    volumes:
+      - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
       - "8086:8086"
     restart: always

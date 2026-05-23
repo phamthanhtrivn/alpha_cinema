@@ -1,8 +1,8 @@
-﻿name: Deploy Config Server
+name: Deploy Config Server
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/infrastructure/config-server/**'
       - 'backend/docker-compose.prod.yml'
