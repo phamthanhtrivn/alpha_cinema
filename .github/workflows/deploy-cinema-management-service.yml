@@ -1,4 +1,4 @@
-﻿name: Deploy Cinema Management Service
+name: Deploy Cinema Management Service
 
 on:
   push:

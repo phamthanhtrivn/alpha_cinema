@@ -1,4 +1,4 @@
-﻿name: Deploy Eureka Server
+name: Deploy Eureka Server
 
 on:
   push:

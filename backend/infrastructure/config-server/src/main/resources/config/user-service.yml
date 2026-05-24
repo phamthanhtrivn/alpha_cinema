@@ -83,6 +83,8 @@ spring:
   config:
     activate:
       on-profile: prod
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/alpha_user_db?sslMode=REQUIRED&serverTimezone=Asia/Ho_Chi_Minh
 
 eureka:
   instance:
