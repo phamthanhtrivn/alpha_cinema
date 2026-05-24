@@ -70,3 +70,4 @@ jobs:
           # Kéo bản mới và khởi chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull product-service
           sudo docker compose -f docker-compose.prod.yml up -d product-service
+

@@ -63,3 +63,4 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/config-server:latest || true
           sudo docker compose -f docker-compose.prod.yml pull config-server
           sudo docker compose -f docker-compose.prod.yml up -d config-server
+

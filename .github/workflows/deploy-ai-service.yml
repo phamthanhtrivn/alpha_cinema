@@ -67,3 +67,4 @@ jobs:
           
           sudo docker compose -f docker-compose.prod.yml pull ai-service
           sudo docker compose -f docker-compose.prod.yml up -d ai-service
+

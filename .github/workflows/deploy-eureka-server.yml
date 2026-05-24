@@ -63,3 +63,4 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest || true
           sudo docker compose -f docker-compose.prod.yml pull eureka-server
           sudo docker compose -f docker-compose.prod.yml up -d eureka-server
+
