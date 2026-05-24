@@ -30,35 +30,55 @@ const RoomName: React.FC<{ roomId: string; cinemaId: string }> = ({ roomId, cine
   return <>{room ? room.label : roomId}</>;
 };
 
-const ScheduleManagement: React.FC = () => {
+interface ScheduleManagementProps {
+  scopeToCurrentCinema?: boolean;
+  scopedCinemaId?: string | null;
+  scopedCinemaLabel?: string;
+}
+
+const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
+  scopeToCurrentCinema = false,
+  scopedCinemaId,
+  scopedCinemaLabel,
+}) => {
   const pageSize = 10;
+  const normalizedScopedCinemaId = scopedCinemaId || undefined;
+  const isCinemaScoped = scopeToCurrentCinema;
+  const defaultFilters = React.useMemo(
+    () => ({
+      movieId: undefined,
+      cinemaId: normalizedScopedCinemaId,
+      roomId: undefined,
+      projectionType: undefined,
+      translationType: undefined,
+      status: undefined,
+      date: undefined,
+    }),
+    [normalizedScopedCinemaId],
+  );
+  const defaultForm = React.useMemo(
+    () => ({
+      movieId: "",
+      cinemaId: normalizedScopedCinemaId || "",
+      roomId: "",
+      startTime: "",
+      translationType: "",
+      status: true,
+    }),
+    [normalizedScopedCinemaId],
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const [filters, setFilters] = useState<any>({
-    movieId: undefined,
-    cinemaId: undefined,
-    roomId: undefined,
-    projectionType: undefined,
-    translationType: undefined,
-    status: undefined,
-    date: undefined,
-  });
+  const [filters, setFilters] = useState<any>(defaultFilters);
 
-  const [appliedFilters, setAppliedFilters] = useState<any>({
-    movieId: undefined,
-    cinemaId: undefined,
-    roomId: undefined,
-    projectionType: undefined,
-    translationType: undefined,
-    status: undefined,
-    date: undefined,
-  });
+  const [appliedFilters, setAppliedFilters] = useState<any>(defaultFilters);
 
   const buildParams = () => {
     return Object.fromEntries(
       Object.entries({
         ...appliedFilters,
+        cinemaId: isCinemaScoped ? normalizedScopedCinemaId : appliedFilters.cinemaId,
         page: currentPage - 1,
         size: pageSize,
       }).filter(([_, v]) => v !== undefined && v !== "")
@@ -70,8 +90,12 @@ const ScheduleManagement: React.FC = () => {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["schedules", currentPage, appliedFilters],
-    queryFn: () => showScheduleService.searchSchedules(buildParams()),
+    queryKey: ["schedules", currentPage, appliedFilters, isCinemaScoped, normalizedScopedCinemaId],
+    queryFn: () =>
+      isCinemaScoped
+        ? showScheduleService.searchManagerSchedules(buildParams())
+        : showScheduleService.searchSchedules(buildParams()),
+    enabled: !isCinemaScoped || !!normalizedScopedCinemaId,
   });
 
   const schedules = schedulesData?.data?.content || [];
@@ -83,11 +107,23 @@ const ScheduleManagement: React.FC = () => {
   });
 
   const cinemas = cinemasData?.data || [];
+  const cinemaOptions = React.useMemo(() => {
+    if (!isCinemaScoped) return cinemas;
+    if (!normalizedScopedCinemaId) return [];
+    const scopedCinema = cinemas.find((c: any) => c.id === normalizedScopedCinemaId);
+    return [
+      {
+        id: normalizedScopedCinemaId,
+        label: scopedCinema?.label || scopedCinemaLabel || normalizedScopedCinemaId,
+      },
+    ];
+  }, [cinemas, isCinemaScoped, normalizedScopedCinemaId, scopedCinemaLabel]);
+  const selectedFilterCinemaId = isCinemaScoped ? normalizedScopedCinemaId : filters.cinemaId;
 
   const { data: roomsData } = useQuery({
-    queryKey: ["rooms-options", filters.cinemaId],
-    queryFn: () => cinemaService.getRoomOptions(filters.cinemaId),
-    enabled: !!filters.cinemaId,
+    queryKey: ["rooms-options", selectedFilterCinemaId],
+    queryFn: () => cinemaService.getRoomOptions(selectedFilterCinemaId),
+    enabled: !!selectedFilterCinemaId,
   });
   const rooms = roomsData?.data || [];
 
@@ -114,18 +150,29 @@ const ScheduleManagement: React.FC = () => {
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [editingMovieTitle, setEditingMovieTitle] = useState("");
   const [, setFormMode] = useState<Mode>("add");
-  const [form, setForm] = useState({
-    movieId: "",
-    cinemaId: "",
-    roomId: "",
-    startTime: "",
-    translationType: "",
-    status: true,
-  });
+  const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
-
+  React.useEffect(() => {
+    if (!isCinemaScoped) return;
+    setCurrentPage(1);
+    setFilters((prev: any) => ({
+      ...prev,
+      cinemaId: normalizedScopedCinemaId,
+      roomId: prev.cinemaId === normalizedScopedCinemaId ? prev.roomId : undefined,
+    }));
+    setAppliedFilters((prev: any) => ({
+      ...prev,
+      cinemaId: normalizedScopedCinemaId,
+      roomId: prev.cinemaId === normalizedScopedCinemaId ? prev.roomId : undefined,
+    }));
+    setForm((prev) => ({
+      ...prev,
+      cinemaId: normalizedScopedCinemaId || "",
+      roomId: prev.cinemaId === normalizedScopedCinemaId ? prev.roomId : "",
+    }));
+  }, [isCinemaScoped, normalizedScopedCinemaId]);
 
   const { data: selectedMovieData } = useQuery({
     queryKey: ["movie-detail-form", form.movieId],
@@ -168,8 +215,9 @@ const ScheduleManagement: React.FC = () => {
       name: "cinemaId",
       label: "Rạp chiếu",
       type: "select",
-      options: cinemas.map((c: any) => ({ label: c.label, value: c.id })),
+      options: cinemaOptions.map((c: any) => ({ label: c.label, value: c.id })),
       placeholder: "Chọn rạp chiếu...",
+      disabled: isCinemaScoped,
     },
     {
       name: "roomId",
@@ -211,6 +259,7 @@ const ScheduleManagement: React.FC = () => {
   ];
 
   const handleFormChange = (name: string, value: any) => {
+    if (isCinemaScoped && name === "cinemaId") return;
     setForm((prev) => {
       const newForm = { ...prev, [name]: value };
       if (name === "cinemaId" && value !== prev.cinemaId) {
@@ -225,14 +274,7 @@ const ScheduleManagement: React.FC = () => {
   };
 
   const resetForm = () => {
-    setForm({
-      movieId: "",
-      cinemaId: "",
-      roomId: "",
-      startTime: "",
-      translationType: "",
-      status: true,
-    });
+    setForm(defaultForm);
     setErrors({});
     setEditingScheduleId(null);
     setEditingMovieTitle("");
@@ -242,7 +284,10 @@ const ScheduleManagement: React.FC = () => {
     try {
       setLoadingSubmit(true);
       setErrors({});
-      const res = await showScheduleService.createSchedule(form);
+      const payload = isCinemaScoped ? { ...form, cinemaId: normalizedScopedCinemaId } : form;
+      const res = isCinemaScoped
+        ? await showScheduleService.createManagerSchedule(payload)
+        : await showScheduleService.createSchedule(payload);
       if (res.success || res.id) {
         toast.success(res.message || "Thêm lịch chiếu thành công!");
         setIsAddOpen(false);
@@ -264,12 +309,16 @@ const ScheduleManagement: React.FC = () => {
   };
 
   const handleEdit = (schedule: ShowScheduleResDTO) => {
+    if (isCinemaScoped && schedule.cinemaId !== normalizedScopedCinemaId) {
+      toast.error("Không thể chỉnh sửa suất chiếu ngoài rạp đang quản lý.");
+      return;
+    }
     setFormMode("update");
     setEditingScheduleId(schedule.id);
     setEditingMovieTitle(schedule.movieTitle || "");
     setForm({
       movieId: schedule.movieId,
-      cinemaId: schedule.cinemaId,
+      cinemaId: isCinemaScoped ? normalizedScopedCinemaId || schedule.cinemaId : schedule.cinemaId,
       roomId: schedule.roomId,
       startTime: schedule.startTime,
       translationType: schedule.translationType,
@@ -284,7 +333,10 @@ const ScheduleManagement: React.FC = () => {
     try {
       setLoadingSubmit(true);
       setErrors({});
-      const res = await showScheduleService.updateSchedule(editingScheduleId, form);
+      const payload = isCinemaScoped ? { ...form, cinemaId: normalizedScopedCinemaId } : form;
+      const res = isCinemaScoped
+        ? await showScheduleService.updateManagerSchedule(editingScheduleId, payload)
+        : await showScheduleService.updateSchedule(editingScheduleId, payload);
       if (res.success || res.id) {
         toast.success(res.message || "Cập nhật lịch chiếu thành công!");
         setIsEditOpen(false);
@@ -306,15 +358,7 @@ const ScheduleManagement: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    const reset = {
-      movieId: undefined,
-      cinemaId: undefined,
-      roomId: undefined,
-      projectionType: undefined,
-      translationType: undefined,
-      status: undefined,
-      date: undefined,
-    };
+    const reset = defaultFilters;
     setFilters(reset);
     setAppliedFilters(reset);
     setCurrentPage(1);
@@ -395,9 +439,17 @@ const ScheduleManagement: React.FC = () => {
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rạp</label>
         <FilterSelect
           placeholder="Tất cả rạp"
-          options={[{ label: "Tất cả", value: "Tất cả" }, ...cinemas.map((c: any) => ({ label: c.label, value: c.id }))]}
-          value={filters.cinemaId || "Tất cả"}
-          onChange={(val) => setFilters({ ...filters, cinemaId: val === "Tất cả" ? undefined : val, roomId: undefined })}
+          options={
+            isCinemaScoped
+              ? cinemaOptions.map((c: any) => ({ label: c.label, value: c.id }))
+              : [{ label: "Tất cả", value: "Tất cả" }, ...cinemaOptions.map((c: any) => ({ label: c.label, value: c.id }))]
+          }
+          value={selectedFilterCinemaId || "Tất cả"}
+          onChange={(val) => {
+            if (isCinemaScoped) return;
+            setFilters({ ...filters, cinemaId: val === "Tất cả" ? undefined : val, roomId: undefined });
+          }}
+          disabled={isCinemaScoped}
         />
       </div>
 
@@ -408,7 +460,7 @@ const ScheduleManagement: React.FC = () => {
           options={[{ label: "Tất cả", value: "Tất cả" }, ...rooms.map((r: any) => ({ label: r.label, value: r.id }))]}
           value={filters.roomId || "Tất cả"}
           onChange={(val) => setFilters({ ...filters, roomId: val === "Tất cả" ? undefined : val })}
-          disabled={!filters.cinemaId}
+          disabled={!selectedFilterCinemaId}
         />
       </div>
 
@@ -432,7 +484,10 @@ const ScheduleManagement: React.FC = () => {
           className="h-11 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-widest bg-sky-500 hover:bg-sky-600 text-white shadow-sm transition-all cursor-pointer"
           onClick={() => {
             setCurrentPage(1);
-            setAppliedFilters(filters);
+            setAppliedFilters({
+              ...filters,
+              cinemaId: isCinemaScoped ? normalizedScopedCinemaId : filters.cinemaId,
+            });
           }}
           disabled={isLoading}
         >
@@ -454,7 +509,17 @@ const ScheduleManagement: React.FC = () => {
       <BaseManagementLayout
         title="Quản lý Lịch chiếu"
         subtitle="Quản lý lịch chiếu theo phim, rạp và phòng chiếu."
-        onAdd={() => setIsAddOpen(true)}
+        onAdd={() => {
+          if (isCinemaScoped && !normalizedScopedCinemaId) {
+            toast.error("Không xác định được rạp đang quản lý.");
+            return;
+          }
+          setForm((prev) => ({
+            ...prev,
+            cinemaId: normalizedScopedCinemaId || prev.cinemaId,
+          }));
+          setIsAddOpen(true);
+        }}
         addLabel="THÊM LỊCH CHIẾU"
         totalItems={totalItems}
         currentPage={currentPage}
@@ -544,7 +609,7 @@ const ScheduleManagement: React.FC = () => {
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center text-sm font-bold text-slate-700">
                     <MapPin size={14} className="mr-2 text-rose-400" />
-                    Rạp: {cinemas.find((c: any) => c.id === schedule.cinemaId)?.label || schedule.cinemaId || "N/A"}
+                    Rạp: {cinemaOptions.find((c: any) => c.id === schedule.cinemaId)?.label || schedule.cinemaId || "N/A"}
                   </div>
                   <div className="text-[11px] text-slate-500 font-medium pl-6 uppercase tracking-widest">
                     Phòng: {schedule.roomId ? <RoomName roomId={schedule.roomId} cinemaId={schedule.cinemaId} /> : "N/A"}

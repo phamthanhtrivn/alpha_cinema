@@ -236,7 +236,7 @@ const MovieReviews = ({ movieId, movieName, avgRating, totalReviews }: MovieRevi
           </div>
 
           {/* Thumbnails Carousel (Bottom) */}
-          <div className="w-full max-w-4xl overflow-x-auto flex justify-center gap-3 p-4 scrollbar-hide">
+          <div className="w-full max-w-4xl overflow-x-auto flex justify-center gap-3 p-4 custom-scrollbar">
             {allReviewImages.map((img, idx) => (
               <div
                 key={idx}
