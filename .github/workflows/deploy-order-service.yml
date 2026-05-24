@@ -2,7 +2,7 @@ name: Deploy Order Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/order-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng
@@ -31,6 +31,8 @@ jobs:
         push: true
         # Đã đổi lại thành biến cho đồng bộ, lỡ sau này đổi tên tài khoản Docker cũng không lo
         tags: ${{ secrets.DOCKER_USERNAME }}/order-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -68,3 +70,4 @@ jobs:
           # Kéo bản mới và chạy
           sudo docker compose -f docker-compose.prod.yml pull order-service
           sudo docker compose -f docker-compose.prod.yml up -d order-service
+

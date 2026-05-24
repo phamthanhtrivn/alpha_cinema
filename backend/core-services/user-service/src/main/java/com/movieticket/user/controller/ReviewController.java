@@ -13,9 +13,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.movieticket.user.enums.ReviewStatus;
+import com.movieticket.user.enums.ReviewType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -68,8 +71,34 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteReview(@PathVariable("id") String id) {
-        reviewService.deleteReview(id);
+    public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @PathVariable("id") String id,
+            @RequestParam(required = false, defaultValue = "Vi phạm tiêu chuẩn cộng đồng") String reason
+    ) {
+        reviewService.deleteReview(id, reason);
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa đánh giá thành công"));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ReviewResponseDTO>>> getAllReviews(
+            @RequestParam(required = false) ReviewStatus status,
+            @RequestParam(required = false) String movieId,
+            @RequestParam(required = false) ReviewType reviewType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<ReviewResponseDTO> reviews = reviewService.getAllReviews(status, movieId, reviewType, pageable);
+        return ResponseEntity.ok(ApiResponse.success(reviews, "Lấy danh sách đánh giá thành công"));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<Void>> updateReviewStatus(
+            @PathVariable("id") String id,
+            @RequestParam ReviewStatus status,
+            @RequestParam(required = false, defaultValue = "") String reason
+    ) {
+        reviewService.updateReviewStatus(id, status, reason);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái đánh giá thành công"));
     }
 }

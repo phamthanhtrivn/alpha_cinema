@@ -24,6 +24,8 @@ public class NotificationEventConsumer {
         String content;
         if ("APPROVED".equals(event.getStatus())) {
             content = "Đánh giá của bạn đã được duyệt thành công.";
+        } else if ("DELETED".equals(event.getStatus())) {
+            content = "Đánh giá của bạn đã bị xóa do: " + (event.getReason() != null ? event.getReason() : "Vi phạm tiêu chuẩn cộng đồng.");
         } else {
             content = "Đánh giá của bạn bị từ chối do: " + (event.getReason() != null ? event.getReason() : "Vi phạm tiêu chuẩn cộng đồng.");
         }

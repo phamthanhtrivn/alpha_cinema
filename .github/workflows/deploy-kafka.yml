@@ -1,0 +1,40 @@
+name: Deploy Kafka
+
+on:
+  push:
+    branches: [ "develop" ]
+    paths:
+      - 'backend/docker-compose.prod.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Copy docker-compose.prod.yml to EC2 Infrastructure (Kafka)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.KAFKA_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_INFRASTRUCTURE }}
+        source: "backend/docker-compose.prod.yml"
+        target: "/home/ubuntu/alpha_cinema"
+        
+    - name: Deploy Kafka Container on EC2 Infrastructure
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.KAFKA_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_INFRASTRUCTURE }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          
+          # Dừng và xóa container Kafka cũ
+          sudo docker compose -f docker-compose.prod.yml stop kafka || true
+          sudo docker compose -f docker-compose.prod.yml rm -f kafka || true
+          
+          # Kéo bản mới và chạy ngầm
+          sudo docker compose -f docker-compose.prod.yml pull kafka
+          sudo docker compose -f docker-compose.prod.yml up -d kafka
