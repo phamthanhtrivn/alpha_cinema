@@ -30,6 +30,8 @@ jobs:
         file: ./backend/core-services/cinema-management-service/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/cinema-management-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -67,3 +69,4 @@ jobs:
           # Kéo bản mới và chạy
           sudo docker compose -f docker-compose.prod.yml pull cinema-management-service
           sudo docker compose -f docker-compose.prod.yml up -d cinema-management-service
+

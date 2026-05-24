@@ -30,6 +30,8 @@ jobs:
         file: ./backend/core-services/ticket-service/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/ticket-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -67,3 +69,4 @@ jobs:
           # Kéo bản mới nhất về và kích nổ chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull ticket-service
           sudo docker compose -f docker-compose.prod.yml up -d ticket-service
+

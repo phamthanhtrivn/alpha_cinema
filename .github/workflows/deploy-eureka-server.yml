@@ -30,6 +30,8 @@ jobs:
         file: ./backend/infrastructure/eureka-server/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -61,3 +63,4 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest || true
           sudo docker compose -f docker-compose.prod.yml pull eureka-server
           sudo docker compose -f docker-compose.prod.yml up -d eureka-server
+

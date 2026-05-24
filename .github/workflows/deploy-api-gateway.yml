@@ -30,6 +30,8 @@ jobs:
         file: ./backend/infrastructure/api-gateway/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/api-gateway:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -61,3 +63,4 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/api-gateway:latest || true
           sudo docker compose -f docker-compose.prod.yml pull api-gateway caddy
           sudo docker compose -f docker-compose.prod.yml up -d api-gateway caddy
+
