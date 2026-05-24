@@ -23,6 +23,8 @@ import com.movieticket.user.exception.BusinessException;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.movieticket.user.repository.specification.ReviewSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -105,7 +107,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteReview(String reviewId) {
+    public void deleteReview(String reviewId, String reason) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy bình luận với ID: " + reviewId));
         
@@ -139,6 +141,15 @@ public class ReviewService {
             );
             reviewProducer.sendMovieRatingUpdateEvent(event);
         }
+
+        // Gửi thông báo sang Kafka về việc đánh giá bị xóa kèm lý do
+        ReviewStatusNotificationEvent notifyEvent = new ReviewStatusNotificationEvent(
+                review.getCustomer().getId(),
+                review.getId(),
+                "DELETED",
+                reason
+        );
+        reviewProducer.sendReviewStatusNotificationEvent(notifyEvent);
     }
 
     @Transactional(readOnly = true)
@@ -157,5 +168,13 @@ public class ReviewService {
     public Page<ReviewResponseDTO> getReviewsByCustomerId(String customerId, Pageable pageable) {
         return reviewRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable)
                 .map(reviewMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponseDTO> getAllReviews(ReviewStatus status, String movieId, ReviewType reviewType, Pageable pageable) {
+        Specification<Review> spec = Specification.where(ReviewSpecification.hasStatus(status))
+                .and(ReviewSpecification.hasMovieId(movieId))
+                .and(ReviewSpecification.hasReviewType(reviewType));
+        return reviewRepository.findAll(spec, pageable).map(reviewMapper::toResponse);
     }
 }

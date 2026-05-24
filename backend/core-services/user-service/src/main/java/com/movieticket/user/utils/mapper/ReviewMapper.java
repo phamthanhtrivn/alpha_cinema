@@ -5,10 +5,11 @@ import com.movieticket.user.dto.response.ReviewResponseDTO;
 import com.movieticket.user.entity.Review;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ReviewMapper {
     // 1. Chuyển từ Entity sang Response DTO (Để trả về cho FE)
     @Mapping(source = "customer.id", target = "customerId")
