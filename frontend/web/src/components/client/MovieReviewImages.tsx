@@ -9,7 +9,7 @@ export const ReviewGallery: React.FC<ReviewGalleryProps> = ({ images, onImageCli
   if (images.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide justify-end">
+    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 custom-scrollbar justify-end">
       {images.slice(0, 5).map((img, idx) => (
         <div
           key={idx}

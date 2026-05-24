@@ -376,7 +376,7 @@ export const Booking = () => {
                   <div className="w-[80%] max-w-3xl h-10 border-t-4 border-alpha-blue rounded-[50%] shadow-[0_-5px_10px_0_rgba(3,78,162,0.4)] transition-all"></div>
                 </div>
 
-                <div className="overflow-x-auto w-full scrollbar-hide">
+                <div className="overflow-x-auto w-full custom-scrollbar">
                   <div className="min-w-175 flex flex-col items-center gap-2">
                     {rows.map((rowName) => (
                       <div
