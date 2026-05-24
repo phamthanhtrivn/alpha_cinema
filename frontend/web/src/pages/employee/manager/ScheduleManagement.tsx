@@ -1,17 +1,23 @@
-import React from 'react';
-import BaseManagementLayout from '../../../components/employee/BaseManagementLayout';
+import React from "react";
+import { useSelector } from "react-redux";
+import AdminScheduleManagement from "../admin/ScheduleManagement";
+import { selectAuth } from "@/store/slices/authSlice";
 
 const ScheduleManagement: React.FC = () => {
+  const auth = useSelector(selectAuth);
+  const cinemaId = auth.cinemaId || auth.user?.cinemaId || "";
+  const cinemaLabel =
+    auth.user?.cinemaName ||
+    auth.user?.cinema?.name ||
+    auth.user?.cinema?.label ||
+    undefined;
+
   return (
-    <BaseManagementLayout 
-      title="Quản lý Lịch chiếu" 
-      subtitle="Cấu hình suất chiếu theo phim, phòng và cụm rạp."
-      onAdd={() => console.log('Add schedule')}
-    >
-       <div className="p-20 text-center flex flex-col items-center justify-center space-y-4 text-slate-300">
-          <p className="italic font-medium">Lịch chiếu chi tiết sẽ hiển thị tại đây.</p>
-       </div>
-    </BaseManagementLayout>
+    <AdminScheduleManagement
+      scopeToCurrentCinema
+      scopedCinemaId={cinemaId}
+      scopedCinemaLabel={cinemaLabel}
+    />
   );
 };
 

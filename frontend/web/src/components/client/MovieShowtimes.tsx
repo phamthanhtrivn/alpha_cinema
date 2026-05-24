@@ -95,7 +95,7 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
                     {/* Scroll ngang cho Tabs ngày */}
                     <div
                         ref={scrollContainerRef}
-                        className="flex-1 flex gap-2 scrollbar-hide overflow-x-auto scroll-smooth min-w-0"
+                        className="flex-1 flex gap-2 custom-scrollbar overflow-x-auto scroll-smooth min-w-0"
                     >
                         {dateTabs.map((tab) => {
                             const isActive = selectedDate === tab.dateString;

@@ -72,10 +72,29 @@ public class ShowScheduleService {
         return entityPage.map(showScheduleMapper::toResDTO);
     }
 
+    public Page<ShowScheduleResDTO> searchSchedulesForCinema(ShowScheduleSearchDTO dto, Pageable pageable, String cinemaId) {
+        ensureCinemaScope(cinemaId);
+        dto.setCinemaId(cinemaId);
+        return searchSchedules(dto, pageable);
+    }
+
     @Transactional
     public ShowSchedule createShowSchedule(ShowScheduleCreateDTO dto) {
-        Movie movie = movieService.getById(dto.getMovieId());
         RoomDetailDTO room = cinemaClient.getRoomDetail(dto.getRoomId());
+        return createShowSchedule(dto, room);
+    }
+
+    @Transactional
+    public ShowSchedule createShowScheduleForCinema(ShowScheduleCreateDTO dto, String cinemaId) {
+        ensureCinemaScope(cinemaId);
+        RoomDetailDTO room = cinemaClient.getRoomDetail(dto.getRoomId());
+        ensureRoomBelongsToCinema(room, cinemaId);
+        dto.setCinemaId(cinemaId);
+        return createShowSchedule(dto, room);
+    }
+
+    private ShowSchedule createShowSchedule(ShowScheduleCreateDTO dto, RoomDetailDTO room) {
+        Movie movie = movieService.getById(dto.getMovieId());
 
         if (!movie.getSupportedProjection().contains(room.getProjectionType())) {
             throw new IllegalArgumentException("Phòng không hỗ trợ loại hình chiếu này");
@@ -106,11 +125,29 @@ public class ShowScheduleService {
 
     @Transactional
     public ShowSchedule update(String id, ShowScheduleUpdateDTO dto) {
+        return update(id, dto, null);
+    }
+
+    @Transactional
+    public ShowSchedule updateForCinema(String id, ShowScheduleUpdateDTO dto, String cinemaId) {
+        ensureCinemaScope(cinemaId);
+        return update(id, dto, cinemaId);
+    }
+
+    private ShowSchedule update(String id, ShowScheduleUpdateDTO dto, String cinemaId) {
         ShowSchedule entity = showScheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy suất chiếu"));
 
+        if (cinemaId != null && !Objects.equals(entity.getCinemaId(), cinemaId)) {
+            throw new BusinessException("Không được chỉnh sửa suất chiếu ngoài rạp đang quản lý");
+        }
+
         Movie movie = movieService.getById(dto.getMovieId());
         RoomDetailDTO room = cinemaClient.getRoomDetail(dto.getRoomId());
+
+        if (cinemaId != null) {
+            ensureRoomBelongsToCinema(room, cinemaId);
+        }
 
         if (!movie.getSupportedProjection().contains(room.getProjectionType())) {
             throw new IllegalArgumentException("Phim không hỗ trợ định dạng của phòng này");
@@ -134,6 +171,18 @@ public class ShowScheduleService {
         entity.setStatus(dto.getStatus());
 
         return showScheduleRepository.save(entity);
+    }
+
+    private void ensureCinemaScope(String cinemaId) {
+        if (cinemaId == null || cinemaId.isBlank()) {
+            throw new BusinessException("Không xác định được rạp đang quản lý");
+        }
+    }
+
+    private void ensureRoomBelongsToCinema(RoomDetailDTO room, String cinemaId) {
+        if (room == null || !Objects.equals(room.getCinemaId(), cinemaId)) {
+            throw new BusinessException("Phòng chiếu không thuộc rạp đang quản lý");
+        }
     }
 
     public List<CinemaShowtimeDTO> getMovieShowtimes(String movieId, LocalDate date) {
