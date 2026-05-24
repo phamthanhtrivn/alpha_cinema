@@ -1,9 +1,8 @@
 name: Deploy Kafka
-type: workflow
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/docker-compose.prod.yml'
 
