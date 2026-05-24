@@ -32,9 +32,9 @@ jobs:
           cd /home/ubuntu/alpha_cinema/backend
           
           # Dừng và xóa container Kafka cũ
-          sudo docker compose -f docker-compose.prod.yml stop kafka || true
-          sudo docker compose -f docker-compose.prod.yml rm -f kafka || true
+          sudo docker-compose -f docker-compose.prod.yml stop kafka || true
+          sudo docker-compose -f docker-compose.prod.yml rm -f kafka || true
           
           # Kéo bản mới và chạy ngầm
-          sudo docker compose -f docker-compose.prod.yml pull kafka
-          sudo docker compose -f docker-compose.prod.yml up -d kafka
+          sudo docker-compose -f docker-compose.prod.yml pull kafka
+          sudo docker-compose -f docker-compose.prod.yml up -d kafka
