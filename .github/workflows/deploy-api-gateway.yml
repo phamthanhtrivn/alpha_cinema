@@ -2,7 +2,7 @@ name: Deploy API Gateway
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/infrastructure/api-gateway/**'
       - 'backend/docker-compose.prod.yml'

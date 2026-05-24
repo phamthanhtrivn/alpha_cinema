@@ -2,7 +2,7 @@ name: Deploy Payment Service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/core-services/payment-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng

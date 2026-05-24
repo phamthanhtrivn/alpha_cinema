@@ -2,7 +2,7 @@ name: Deploy Product Service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/core-services/product-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng
