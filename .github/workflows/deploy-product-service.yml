@@ -1,4 +1,4 @@
-﻿name: Deploy Product Service
+name: Deploy Product Service
 
 on:
   push:
