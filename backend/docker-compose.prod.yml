@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   # ==========================================
-  # --- INFRASTRUCTURE SERVICES ---
+  # ---- INFRASTRUCTURE SERVICES ----
   # ==========================================
   eureka-server:
     image: htuan04/eureka-server:latest
