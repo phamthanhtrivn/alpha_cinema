@@ -1,4 +1,4 @@
-﻿name: Deploy Payment Service
+name: Deploy Payment Service
 
 on:
   push:

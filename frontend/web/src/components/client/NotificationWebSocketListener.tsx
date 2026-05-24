@@ -96,7 +96,7 @@ const NotificationWebSocketListener: React.FC = () => {
       console.log("[WebSocket] Đang dọn dẹp kết nối...");
       stompClient.deactivate();
     };
-  }, [user, isAuthenticated, queryClient]);
+  }, [user?.id, user?.userId, isAuthenticated, queryClient]);
 
   // Component chạy ngầm không cần hiển thị giao diện trực tiếp
   return null;

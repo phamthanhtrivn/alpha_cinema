@@ -3,6 +3,9 @@ spring:
     serialization:
       # Định dạng ngày tháng về kiểu ISO-8601 (String) thay vì mảng số (Timestamps)
       write-dates-as-timestamps: false
+  datasource:
+    hikari:
+      maximum-pool-size: 3 # Giới hạn tối đa 3 kết nối mỗi service để tránh lỗi 'Too many connections' trên RDS/DB cỡ nhỏ
 
 eureka:
   client:

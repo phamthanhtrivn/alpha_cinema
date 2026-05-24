@@ -1,4 +1,4 @@
-﻿name: Deploy Config Server
+name: Deploy Config Server
 
 on:
   push:
