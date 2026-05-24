@@ -2,7 +2,7 @@ name: Deploy Order Service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/core-services/order-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng
