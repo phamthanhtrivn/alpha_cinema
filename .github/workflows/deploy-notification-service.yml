@@ -2,7 +2,7 @@ name: Deploy Notification Service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/support-services/notification-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu file compose tổng có cập nhật
