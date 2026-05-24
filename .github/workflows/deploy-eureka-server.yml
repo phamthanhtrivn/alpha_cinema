@@ -2,7 +2,7 @@ name: Deploy Eureka Server
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/infrastructure/eureka-server/**'
       - 'backend/docker-compose.prod.yml'
@@ -63,4 +63,3 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest || true
           sudo docker compose -f docker-compose.prod.yml pull eureka-server
           sudo docker compose -f docker-compose.prod.yml up -d eureka-server
-

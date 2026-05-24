@@ -2,7 +2,7 @@ name: Deploy User Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/user-service/**'
       - 'backend/docker-compose.prod.yml' # Tự động chạy lại nếu file compose tổng có update
@@ -69,4 +69,3 @@ jobs:
           # Kéo bản mới nhất từ Docker Hub về và khởi chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull user-service
           sudo docker compose -f docker-compose.prod.yml up -d user-service
-

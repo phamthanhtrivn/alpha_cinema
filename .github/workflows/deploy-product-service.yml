@@ -2,7 +2,7 @@ name: Deploy Product Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/product-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng
@@ -70,4 +70,3 @@ jobs:
           # Kéo bản mới và khởi chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull product-service
           sudo docker compose -f docker-compose.prod.yml up -d product-service
-

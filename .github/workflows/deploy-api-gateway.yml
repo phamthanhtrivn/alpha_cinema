@@ -1,8 +1,8 @@
-name: Deploy API Gateway
+﻿name: Deploy API Gateway
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/infrastructure/api-gateway/**'
       - 'backend/docker-compose.prod.yml'
@@ -63,4 +63,3 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/api-gateway:latest || true
           sudo docker compose -f docker-compose.prod.yml pull api-gateway caddy
           sudo docker compose -f docker-compose.prod.yml up -d api-gateway caddy
-

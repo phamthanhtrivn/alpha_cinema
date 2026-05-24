@@ -1,8 +1,8 @@
-name: Deploy AI Service
+﻿name: Deploy AI Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/support-services/ai-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm cái này để file compose thay đổi nó cũng tự update
@@ -67,4 +67,3 @@ jobs:
           
           sudo docker compose -f docker-compose.prod.yml pull ai-service
           sudo docker compose -f docker-compose.prod.yml up -d ai-service
-

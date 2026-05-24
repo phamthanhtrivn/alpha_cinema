@@ -1,8 +1,8 @@
-name: Deploy Cinema Management Service
+﻿name: Deploy Cinema Management Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/cinema-management-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu có cập nhật file compose
@@ -69,4 +69,3 @@ jobs:
           # Kéo bản mới và chạy
           sudo docker compose -f docker-compose.prod.yml pull cinema-management-service
           sudo docker compose -f docker-compose.prod.yml up -d cinema-management-service
-

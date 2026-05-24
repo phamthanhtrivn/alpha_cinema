@@ -2,7 +2,7 @@ name: Deploy Ticket Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/ticket-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu file compose tổng thay đổi
@@ -69,4 +69,3 @@ jobs:
           # Kéo bản mới nhất về và kích nổ chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull ticket-service
           sudo docker compose -f docker-compose.prod.yml up -d ticket-service
-
