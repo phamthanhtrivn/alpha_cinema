@@ -17,7 +17,21 @@ export const showScheduleService = {
     return response.data;
   },
   updateSchedule: async (id: string, data: any) => {
-    const response = await apiClient.put(`/admin/show-schedules/${id}`, data);
+    const response = await apiClient.put(`/show-schedules/admin/${id}`, data);
+    return response.data;
+  },
+  searchManagerSchedules: async (params?: ShowScheduleSearchDTO) => {
+    const response = await apiClient.get(`/show-schedules/manager/search`, {
+      params,
+    });
+    return response.data;
+  },
+  createManagerSchedule: async (data: any) => {
+    const response = await apiClient.post(`/show-schedules/manager`, data);
+    return response.data;
+  },
+  updateManagerSchedule: async (id: string, data: any) => {
+    const response = await apiClient.put(`/show-schedules/manager/${id}`, data);
     return response.data;
   },
   getMovieShowtimes: async (

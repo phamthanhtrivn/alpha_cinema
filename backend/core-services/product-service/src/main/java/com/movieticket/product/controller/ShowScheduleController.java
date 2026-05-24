@@ -68,12 +68,47 @@ public class ShowScheduleController {
                 .body(ApiResponse.success(result, "Tạo suất chiếu mới thành công!"));
     }
 
+    @GetMapping("/manager/search")
+    public ResponseEntity<ApiResponse<Page<ShowScheduleResDTO>>> searchManager(
+            ShowScheduleSearchDTO searchDTO,
+            @RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId,
+            @PageableDefault(size = 10, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
+
+        Page<ShowScheduleResDTO> showSchedule =
+                showScheduleService.searchSchedulesForCinema(searchDTO, pageable, cinemaHeaderId);
+
+        return ResponseEntity.ok(ApiResponse.success(showSchedule, ""));
+    }
+
+    @PostMapping("/manager")
+    public ResponseEntity<ApiResponse<ShowSchedule>> createManagerShowSchedule(
+            @RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId,
+            @Valid @RequestBody ShowScheduleCreateDTO createDTO) {
+
+        ShowSchedule result = showScheduleService.createShowScheduleForCinema(createDTO, cinemaHeaderId);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(result, "Tạo suất chiếu mới thành công!"));
+    }
+
     @PutMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<ShowSchedule>> updateShowSchedule(
             @PathVariable String id,
             @Valid @RequestBody ShowScheduleUpdateDTO dto) {
 
         ShowSchedule result = showScheduleService.update(id, dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(result, "Cập nhật suất chiếu thành công!"));
+    }
+
+    @PutMapping("/manager/{id}")
+    public ResponseEntity<ApiResponse<ShowSchedule>> updateManagerShowSchedule(
+            @PathVariable String id,
+            @RequestHeader(value = "X-Cinema-Id", required = true) String cinemaHeaderId,
+            @Valid @RequestBody ShowScheduleUpdateDTO dto) {
+
+        ShowSchedule result = showScheduleService.updateForCinema(id, dto, cinemaHeaderId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(result, "Cập nhật suất chiếu thành công!"));
