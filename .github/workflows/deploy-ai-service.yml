@@ -2,7 +2,7 @@ name: Deploy AI Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/support-services/ai-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm cái này để file compose thay đổi nó cũng tự update
@@ -31,6 +31,8 @@ jobs:
         push: true
         # Đổi tên image về dùng biến cho đồng bộ với file compose
         tags: ${{ secrets.DOCKER_USERNAME }}/ai-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -65,3 +67,4 @@ jobs:
           
           sudo docker compose -f docker-compose.prod.yml pull ai-service
           sudo docker compose -f docker-compose.prod.yml up -d ai-service
+
