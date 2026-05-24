@@ -243,6 +243,7 @@ const BaseFormModal: React.FC<Props> = ({
             placeholder={field.placeholder}
             options={normalizedOptions}
             value={values[field.name]}
+            disabled={field.disabled}
             onChange={(val) => {
               let parsed: any = val;
               if (val === "true") parsed = true;
