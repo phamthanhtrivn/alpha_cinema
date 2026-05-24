@@ -1,0 +1,41 @@
+name: Deploy Redis
+type: workflow
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/docker-compose.prod.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Copy docker-compose.prod.yml to EC2 Support
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.REDIS_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }}
+        source: "backend/docker-compose.prod.yml"
+        target: "/home/ubuntu/alpha_cinema"
+        
+    - name: Deploy Redis Container on EC2 Support
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.REDIS_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          
+          # Dừng và xóa container Redis cũ
+          sudo docker compose -f docker-compose.prod.yml stop redis || true
+          sudo docker compose -f docker-compose.prod.yml rm -f redis || true
+          
+          # Kéo bản mới và chạy ngầm
+          sudo docker compose -f docker-compose.prod.yml pull redis
+          sudo docker compose -f docker-compose.prod.yml up -d redis
