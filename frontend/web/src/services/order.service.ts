@@ -14,6 +14,11 @@ export const orderService = {
     return response.data;
   },
 
+  checkoutEmployeeMomo: async (data: unknown) => {
+    const response = await apiClient.post(`/checkouts/payment-by-momo`, data);
+    return response.data;
+  },
+
   getOrders: async (params?: OrderSearchParams) => {
     const response = await apiClient.get(`/orders/page`, { params });
     return response.data as ApiResponse<PageResponse<OrderSummary>>;

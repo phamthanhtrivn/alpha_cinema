@@ -65,7 +65,9 @@ public class PaymentResultEventListener {
             publishSeatEvent(showScheduleDetails, "SOLD", "PAYMENT", cache == null ? null : cache.getSessionId());
 
             UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
-            userLoyaltyEventProducer.publish(loyaltyEvent);
+            if (loyaltyEvent != null) {
+                userLoyaltyEventProducer.publish(loyaltyEvent);
+            }
 
             OrderSuccessfulEvent orderEvent = buildOrderSuccessfulEvent(order, cache, event);
             if (orderEvent.getCustomerEmail() != null && !orderEvent.getCustomerEmail().isBlank()) {
