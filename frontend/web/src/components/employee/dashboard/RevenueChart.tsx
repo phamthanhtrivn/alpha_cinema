@@ -45,6 +45,11 @@ export function RevenueChart({ data, isLoading, detailPath }: RevenueChartProps)
         ]
       : [];
   const maxRevenue = Math.max(...chartSeries.map((point) => point.revenue), 1);
+  const formatBarValue = (value: number) => {
+    if (value >= 1_000_000_000) return `${formatNumber(value / 1_000_000_000)} tỷ`;
+    if (value >= 1_000_000) return `${formatNumber(value / 1_000_000)} tr`;
+    return formatVnd(value);
+  };
 
   return (
     <Card className="border-slate-200 bg-white shadow-sm">
@@ -60,11 +65,6 @@ export function RevenueChart({ data, isLoading, detailPath }: RevenueChartProps)
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {data.comparison && (
-              <div className="rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
-                +{formatPercent(data.comparison.value)} {data.comparison.label}
-              </div>
-            )}
             {detailPath && (
               <Button asChild variant="outline" size="sm">
                 <Link to={detailPath}>
@@ -112,8 +112,14 @@ export function RevenueChart({ data, isLoading, detailPath }: RevenueChartProps)
 
               return (
                 <div key={point.label} className="flex h-full flex-1 flex-col justify-end gap-2">
-                  <div className="flex min-h-0 flex-1 items-end">
-                    <div className="relative h-full w-full overflow-hidden rounded-t-md bg-sky-100">
+                  <div className="flex min-h-0 flex-1 items-end pt-7">
+                    <div className="relative h-full w-full rounded-t-md bg-sky-100">
+                      <div
+                        className="absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-white px-1.5 py-0.5 text-[10px] font-black text-slate-700 shadow-sm ring-1 ring-slate-200"
+                        style={{ bottom: `calc(${barHeight}% + 6px)` }}
+                      >
+                        {formatBarValue(point.revenue)}
+                      </div>
                       <div
                         className="absolute bottom-0 left-0 right-0 rounded-t-md bg-sky-500"
                         style={{ height: `${barHeight}%` }}
