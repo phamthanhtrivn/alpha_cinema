@@ -34,5 +34,21 @@ export const reviewService = {
       }
     });
     return response.data;
+  },
+  getAllReviews: async (params?: any) => {
+    const response = await apiClient.get('/reviews', { params });
+    return response.data;
+  },
+  updateReviewStatus: async (id: string, status: string, reason?: string) => {
+    const response = await apiClient.put(`/reviews/${id}/status`, null, {
+      params: { status, reason: reason || "" }
+    });
+    return response.data;
+  },
+  deleteReview: async (id: string, reason?: string) => {
+    const response = await apiClient.delete(`/reviews/${id}`, {
+      params: { reason: reason || "" }
+    });
+    return response.data;
   }
 };

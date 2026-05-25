@@ -3,6 +3,7 @@ package com.movieticket.user.repository;
 import com.movieticket.user.entity.Review;
 import com.movieticket.user.enums.ReviewStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface ReviewRepository extends JpaRepository<Review, String> {
+public interface ReviewRepository extends JpaRepository<Review, String>, JpaSpecificationExecutor<Review> {
     
     boolean existsByCustomerIdAndMovieId(String customerId, String movieId);
 

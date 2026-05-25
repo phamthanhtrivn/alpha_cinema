@@ -2,7 +2,7 @@ name: Deploy Notification Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/support-services/notification-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu file compose tổng có cập nhật
@@ -30,6 +30,8 @@ jobs:
         file: ./backend/support-services/notification-service/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/notification-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -67,3 +69,4 @@ jobs:
           # Kéo bản mới và kích nổ
           sudo docker compose -f docker-compose.prod.yml pull notification-service
           sudo docker compose -f docker-compose.prod.yml up -d notification-service
+
