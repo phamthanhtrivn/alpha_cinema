@@ -5,18 +5,23 @@ import com.movieticket.order.dto.request.CreateShowScheduleDetailRequestDto;
 import com.movieticket.order.dto.request.SeatRequestDto;
 import com.movieticket.order.entity.OrderStatus;
 import com.movieticket.order.entity.ShowScheduleDetail;
+import com.movieticket.order.event.model.SeatLockEvent;
+import com.movieticket.order.event.producer.SeatLockEventProducer;
 import com.movieticket.order.exception.BusinessException;
 import com.movieticket.order.repository.ShowScheduleDetailRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,7 @@ public class ShowScheduleDetailService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ShowScheduleDetailRepository showScheduleDetailRepository;
+    private final SeatLockEventProducer seatLockEventProducer;
 
     public void ensureSeatsNotBooked(String showScheduleId, List<SeatRequestDto> seats) {
         if (showScheduleId == null || showScheduleId.isBlank() || seats == null || seats.isEmpty()) {
@@ -123,6 +129,9 @@ public class ShowScheduleDetailService {
             }
             acquiredKeys.add(key);
         }
+
+        publishSeatEvent(showScheduleId, normalizedSeatIds, "LOCKED", null, "CHECKOUT_SESSION",
+                LocalDateTime.now().plusMinutes(SEAT_LOCK_MINUTES));
     }
 
     public void unlockSeats(String showScheduleId, List<String> seatIds) {
@@ -135,6 +144,8 @@ public class ShowScheduleDetailService {
         normalizedSeatIds.stream()
                 .map(seatId -> buildSeatLockKey(showScheduleId, seatId))
                 .forEach(redisTemplate::delete);
+
+        publishSeatEvent(showScheduleId, normalizedSeatIds, "AVAILABLE", null, "SESSION_CANCEL", null);
     }
 
     private String buildSeatLockKey(String showScheduleId, String seatId) {
@@ -167,10 +178,13 @@ public class ShowScheduleDetailService {
     public Map<String, String> getBookedSeatMap(String showScheduleId) {
         List<Object[]> results = showScheduleDetailRepository.findBookedSeatsInternal(showScheduleId);
 
-        return results.stream().collect(Collectors.toMap(
+        Map<String, String> bookedSeats = new HashMap<>(results.stream().collect(Collectors.toMap(
                 row -> (String) row[0],
                 row -> row[1].toString()
-        ));
+        )));
+
+        getLockedSeatIds(showScheduleId).forEach(seatId -> bookedSeats.putIfAbsent(seatId, "LOCKED"));
+        return bookedSeats;
     }
 
     public List<ShowScheduleDetailDTO> getShowScheduleDetailsByShowScheduleId(String showScheduleId) {
@@ -186,5 +200,55 @@ public class ShowScheduleDetailService {
                     return dto;
                 }
         ).toList();
+    }
+
+    private List<String> getLockedSeatIds(String showScheduleId) {
+        if (showScheduleId == null || showScheduleId.isBlank()) {
+            return List.of();
+        }
+
+        String pattern = "seat:lock:" + showScheduleId + ":*";
+        try {
+            return redisTemplate.keys(pattern)
+                    .stream()
+                    .map(key -> extractSeatIdFromKey(key, showScheduleId))
+                    .filter(seatId -> seatId != null && !seatId.isBlank())
+                    .distinct()
+                    .toList();
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private String extractSeatIdFromKey(String key, String showScheduleId) {
+        String prefix = "seat:lock:" + showScheduleId + ":";
+        if (key != null && key.startsWith(prefix)) {
+            return key.substring(prefix.length());
+        }
+        return null;
+    }
+
+    private void publishSeatEvent(
+            String showScheduleId,
+            List<String> seatIds,
+            String status,
+            String sessionId,
+            String source,
+            LocalDateTime expiresAt
+    ) {
+        if (seatIds == null || seatIds.isEmpty()) {
+            return;
+        }
+
+        seatLockEventProducer.publish(SeatLockEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .showScheduleId(showScheduleId)
+                .seatIds(seatIds)
+                .status(status)
+                .sessionId(sessionId)
+                .source(source)
+                .expiresAt(expiresAt)
+                .occurredAt(LocalDateTime.now())
+                .build());
     }
 }
