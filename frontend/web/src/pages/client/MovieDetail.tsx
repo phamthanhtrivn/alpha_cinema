@@ -91,7 +91,7 @@ const MovieDetail = () => {
     );
 
     return (
-        <div className="bg-white min-h-screen pb-20 scrollbar-hide">
+        <div className="bg-white min-h-screen pb-20">
             {/* SECTION 1: HERO BANNER */}
             <div className="w-full bg-black">
                 <div className="max-w-6xl mx-auto relative h-[400px] md:h-[500px]">

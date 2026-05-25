@@ -7,6 +7,7 @@ import { AlertTriangle, FileSpreadsheet, LayoutDashboard } from "lucide-react";
 import { AiChatbotStats } from "@/components/employee/dashboard/AiChatbotStats";
 import { DashboardFilter } from "@/components/employee/dashboard/DashboardFilter";
 import { DashboardSectionToolbar } from "@/components/employee/dashboard/DashboardSectionToolbar";
+import { DashboardTabs } from "@/components/employee/dashboard/DashboardTabs";
 import { EmployeeStats } from "@/components/employee/dashboard/EmployeeStats";
 import { LoyaltyStats } from "@/components/employee/dashboard/LoyaltyStats";
 import { MoviePerformance } from "@/components/employee/dashboard/MoviePerformance";
@@ -29,6 +30,7 @@ import type {
 } from "@/types/dashboard";
 
 type SectionFilters = Record<DashboardSectionKey, DashboardFilterState>;
+type AdminDashboardTabKey = "finance" | "movies" | "customers" | "operations" | "ai";
 
 interface ScrollableDashboardPanelProps {
   children: ReactNode;
@@ -100,7 +102,30 @@ const createSectionFilters = (filters: DashboardFilterState): SectionFilters => 
   promotions: { ...filters },
 });
 
+const adminDashboardTabs = [
+  { value: "finance", label: "Tài chính" },
+  { value: "movies", label: "Phim & suất chiếu" },
+  { value: "customers", label: "Khách hàng" },
+  { value: "operations", label: "Vận hành" },
+  { value: "ai", label: "AI" },
+] satisfies { value: AdminDashboardTabKey; label: string }[];
+
+const adminTabSections: Record<AdminDashboardTabKey, DashboardSectionKey[]> = {
+  finance: ["revenue", "orders"],
+  movies: ["movies", "schedules"],
+  customers: ["customers", "reviews"],
+  operations: ["products", "employees", "promotions"],
+  ai: [],
+};
+
 const getWeekOfMonth = (date: Date) => Math.ceil(date.getDate() / 7);
+
+const sameFilters = (left: DashboardFilterState, right: DashboardFilterState) =>
+  left.range === right.range &&
+  left.year === right.year &&
+  left.month === right.month &&
+  left.week === right.week &&
+  (left.cinemaId ?? "") === (right.cinemaId ?? "");
 
 const escapeExcelCell = (value: unknown) =>
   String(value ?? "")
@@ -204,10 +229,12 @@ const exportFullDashboardReport = (
 const useDashboardSectionData = (
   sectionKey: DashboardSectionKey,
   filters: DashboardFilterState,
+  enabled: boolean,
 ) =>
   useQuery({
     queryKey: ["admin-dashboard-section", sectionKey, filters],
     queryFn: () => dashboardService.getAdminDashboardSection(sectionKey, filters),
+    enabled,
   });
 
 const AdminDashboard = () => {
@@ -225,6 +252,7 @@ const AdminDashboard = () => {
   const [sectionFilters, setSectionFilters] = useState<SectionFilters>(() =>
     createSectionFilters(initialFilters),
   );
+  const [activeTab, setActiveTab] = useState<AdminDashboardTabKey>("finance");
 
   const { data: cinemaOptionsData, isLoading: isCinemaLoading } = useQuery({
     queryKey: ["dashboard-cinema-options"],
@@ -242,15 +270,34 @@ const AdminDashboard = () => {
     queryFn: () => dashboardService.getAdminDashboard(filters),
   });
 
-  const revenueQuery = useDashboardSectionData("revenue", sectionFilters.revenue);
-  const customerQuery = useDashboardSectionData("customers", sectionFilters.customers);
-  const employeeQuery = useDashboardSectionData("employees", sectionFilters.employees);
-  const reviewQuery = useDashboardSectionData("reviews", sectionFilters.reviews);
-  const movieQuery = useDashboardSectionData("movies", sectionFilters.movies);
-  const productQuery = useDashboardSectionData("products", sectionFilters.products);
-  const scheduleQuery = useDashboardSectionData("schedules", sectionFilters.schedules);
-  const orderQuery = useDashboardSectionData("orders", sectionFilters.orders);
-  const promotionQuery = useDashboardSectionData("promotions", sectionFilters.promotions);
+  const activeSections = adminTabSections[activeTab];
+  const shouldFetchSection = (sectionKey: DashboardSectionKey) =>
+    activeSections.includes(sectionKey) && !sameFilters(sectionFilters[sectionKey], filters);
+
+  const revenueQuery = useDashboardSectionData("revenue", sectionFilters.revenue, shouldFetchSection("revenue"));
+  const customerQuery = useDashboardSectionData("customers", sectionFilters.customers, shouldFetchSection("customers"));
+  const employeeQuery = useDashboardSectionData("employees", sectionFilters.employees, shouldFetchSection("employees"));
+  const reviewQuery = useDashboardSectionData("reviews", sectionFilters.reviews, shouldFetchSection("reviews"));
+  const movieQuery = useDashboardSectionData("movies", sectionFilters.movies, shouldFetchSection("movies"));
+  const productQuery = useDashboardSectionData("products", sectionFilters.products, shouldFetchSection("products"));
+  const scheduleQuery = useDashboardSectionData("schedules", sectionFilters.schedules, shouldFetchSection("schedules"));
+  const orderQuery = useDashboardSectionData("orders", sectionFilters.orders, shouldFetchSection("orders"));
+  const promotionQuery = useDashboardSectionData(
+    "promotions",
+    sectionFilters.promotions,
+    shouldFetchSection("promotions"),
+  );
+  const sectionKeys: DashboardSectionKey[] = [
+    "revenue",
+    "customers",
+    "employees",
+    "reviews",
+    "movies",
+    "products",
+    "schedules",
+    "orders",
+    "promotions",
+  ];
   const sectionQueries = [
     revenueQuery,
     customerQuery,
@@ -262,7 +309,18 @@ const AdminDashboard = () => {
     orderQuery,
     promotionQuery,
   ];
-  const isAnyDashboardFetching = isFetching || sectionQueries.some((query) => query.isFetching);
+  const activeSectionQueries = sectionQueries.filter((_, index) => shouldFetchSection(sectionKeys[index]));
+  const isAnyDashboardFetching = isFetching || activeSectionQueries.some((query) => query.isFetching);
+
+  const revenueData = revenueQuery.data ?? dashboardData;
+  const customerData = customerQuery.data ?? dashboardData;
+  const employeeData = employeeQuery.data ?? dashboardData;
+  const reviewData = reviewQuery.data ?? dashboardData;
+  const movieData = movieQuery.data ?? dashboardData;
+  const productData = productQuery.data ?? dashboardData;
+  const scheduleData = scheduleQuery.data ?? dashboardData;
+  const orderData = orderQuery.data ?? dashboardData;
+  const promotionData = promotionQuery.data ?? dashboardData;
 
   const cinemaOptions = useMemo(() => {
     const options = cinemaOptionsData?.data ?? [];
@@ -297,9 +355,18 @@ const AdminDashboard = () => {
 
   const handleGlobalRefresh = () => {
     void refetch();
-    sectionQueries.forEach((query) => {
+    activeSectionQueries.forEach((query) => {
       void query.refetch();
     });
+  };
+
+  const refreshSection = (sectionKey: DashboardSectionKey, refetchSection: () => unknown) => {
+    if (sameFilters(sectionFilters[sectionKey], filters)) {
+      void refetch();
+      return;
+    }
+
+    void refetchSection();
   };
 
   const exportSection = (
@@ -384,146 +451,161 @@ const AdminDashboard = () => {
         getDetailPath={metricDetailPath}
       />
 
+      <DashboardTabs
+        tabs={adminDashboardTabs}
+        value={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {activeTab === "finance" && (
+      <>
       <div className="space-y-3">
         <DashboardSectionToolbar
           title="Lọc riêng: Doanh thu"
           value={sectionFilters.revenue}
           onChange={(next) => handleSectionFilterChange("revenue", next)}
-          onRefresh={() => revenueQuery.refetch()}
+          onRefresh={() => refreshSection("revenue", revenueQuery.refetch)}
           onExport={() =>
-            revenueQuery.data &&
+            revenueData &&
             exportSection("doanh thu", "dashboard-revenue", "revenue", [
               { title: "Tóm tắt doanh thu", rows: [{
-                "Doanh thu": revenueQuery.data.revenue.totalRevenue,
-                "Vé bán": revenueQuery.data.revenue.totalTickets,
-                "Sản phẩm": revenueQuery.data.revenue.totalProducts,
-              }] },
-              { title: "Doanh thu theo kỳ", rows: revenueQuery.data.revenue.series },
+                "Doanh thu": revenueData.revenue.totalRevenue,
+                "Vé bán": revenueData.revenue.totalTickets,
+                "Sản phẩm": revenueData.revenue.totalProducts,
+              }] }
             ])
           }
-          isExportDisabled={!revenueQuery.data || revenueQuery.isLoading}
+          isExportDisabled={!revenueData || revenueQuery.isLoading}
           isRefreshing={revenueQuery.isFetching}
           cinemaOptions={cinemaOptions}
           isCinemaLoading={isCinemaLoading}
         />
         <ScrollableDashboardPanel minWidth="760px" maxHeight="620px">
           <RevenueChart
-            data={revenueQuery.data?.revenue}
-            isLoading={revenueQuery.isLoading}
+            data={revenueData?.revenue}
+            isLoading={revenueQuery.isLoading || (isLoading && !revenueData)}
             detailPath={detailRoutes.orders}
           />
         </ScrollableDashboardPanel>
       </div>
 
-      <div className="space-y-3">
-        <DashboardSectionToolbar
-          title="Lọc riêng: Phim"
-          value={sectionFilters.movies}
-          onChange={(next) => handleSectionFilterChange("movies", next)}
-          onRefresh={() => movieQuery.refetch()}
-          onExport={() =>
-            movieQuery.data &&
-            exportSection("phim", "dashboard-movies", "movies", [
-              { title: "Tóm tắt phim", rows: [{
-                "Đang chiếu": movieQuery.data.movies.nowShowing,
-                "Sắp chiếu": movieQuery.data.movies.comingSoon,
-              }] },
-              { title: "Top phim theo doanh thu", rows: movieQuery.data.movies.topRevenue },
-              { title: "Top phim theo vé bán", rows: movieQuery.data.movies.topTickets },
-            ])
-          }
-          isExportDisabled={!movieQuery.data || movieQuery.isLoading}
-          isRefreshing={movieQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          isCinemaLoading={isCinemaLoading}
-        />
-        <ScrollableDashboardPanel minWidth="760px" maxHeight="720px">
-          <MoviePerformance
-            data={movieQuery.data?.movies}
-            isLoading={movieQuery.isLoading}
-            detailPath={detailRoutes.movies}
-          />
-        </ScrollableDashboardPanel>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
-        <div className="space-y-3 xl:col-span-2">
-          <DashboardSectionToolbar
-            title="Lọc riêng: Suất chiếu"
-            value={sectionFilters.schedules}
-            onChange={(next) => handleSectionFilterChange("schedules", next)}
-            onRefresh={() => scheduleQuery.refetch()}
-            onExport={() =>
-              scheduleQuery.data &&
-              exportSection("suất chiếu", "dashboard-schedules", "schedules", [
-                { title: "Suất chiếu", rows: scheduleQuery.data.schedules },
-              ])
-            }
-            isExportDisabled={!scheduleQuery.data || scheduleQuery.isLoading}
-            isRefreshing={scheduleQuery.isFetching}
-            cinemaOptions={cinemaOptions}
-            isCinemaLoading={isCinemaLoading}
-          />
-          <ScrollableDashboardPanel minWidth="520px" maxHeight="640px">
-            <ShowScheduleOverview
-              schedules={scheduleQuery.data?.schedules ?? []}
-              isLoading={scheduleQuery.isLoading}
-              detailPath={detailRoutes.schedules}
-            />
-          </ScrollableDashboardPanel>
-        </div>
-        <div className="space-y-3 xl:col-span-3">
+        <div className="space-y-3 xl:col-span-5">
           <DashboardSectionToolbar
             title="Lọc riêng: Đơn hàng"
             value={sectionFilters.orders}
             onChange={(next) => handleSectionFilterChange("orders", next)}
-            onRefresh={() => orderQuery.refetch()}
+            onRefresh={() => refreshSection("orders", orderQuery.refetch)}
             onExport={() =>
-              orderQuery.data &&
+              orderData &&
               exportSection("đơn hàng", "dashboard-orders", "orders", [
-                { title: "Trạng thái đơn hàng", rows: [orderQuery.data.orders.statuses] },
-                { title: "Phương thức thanh toán", rows: orderQuery.data.orders.paymentMethods },
-                { title: "Đơn gần đây", rows: orderQuery.data.orders.recentOrders },
+                { title: "Trạng thái đơn hàng", rows: [orderData.orders.statuses] },
+                { title: "Phương thức thanh toán", rows: orderData.orders.paymentMethods },
+                { title: "Đơn gần đây", rows: orderData.orders.recentOrders },
               ])
             }
-            isExportDisabled={!orderQuery.data || orderQuery.isLoading}
+            isExportDisabled={!orderData || orderQuery.isLoading}
             isRefreshing={orderQuery.isFetching}
             cinemaOptions={cinemaOptions}
             isCinemaLoading={isCinemaLoading}
           />
           <ScrollableDashboardPanel minWidth="820px" maxHeight="700px">
             <OrderPaymentStats
-              data={orderQuery.data?.orders}
-              isLoading={orderQuery.isLoading}
+              data={orderData?.orders}
+              isLoading={orderQuery.isLoading || (isLoading && !orderData)}
               detailPath={detailRoutes.orders}
             />
           </ScrollableDashboardPanel>
         </div>
       </div>
+      </>
+      )}
 
+      {activeTab === "movies" && (
+      <>
+      <div className="space-y-3">
+        <DashboardSectionToolbar
+          title="Lọc riêng: Phim"
+          value={sectionFilters.movies}
+          onChange={(next) => handleSectionFilterChange("movies", next)}
+          onRefresh={() => refreshSection("movies", movieQuery.refetch)}
+          onExport={() =>
+            movieData &&
+            exportSection("phim", "dashboard-movies", "movies", [
+              { title: "Tóm tắt phim", rows: [{
+                "Đang chiếu": movieData.movies.nowShowing,
+                "Sắp chiếu": movieData.movies.comingSoon,
+              }] },
+              { title: "Top phim theo doanh thu", rows: movieData.movies.topRevenue },
+              { title: "Top phim theo vé bán", rows: movieData.movies.topTickets },
+            ])
+          }
+          isExportDisabled={!movieData || movieQuery.isLoading}
+          isRefreshing={movieQuery.isFetching}
+          cinemaOptions={cinemaOptions}
+          isCinemaLoading={isCinemaLoading}
+        />
+        <ScrollableDashboardPanel minWidth="760px" maxHeight="720px">
+          <MoviePerformance
+            data={movieData?.movies}
+            isLoading={movieQuery.isLoading || (isLoading && !movieData)}
+            detailPath={detailRoutes.movies}
+          />
+        </ScrollableDashboardPanel>
+      </div>
+
+      <div className="space-y-3">
+        <DashboardSectionToolbar
+          title="Lọc riêng: Suất chiếu"
+          value={sectionFilters.schedules}
+          onChange={(next) => handleSectionFilterChange("schedules", next)}
+          onRefresh={() => refreshSection("schedules", scheduleQuery.refetch)}
+          onExport={() =>
+            scheduleData &&
+            exportSection("suất chiếu", "dashboard-schedules", "schedules", [
+              { title: "Suất chiếu", rows: scheduleData.schedules },
+            ])
+          }
+          isExportDisabled={!scheduleData || scheduleQuery.isLoading}
+          isRefreshing={scheduleQuery.isFetching}
+          cinemaOptions={cinemaOptions}
+          isCinemaLoading={isCinemaLoading}
+        />
+        <ScrollableDashboardPanel minWidth="520px" maxHeight="640px">
+          <ShowScheduleOverview
+            schedules={scheduleData?.schedules ?? []}
+            isLoading={scheduleQuery.isLoading || (isLoading && !scheduleData)}
+            detailPath={detailRoutes.schedules}
+          />
+        </ScrollableDashboardPanel>
+      </div>
+      </>
+      )}
+
+      {activeTab === "customers" && (
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-3">
           <DashboardSectionToolbar
             title="Lọc riêng: Khách hàng"
             value={sectionFilters.customers}
             onChange={(next) => handleSectionFilterChange("customers", next)}
-            onRefresh={() => customerQuery.refetch()}
+            onRefresh={() => refreshSection("customers", customerQuery.refetch)}
             onExport={() =>
-              customerQuery.data &&
+              customerData &&
               exportSection("khách hàng", "dashboard-customers", "customers", [
-                { title: "Hạng khách hàng", rows: customerQuery.data.loyalty.tiers },
-                { title: "Top khách hàng", rows: customerQuery.data.loyalty.topCustomers },
+                { title: "Hạng khách hàng", rows: customerData.loyalty.tiers },
+                { title: "Top khách hàng", rows: customerData.loyalty.topCustomers },
               ])
             }
-            isExportDisabled={!customerQuery.data || customerQuery.isLoading}
+            isExportDisabled={!customerData || customerQuery.isLoading}
             isRefreshing={customerQuery.isFetching}
             cinemaOptions={cinemaOptions}
             isCinemaLoading={isCinemaLoading}
           />
           <ScrollableDashboardPanel minWidth="560px" maxHeight="640px">
             <LoyaltyStats
-              data={customerQuery.data?.loyalty}
-              isLoading={customerQuery.isLoading}
+              data={customerData?.loyalty}
+              isLoading={customerQuery.isLoading || (isLoading && !customerData)}
               detailPath={detailRoutes.customers}
             />
           </ScrollableDashboardPanel>
@@ -534,63 +616,66 @@ const AdminDashboard = () => {
             title="Lọc riêng: Đánh giá"
             value={sectionFilters.reviews}
             onChange={(next) => handleSectionFilterChange("reviews", next)}
-            onRefresh={() => reviewQuery.refetch()}
+            onRefresh={() => refreshSection("reviews", reviewQuery.refetch)}
             onExport={() =>
-              reviewQuery.data &&
+              reviewData &&
               exportSection("đánh giá", "dashboard-reviews", "reviews", [
                 { title: "Tóm tắt đánh giá", rows: [{
-                  "Điểm trung bình": reviewQuery.data.reviews.averageRating,
-                  "Tổng đánh giá": reviewQuery.data.reviews.totalReviews,
-                  "Chờ xử lý": reviewQuery.data.reviews.pendingReviews,
-                  "Đã xử lý": reviewQuery.data.reviews.resolvedReviews,
+                  "Điểm trung bình": reviewData.reviews.averageRating,
+                  "Tổng đánh giá": reviewData.reviews.totalReviews,
+                  "Chờ xử lý": reviewData.reviews.pendingReviews,
+                  "Đã xử lý": reviewData.reviews.resolvedReviews,
                 }] },
-                { title: "Phân bổ đánh giá", rows: reviewQuery.data.reviews.ratingDistribution },
-                { title: "Đánh giá gần đây", rows: reviewQuery.data.reviews.recentReviews },
+                { title: "Phân bổ đánh giá", rows: reviewData.reviews.ratingDistribution },
+                { title: "Đánh giá gần đây", rows: reviewData.reviews.recentReviews },
               ])
             }
-            isExportDisabled={!reviewQuery.data || reviewQuery.isLoading}
+            isExportDisabled={!reviewData || reviewQuery.isLoading}
             isRefreshing={reviewQuery.isFetching}
             cinemaOptions={cinemaOptions}
             isCinemaLoading={isCinemaLoading}
           />
           <ScrollableDashboardPanel minWidth="560px" maxHeight="640px">
             <ReviewStats
-              data={reviewQuery.data?.reviews}
-              isLoading={reviewQuery.isLoading}
+              data={reviewData?.reviews}
+              isLoading={reviewQuery.isLoading || (isLoading && !reviewData)}
               detailPath={detailRoutes.reviews}
             />
           </ScrollableDashboardPanel>
         </div>
       </div>
+      )}
 
+      {activeTab === "operations" && (
+      <>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-3">
           <DashboardSectionToolbar
             title="Lọc riêng: Sản phẩm"
             value={sectionFilters.products}
             onChange={(next) => handleSectionFilterChange("products", next)}
-            onRefresh={() => productQuery.refetch()}
+            onRefresh={() => refreshSection("products", productQuery.refetch)}
             onExport={() =>
-              productQuery.data &&
+              productData &&
               exportSection("sản phẩm", "dashboard-products", "products", [
                 { title: "Tóm tắt sản phẩm", rows: [{
-                  "Doanh thu": productQuery.data.products.totalRevenue,
-                  "Đã bán": productQuery.data.products.itemsSold,
-                  "Attach rate": productQuery.data.products.comboAttachRate,
+                  "Doanh thu": productData.products.totalRevenue,
+                  "Đã bán": productData.products.itemsSold,
+                  "Attach rate": productData.products.comboAttachRate,
                 }] },
-                { title: "Top sản phẩm", rows: productQuery.data.products.topProducts },
-                { title: "Sản phẩm sắp hết hàng", rows: productQuery.data.products.lowStockProducts },
+                { title: "Top sản phẩm", rows: productData.products.topProducts },
+                { title: "Sản phẩm sắp hết hàng", rows: productData.products.lowStockProducts },
               ])
             }
-            isExportDisabled={!productQuery.data || productQuery.isLoading}
+            isExportDisabled={!productData || productQuery.isLoading}
             isRefreshing={productQuery.isFetching}
             cinemaOptions={cinemaOptions}
             isCinemaLoading={isCinemaLoading}
           />
           <ScrollableDashboardPanel minWidth="560px" maxHeight="640px">
             <ProductStats
-              data={productQuery.data?.products}
-              isLoading={productQuery.isLoading}
+              data={productData?.products}
+              isLoading={productQuery.isLoading || (isLoading && !productData)}
               detailPath={detailRoutes.products}
             />
           </ScrollableDashboardPanel>
@@ -601,28 +686,28 @@ const AdminDashboard = () => {
             title="Lọc riêng: Nhân viên"
             value={sectionFilters.employees}
             onChange={(next) => handleSectionFilterChange("employees", next)}
-            onRefresh={() => employeeQuery.refetch()}
+            onRefresh={() => refreshSection("employees", employeeQuery.refetch)}
             onExport={() =>
-              employeeQuery.data &&
+              employeeData &&
               exportSection("nhân viên", "dashboard-employees", "employees", [
                 { title: "Tóm tắt nhân viên", rows: [{
-                  "Tổng nhân viên": employeeQuery.data.employees.totalEmployees,
-                  "Đang hoạt động": employeeQuery.data.employees.activeEmployees,
-                  "Tạm nghỉ": employeeQuery.data.employees.inactiveEmployees,
+                  "Tổng nhân viên": employeeData.employees.totalEmployees,
+                  "Đang hoạt động": employeeData.employees.activeEmployees,
+                  "Tạm nghỉ": employeeData.employees.inactiveEmployees,
                 }] },
-                { title: "Nhân viên theo vai trò", rows: employeeQuery.data.employees.roles },
-                { title: "Top nhân viên", rows: employeeQuery.data.employees.topEmployees },
+                { title: "Nhân viên theo vai trò", rows: employeeData.employees.roles },
+                { title: "Top nhân viên", rows: employeeData.employees.topEmployees },
               ])
             }
-            isExportDisabled={!employeeQuery.data || employeeQuery.isLoading}
+            isExportDisabled={!employeeData || employeeQuery.isLoading}
             isRefreshing={employeeQuery.isFetching}
             cinemaOptions={cinemaOptions}
             isCinemaLoading={isCinemaLoading}
           />
           <ScrollableDashboardPanel minWidth="560px" maxHeight="640px">
             <EmployeeStats
-              data={employeeQuery.data?.employees}
-              isLoading={employeeQuery.isLoading}
+              data={employeeData?.employees}
+              isLoading={employeeQuery.isLoading || (isLoading && !employeeData)}
               detailPath={detailRoutes.staff}
             />
           </ScrollableDashboardPanel>
@@ -634,38 +719,41 @@ const AdminDashboard = () => {
           title="Lọc riêng: Khuyến mãi"
           value={sectionFilters.promotions}
           onChange={(next) => handleSectionFilterChange("promotions", next)}
-          onRefresh={() => promotionQuery.refetch()}
+          onRefresh={() => refreshSection("promotions", promotionQuery.refetch)}
           onExport={() =>
-            promotionQuery.data &&
+            promotionData &&
             exportSection("khuyến mãi", "dashboard-promotions", "promotions", [
               { title: "Tóm tắt khuyến mãi", rows: [{
-                "Tổng khuyến mãi": promotionQuery.data.promotions.totalPromotions,
-                "Lượt áp dụng": promotionQuery.data.promotions.ordersApplied,
-                "Tổng giảm": promotionQuery.data.promotions.totalDiscountValue,
-                "Giảm trung bình": promotionQuery.data.promotions.averageDiscountValue,
+                "Tổng khuyến mãi": promotionData.promotions.totalPromotions,
+                "Lượt áp dụng": promotionData.promotions.ordersApplied,
+                "Tổng giảm": promotionData.promotions.totalDiscountValue,
+                "Giảm trung bình": promotionData.promotions.averageDiscountValue,
               }] },
-              { title: "Trạng thái khuyến mãi", rows: [promotionQuery.data.promotions.statuses] },
-              { title: "Top khuyến mãi", rows: promotionQuery.data.promotions.topPromotions },
+              { title: "Trạng thái khuyến mãi", rows: [promotionData.promotions.statuses] },
+              { title: "Top khuyến mãi", rows: promotionData.promotions.topPromotions },
             ])
           }
-          isExportDisabled={!promotionQuery.data || promotionQuery.isLoading}
+          isExportDisabled={!promotionData || promotionQuery.isLoading}
           isRefreshing={promotionQuery.isFetching}
           cinemaOptions={cinemaOptions}
           isCinemaLoading={isCinemaLoading}
         />
         <ScrollableDashboardPanel minWidth="760px" maxHeight="640px">
           <PromotionStats
-            data={promotionQuery.data?.promotions}
-            isLoading={promotionQuery.isLoading}
+            data={promotionData?.promotions}
+            isLoading={promotionQuery.isLoading || (isLoading && !promotionData)}
             detailPath={detailRoutes.promotions}
           />
         </ScrollableDashboardPanel>
       </div>
+      </>
+      )}
 
       {/*
         AI chatbot stats sẽ làm sau theo yêu cầu.
         <AiChatbotStats data={dashboardData?.ai} isLoading={isLoading} detailPath={detailRoutes.customers} />
       */}
+      {activeTab === "ai" && (
       <ScrollableDashboardPanel minWidth="760px" maxHeight="760px">
         <AiChatbotStats
           data={dashboardData?.ai}
@@ -673,6 +761,7 @@ const AdminDashboard = () => {
           detailPath={detailRoutes.ai}
         />
       </ScrollableDashboardPanel>
+      )}
     </div>
   );
 };

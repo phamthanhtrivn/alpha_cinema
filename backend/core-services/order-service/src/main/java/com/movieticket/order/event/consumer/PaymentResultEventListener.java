@@ -7,6 +7,7 @@ import com.movieticket.order.entity.ShowScheduleDetail;
 import com.movieticket.order.entity.ShowSeatType;
 import com.movieticket.order.event.model.*;
 import com.movieticket.order.event.producer.OrderSuccessfulEventProducer;
+import com.movieticket.order.event.producer.SeatLockEventProducer;
 import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import com.movieticket.order.model.cache.CheckoutSessionCache;
 import com.movieticket.order.repository.OrderRepository;
@@ -36,6 +37,7 @@ public class PaymentResultEventListener {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final ShowScheduleDetailService showScheduleDetailService;
+    private final SeatLockEventProducer seatLockEventProducer;
 
     @Transactional
     @KafkaListener(
@@ -60,6 +62,7 @@ public class PaymentResultEventListener {
             }
 
             orderRepository.save(order);
+            publishSeatEvent(showScheduleDetails, "SOLD", "PAYMENT", cache == null ? null : cache.getSessionId());
 
             UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
             if (loyaltyEvent != null) {
@@ -84,6 +87,45 @@ public class PaymentResultEventListener {
         orderRepository.save(order);
         showScheduleDetailService.releaseBookedSeats(order.getId());
         deleteCheckoutCache(cache, order.getId());
+
+        List<ShowScheduleDetail> releasedSeats = order.getShowScheduleDetails();
+        publishSeatEvent(releasedSeats, "AVAILABLE", "PAYMENT", cache == null ? null : cache.getSessionId());
+    }
+
+    private void publishSeatEvent(
+            List<ShowScheduleDetail> showScheduleDetails,
+            String status,
+            String source,
+            String sessionId
+    ) {
+        if (showScheduleDetails == null || showScheduleDetails.isEmpty()) {
+            return;
+        }
+
+        showScheduleDetails.stream()
+                .filter(detail -> detail.getShowScheduleId() != null && !detail.getShowScheduleId().isBlank())
+                .collect(Collectors.groupingBy(ShowScheduleDetail::getShowScheduleId))
+                .forEach((showScheduleId, details) -> {
+                    List<String> seatIds = details.stream()
+                            .map(ShowScheduleDetail::getSeatId)
+                            .filter(seatId -> seatId != null && !seatId.isBlank())
+                            .distinct()
+                            .toList();
+
+                    if (seatIds.isEmpty()) {
+                        return;
+                    }
+
+                    seatLockEventProducer.publish(SeatLockEvent.builder()
+                            .eventId(UUID.randomUUID().toString())
+                            .showScheduleId(showScheduleId)
+                            .seatIds(seatIds)
+                            .status(status)
+                            .sessionId(sessionId)
+                            .source(source)
+                            .occurredAt(LocalDateTime.now())
+                            .build());
+                });
     }
 
     private OrderSuccessfulEvent buildOrderSuccessfulEvent(

@@ -7,6 +7,7 @@ import { FileSpreadsheet, LayoutDashboard } from "lucide-react";
 
 import { DashboardFilter } from "@/components/employee/dashboard/DashboardFilter";
 import { DashboardSectionToolbar } from "@/components/employee/dashboard/DashboardSectionToolbar";
+import { DashboardTabs } from "@/components/employee/dashboard/DashboardTabs";
 import { MoviePerformance } from "@/components/employee/dashboard/MoviePerformance";
 import { OrderPaymentStats } from "@/components/employee/dashboard/OrderPaymentStats";
 import { OverviewStats } from "@/components/employee/dashboard/OverviewStats";
@@ -25,6 +26,7 @@ import type {
 
 type StaffSectionKey = "revenue" | "orders" | "products" | "movies" | "schedules";
 type StaffSectionFilters = Record<StaffSectionKey, DashboardFilterState>;
+type StaffDashboardTabKey = "sales" | "products" | "movies";
 
 interface ScrollableDashboardPanelProps {
   children: ReactNode;
@@ -68,6 +70,18 @@ const createStaffSectionFilters = (
   movies: { ...filters, cinemaId },
   schedules: { ...filters, cinemaId },
 });
+
+const staffDashboardTabs = [
+  { value: "sales", label: "Doanh số" },
+  { value: "products", label: "Sản phẩm" },
+  { value: "movies", label: "Phim & suất chiếu" },
+] satisfies { value: StaffDashboardTabKey; label: string }[];
+
+const staffTabSections: Record<StaffDashboardTabKey, StaffSectionKey[]> = {
+  sales: ["revenue", "orders"],
+  products: ["products"],
+  movies: ["movies", "schedules"],
+};
 
 const sameFilters = (left: DashboardFilterState, right: DashboardFilterState) =>
   left.range === right.range &&
@@ -175,14 +189,14 @@ const exportFullDashboardReport = (
 const useStaffSectionData = (
   sectionKey: StaffSectionKey,
   filters: DashboardFilterState,
-  baseFilters: DashboardFilterState,
   cinemaId: string,
   employeeId: string,
+  enabled: boolean,
 ) =>
   useQuery({
     queryKey: ["staff-dashboard-section", sectionKey, filters, employeeId],
     queryFn: () => dashboardService.getStaffDashboard({ ...filters, cinemaId }, employeeId),
-    enabled: Boolean(cinemaId && employeeId) && !sameFilters(filters, baseFilters),
+    enabled: Boolean(cinemaId && employeeId) && enabled,
   });
 
 export default function StaffDashboard() {
@@ -206,6 +220,7 @@ export default function StaffDashboard() {
   const [sectionFilters, setSectionFilters] = useState<StaffSectionFilters>(
     createStaffSectionFilters(initialFilters, cinemaId),
   );
+  const [activeTab, setActiveTab] = useState<StaffDashboardTabKey>("sales");
 
   useEffect(() => {
     if (!cinemaId) return;
@@ -220,18 +235,54 @@ export default function StaffDashboard() {
   }, [cinemaId]);
 
   const scopedFilters = { ...filters, cinemaId };
+  const activeSections = staffTabSections[activeTab];
+  const shouldFetchSection = (sectionKey: StaffSectionKey) =>
+    activeSections.includes(sectionKey) && !sameFilters(sectionFilters[sectionKey], scopedFilters);
+
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["staff-dashboard", scopedFilters, employeeId],
     queryFn: () => dashboardService.getStaffDashboard(scopedFilters, employeeId),
     enabled: Boolean(cinemaId && employeeId),
   });
 
-  const revenueQuery = useStaffSectionData("revenue", sectionFilters.revenue, scopedFilters, cinemaId, employeeId);
-  const orderQuery = useStaffSectionData("orders", sectionFilters.orders, scopedFilters, cinemaId, employeeId);
-  const productQuery = useStaffSectionData("products", sectionFilters.products, scopedFilters, cinemaId, employeeId);
-  const movieQuery = useStaffSectionData("movies", sectionFilters.movies, scopedFilters, cinemaId, employeeId);
-  const scheduleQuery = useStaffSectionData("schedules", sectionFilters.schedules, scopedFilters, cinemaId, employeeId);
+  const revenueQuery = useStaffSectionData(
+    "revenue",
+    sectionFilters.revenue,
+    cinemaId,
+    employeeId,
+    shouldFetchSection("revenue"),
+  );
+  const orderQuery = useStaffSectionData(
+    "orders",
+    sectionFilters.orders,
+    cinemaId,
+    employeeId,
+    shouldFetchSection("orders"),
+  );
+  const productQuery = useStaffSectionData(
+    "products",
+    sectionFilters.products,
+    cinemaId,
+    employeeId,
+    shouldFetchSection("products"),
+  );
+  const movieQuery = useStaffSectionData(
+    "movies",
+    sectionFilters.movies,
+    cinemaId,
+    employeeId,
+    shouldFetchSection("movies"),
+  );
+  const scheduleQuery = useStaffSectionData(
+    "schedules",
+    sectionFilters.schedules,
+    cinemaId,
+    employeeId,
+    shouldFetchSection("schedules"),
+  );
+  const sectionKeys: StaffSectionKey[] = ["revenue", "orders", "products", "movies", "schedules"];
   const sectionQueries = [revenueQuery, orderQuery, productQuery, movieQuery, scheduleQuery];
+  const activeSectionQueries = sectionQueries.filter((_, index) => shouldFetchSection(sectionKeys[index]));
 
   const revenueData = revenueQuery.data ?? data;
   const orderData = orderQuery.data ?? data;
@@ -256,7 +307,16 @@ export default function StaffDashboard() {
   };
 
   const refreshAll = () => {
-    void Promise.all([refetch(), ...sectionQueries.map((query) => query.refetch())]);
+    void Promise.all([refetch(), ...activeSectionQueries.map((query) => query.refetch())]);
+  };
+
+  const refreshSection = (sectionKey: StaffSectionKey, refetchSection: () => unknown) => {
+    if (sameFilters(sectionFilters[sectionKey], scopedFilters)) {
+      void refetch();
+      return;
+    }
+
+    void refetchSection();
   };
 
   const updateSectionFilters = (sectionKey: StaffSectionKey, next: DashboardFilterState) => {
@@ -304,7 +364,7 @@ export default function StaffDashboard() {
         value={scopedFilters}
         onChange={handleGlobalFilterChange}
         onRefresh={refreshAll}
-        isRefreshing={isFetching || sectionQueries.some((query) => query.isFetching)}
+        isRefreshing={isFetching || activeSectionQueries.some((query) => query.isFetching)}
         cinemaOptions={cinemaOptions}
         isCinemaLoading={false}
         hideCinemaFilter
@@ -312,12 +372,20 @@ export default function StaffDashboard() {
 
       <OverviewStats metrics={overview} isLoading={isLoading} getDetailPath={staffMetricPath} />
 
+      <DashboardTabs
+        tabs={staffDashboardTabs}
+        value={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {activeTab === "sales" && (
+      <>
       <section className="space-y-3">
         <DashboardSectionToolbar
           title="Lọc riêng: Doanh thu"
           value={sectionFilters.revenue}
           onChange={(next) => updateSectionFilters("revenue", next)}
-          onRefresh={() => void revenueQuery.refetch()}
+          onRefresh={() => refreshSection("revenue", revenueQuery.refetch)}
           onExport={() =>
             revenueData &&
             exportSection("doanh thu", "staff-dashboard-revenue", "revenue", [
@@ -353,7 +421,7 @@ export default function StaffDashboard() {
           title="Lọc riêng: Đơn hàng và thanh toán"
           value={sectionFilters.orders}
           onChange={(next) => updateSectionFilters("orders", next)}
-          onRefresh={() => void orderQuery.refetch()}
+          onRefresh={() => refreshSection("orders", orderQuery.refetch)}
           onExport={() =>
             orderData &&
             exportSection("don hang", "staff-dashboard-orders", "orders", [
@@ -374,14 +442,16 @@ export default function StaffDashboard() {
           />
         </ScrollableDashboardPanel>
       </section>
+      </>
+      )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      {activeTab === "products" && (
         <section className="space-y-3">
           <DashboardSectionToolbar
             title="Lọc riêng: Sản phẩm"
             value={sectionFilters.products}
             onChange={(next) => updateSectionFilters("products", next)}
-            onRefresh={() => void productQuery.refetch()}
+            onRefresh={() => refreshSection("products", productQuery.refetch)}
             onExport={() =>
               productData &&
               exportSection("san pham", "staff-dashboard-products", "products", [
@@ -401,13 +471,16 @@ export default function StaffDashboard() {
             />
           </ScrollableDashboardPanel>
         </section>
+      )}
 
+      {activeTab === "movies" && (
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <section className="space-y-3">
           <DashboardSectionToolbar
             title="Lọc riêng: Suất chiếu"
             value={sectionFilters.schedules}
             onChange={(next) => updateSectionFilters("schedules", next)}
-            onRefresh={() => void scheduleQuery.refetch()}
+            onRefresh={() => refreshSection("schedules", scheduleQuery.refetch)}
             onExport={() =>
               scheduleData &&
               exportSection("suat chieu", "staff-dashboard-schedules", "schedules", [
@@ -427,34 +500,35 @@ export default function StaffDashboard() {
             />
           </ScrollableDashboardPanel>
         </section>
-      </div>
 
-      <section className="space-y-3">
-        <DashboardSectionToolbar
-          title="Lọc riêng: Phim gợi ý"
-          value={sectionFilters.movies}
-          onChange={(next) => updateSectionFilters("movies", next)}
-          onRefresh={() => void movieQuery.refetch()}
-          onExport={() =>
-            movieData &&
-            exportSection("phim", "staff-dashboard-movies", "movies", [
-              { title: "Top doanh thu", rows: movieData.movies.topRevenue },
-              { title: "Top phim theo vé bán", rows: movieData.movies.topTickets },
-            ])
-          }
-          isExportDisabled={!movieData || movieQuery.isLoading}
-          isRefreshing={movieQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          hideCinemaFilter
-        />
-        <ScrollableDashboardPanel>
-          <MoviePerformance
-            data={movieData?.movies}
-            isLoading={movieQuery.isLoading || (isLoading && !movieData)}
-            detailPath="/employee/staff/movies"
+        <section className="space-y-3">
+          <DashboardSectionToolbar
+            title="Lọc riêng: Phim gợi ý"
+            value={sectionFilters.movies}
+            onChange={(next) => updateSectionFilters("movies", next)}
+            onRefresh={() => refreshSection("movies", movieQuery.refetch)}
+            onExport={() =>
+              movieData &&
+              exportSection("phim", "staff-dashboard-movies", "movies", [
+                { title: "Top doanh thu", rows: movieData.movies.topRevenue },
+                { title: "Top phim theo vé bán", rows: movieData.movies.topTickets },
+              ])
+            }
+            isExportDisabled={!movieData || movieQuery.isLoading}
+            isRefreshing={movieQuery.isFetching}
+            cinemaOptions={cinemaOptions}
+            hideCinemaFilter
           />
-        </ScrollableDashboardPanel>
-      </section>
+          <ScrollableDashboardPanel>
+            <MoviePerformance
+              data={movieData?.movies}
+              isLoading={movieQuery.isLoading || (isLoading && !movieData)}
+              detailPath="/employee/staff/movies"
+            />
+          </ScrollableDashboardPanel>
+        </section>
+      </div>
+      )}
     </div>
   );
 }
