@@ -27,7 +27,8 @@ spring:
         spring.json.type.mapping: >
           otp_event:com.movieticket.notification.event.model.SendOTPEvent,
           order_event:com.movieticket.notification.event.model.OrderSuccessfulEvent,
-          review_status_notification_event:com.movieticket.notification.event.model.ReviewStatusNotificationEvent
+          review_status_notification_event:com.movieticket.notification.event.model.ReviewStatusNotificationEvent,
+          seat_lock_event:com.movieticket.notification.event.model.SeatLockEvent
 
   mail:
     host: smtp.gmail.com

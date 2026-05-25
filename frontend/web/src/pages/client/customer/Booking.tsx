@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { Clock3, Loader2 } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Container, Section } from "@/components/common/Layout";
 import { BookingProgressBar } from "@/components/client/BookingProgressBar";
 import type { BookingLayoutDTO, SeatResponseToProduct } from "@/types/booking";
@@ -14,6 +15,12 @@ import { showScheduleService } from "@/services/show-schedule.service";
 import { movieService } from "@/services/movie.service";
 import { checkoutService } from "@/services/checkout.service";
 import { selectAuth } from "@/store/slices/authSlice";
+import type { AppDispatch, RootState } from "@/store";
+import {
+  unwatchSeatLocks,
+  watchSeatLocks,
+} from "@/store/slices/seatLockSlice";
+import type { SeatLockSeatState } from "@/store/slices/seatLockSlice";
 import type { CheckoutSeatRequest } from "@/types/checkout";
 
 type SelectedSeat = SeatResponseToProduct & {
@@ -33,6 +40,8 @@ type MovieDetail = {
   ageType: string;
 };
 
+const EMPTY_SEAT_LOCKS: Record<string, SeatLockSeatState> = {};
+
 export const Booking = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -41,13 +50,28 @@ export const Booking = () => {
   const checkoutExpiresAt = searchParams.get("checkoutExpiresAt");
   const navigate = useNavigate();
   const { user } = useSelector(selectAuth);
+  const dispatch = useDispatch<AppDispatch>();
+  const seatLockById = useSelector((state: RootState) =>
+    id ? state.seatLocks.seatsByShowScheduleId[id] ?? EMPTY_SEAT_LOCKS : EMPTY_SEAT_LOCKS,
+  );
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
   const [loadingSeatId, setLoadingSeatId] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
+  const checkoutSessionRequestedRef = useRef(false);
 
   useEffect(() => {
     setSelectedSeats([]);
+    checkoutSessionRequestedRef.current = false;
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    dispatch(watchSeatLocks(id));
+    return () => {
+      dispatch(unwatchSeatLocks(id));
+    };
+  }, [dispatch, id]);
 
   useEffect(() => {
     if (!checkoutSessionId || !checkoutExpiresAt) {
@@ -134,6 +158,26 @@ export const Booking = () => {
     enabled: !!layout && !!movieId,
   });
 
+  const effectiveSeatStatusById = useMemo(() => {
+    if (!layout?.seats) return {};
+    const statuses: Record<string, string> = {};
+
+    layout.seats.forEach((seat) => {
+      const realtimeStatus = seatLockById[seat.seatId]?.status;
+      if (
+        realtimeStatus === "AVAILABLE" &&
+        ["SOLD", "BOOKED", "CHECKED_IN"].includes(seat.status)
+      ) {
+        statuses[seat.seatId] = seat.status;
+        return;
+      }
+
+      statuses[seat.seatId] = realtimeStatus ?? seat.status;
+    });
+
+    return statuses;
+  }, [layout, seatLockById]);
+
   const seatMap = useMemo(() => {
     if (!layout?.seats) return {};
     const map: Record<string, SeatResponseToProduct[]> = {};
@@ -141,7 +185,10 @@ export const Booking = () => {
       if (!map[seat.rowName]) {
         map[seat.rowName] = [];
       }
-      map[seat.rowName].push(seat);
+      map[seat.rowName].push({
+        ...seat,
+        status: effectiveSeatStatusById[seat.seatId] ?? seat.status,
+      });
     });
 
     Object.keys(map).forEach((row) => {
@@ -149,10 +196,41 @@ export const Booking = () => {
     });
 
     return map;
-  }, [layout]);
+  }, [effectiveSeatStatusById, layout]);
 
   const rows = useMemo(() => Object.keys(seatMap).sort(), [seatMap]);
   const customerId = user?.customerId || user?.id || user?.customer?.id;
+
+  useEffect(() => {
+    const blockedSelectedSeatIds = new Set(
+      selectedSeats
+        .filter((seat) =>
+          ["LOCKED", "SOLD"].includes(seatLockById[seat.seatId]?.status ?? ""),
+        )
+        .map((seat) => seat.seatId),
+    );
+
+    if (blockedSelectedSeatIds.size === 0) {
+      return;
+    }
+
+    const hasSeatHeldByAnotherSession = selectedSeats.some(
+      (seat) => seatLockById[seat.seatId]?.status === "LOCKED",
+    );
+
+    setSelectedSeats((current) =>
+      current.filter((seat) => !blockedSelectedSeatIds.has(seat.seatId)),
+    );
+    if (
+      hasSeatHeldByAnotherSession &&
+      !creatingSession &&
+      !checkoutSessionRequestedRef.current
+    ) {
+      toast.info(
+        "Một số ghế vừa được giữ bởi phiên khác, hệ thống đã bỏ khỏi lựa chọn.",
+      );
+    }
+  }, [creatingSession, seatLockById, selectedSeats]);
 
   const toggleSeat = async (seat: SeatResponseToProduct) => {
     if (seat.status !== "AVAILABLE" || !seat.usable) return;
@@ -180,6 +258,7 @@ export const Booking = () => {
       });
 
       if (!response.success) {
+        checkoutSessionRequestedRef.current = false;
         toast.error(response.message || "Không thể xác định giá ghế này.");
         return;
       }
@@ -194,6 +273,7 @@ export const Booking = () => {
         },
       ]);
     } catch (error: unknown) {
+      checkoutSessionRequestedRef.current = false;
       const message =
         typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
@@ -218,8 +298,12 @@ export const Booking = () => {
       return "bg-slate-200 text-slate-400 cursor-not-allowed opacity-50 border-transparent border-b-[3px] border-b-slate-300";
     }
 
-    if (["SOLD", "LOCKED", "CHECKED_IN", "BOOKED"].includes(seat.status)) {
+    if (["CHECKED_IN", "SOLD"].includes(seat.status)) {
       return "bg-red-500 text-white cursor-not-allowed border-transparent border-b-[3px] border-b-red-700";
+    }
+
+    if (seat.status === "LOCKED") {
+      return "bg-purple-500 text-white cursor-not-allowed border-transparent border-b-[3px] border-b-purple-700";
     }
 
     const typeName = seat.seatType?.toLowerCase() || "";
@@ -274,6 +358,7 @@ export const Booking = () => {
     }));
 
     try {
+      checkoutSessionRequestedRef.current = true;
       setCreatingSession(true);
       const response = await checkoutService.createSession({
         customerId,
@@ -428,6 +513,13 @@ export const Booking = () => {
                       <div className="w-3 h-px bg-white/50 -rotate-45 absolute"></div>
                     </div>
                     <span>Đã bán</span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 bg-purple-500 rounded relative flex items-center justify-center border-b-2 border-b-purple-700">
+                      <div className="w-2 h-2 rounded-full bg-white/60"></div>
+                    </div>
+                    <span>Đang giữ</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-4 h-4 bg-alpha-orange rounded border-b-2 border-b-orange-700 shadow-sm"></div>

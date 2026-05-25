@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useSelector } from "react-redux";
@@ -6,6 +7,7 @@ import { FileSpreadsheet, LayoutDashboard } from "lucide-react";
 
 import { DashboardFilter } from "@/components/employee/dashboard/DashboardFilter";
 import { DashboardSectionToolbar } from "@/components/employee/dashboard/DashboardSectionToolbar";
+import { DashboardTabs } from "@/components/employee/dashboard/DashboardTabs";
 import { EmployeeStats } from "@/components/employee/dashboard/EmployeeStats";
 import { MoviePerformance } from "@/components/employee/dashboard/MoviePerformance";
 import { OrderPaymentStats } from "@/components/employee/dashboard/OrderPaymentStats";
@@ -25,6 +27,7 @@ import type {
 
 type ManagerSectionKey = "revenue" | "movies" | "schedules" | "orders" | "products" | "employees";
 type ManagerSectionFilters = Record<ManagerSectionKey, DashboardFilterState>;
+type ManagerDashboardTabKey = "finance" | "movies" | "products" | "employees";
 
 interface ScrollableDashboardPanelProps {
   children: ReactNode;
@@ -72,6 +75,20 @@ const createManagerSectionFilters = (
   products: { ...filters, cinemaId },
   employees: { ...filters, cinemaId },
 });
+
+const managerDashboardTabs = [
+  { value: "finance", label: "Tài chính" },
+  { value: "movies", label: "Phim & suất chiếu" },
+  { value: "products", label: "Sản phẩm" },
+  { value: "employees", label: "Nhân viên" },
+] satisfies { value: ManagerDashboardTabKey; label: string }[];
+
+const managerTabSections: Record<ManagerDashboardTabKey, ManagerSectionKey[]> = {
+  finance: ["revenue", "orders"],
+  movies: ["movies", "schedules"],
+  products: ["products"],
+  employees: ["employees"],
+};
 
 const sameFilters = (left: DashboardFilterState, right: DashboardFilterState) =>
   left.range === right.range &&
@@ -176,13 +193,13 @@ const exportFullDashboardReport = (
 const useManagerSectionData = (
   sectionKey: ManagerSectionKey,
   filters: DashboardFilterState,
-  baseFilters: DashboardFilterState,
   cinemaId: string,
+  enabled: boolean,
 ) =>
   useQuery({
     queryKey: ["manager-dashboard-section", sectionKey, filters],
     queryFn: () => dashboardService.getManagerDashboard({ ...filters, cinemaId }),
-    enabled: Boolean(cinemaId) && !sameFilters(filters, baseFilters),
+    enabled: Boolean(cinemaId) && enabled,
   });
 
 export default function ManagerDashboard() {
@@ -204,6 +221,7 @@ export default function ManagerDashboard() {
   const [sectionFilters, setSectionFilters] = useState<ManagerSectionFilters>(
     createManagerSectionFilters(initialFilters, cinemaId),
   );
+  const [activeTab, setActiveTab] = useState<ManagerDashboardTabKey>("finance");
 
   useEffect(() => {
     if (!cinemaId) return;
@@ -219,19 +237,40 @@ export default function ManagerDashboard() {
   }, [cinemaId]);
 
   const scopedFilters = { ...filters, cinemaId };
+  const activeSections = managerTabSections[activeTab];
+  const shouldFetchSection = (sectionKey: ManagerSectionKey) =>
+    activeSections.includes(sectionKey) && !sameFilters(sectionFilters[sectionKey], scopedFilters);
+
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["manager-dashboard", scopedFilters],
     queryFn: () => dashboardService.getManagerDashboard(scopedFilters),
     enabled: Boolean(cinemaId),
   });
 
-  const revenueQuery = useManagerSectionData("revenue", sectionFilters.revenue, scopedFilters, cinemaId);
-  const movieQuery = useManagerSectionData("movies", sectionFilters.movies, scopedFilters, cinemaId);
-  const scheduleQuery = useManagerSectionData("schedules", sectionFilters.schedules, scopedFilters, cinemaId);
-  const orderQuery = useManagerSectionData("orders", sectionFilters.orders, scopedFilters, cinemaId);
-  const productQuery = useManagerSectionData("products", sectionFilters.products, scopedFilters, cinemaId);
-  const employeeQuery = useManagerSectionData("employees", sectionFilters.employees, scopedFilters, cinemaId);
+  const revenueQuery = useManagerSectionData("revenue", sectionFilters.revenue, cinemaId, shouldFetchSection("revenue"));
+  const movieQuery = useManagerSectionData("movies", sectionFilters.movies, cinemaId, shouldFetchSection("movies"));
+  const scheduleQuery = useManagerSectionData(
+    "schedules",
+    sectionFilters.schedules,
+    cinemaId,
+    shouldFetchSection("schedules"),
+  );
+  const orderQuery = useManagerSectionData("orders", sectionFilters.orders, cinemaId, shouldFetchSection("orders"));
+  const productQuery = useManagerSectionData(
+    "products",
+    sectionFilters.products,
+    cinemaId,
+    shouldFetchSection("products"),
+  );
+  const employeeQuery = useManagerSectionData(
+    "employees",
+    sectionFilters.employees,
+    cinemaId,
+    shouldFetchSection("employees"),
+  );
+  const sectionKeys: ManagerSectionKey[] = ["revenue", "movies", "schedules", "orders", "products", "employees"];
   const sectionQueries = [revenueQuery, movieQuery, scheduleQuery, orderQuery, productQuery, employeeQuery];
+  const activeSectionQueries = sectionQueries.filter((_, index) => shouldFetchSection(sectionKeys[index]));
 
   const revenueData = revenueQuery.data ?? data;
   const movieData = movieQuery.data ?? data;
@@ -253,7 +292,16 @@ export default function ManagerDashboard() {
   };
 
   const refreshAll = () => {
-    void Promise.all([refetch(), ...sectionQueries.map((query) => query.refetch())]);
+    void Promise.all([refetch(), ...activeSectionQueries.map((query) => query.refetch())]);
+  };
+
+  const refreshSection = (sectionKey: ManagerSectionKey, refetchSection: () => unknown) => {
+    if (sameFilters(sectionFilters[sectionKey], scopedFilters)) {
+      void refetch();
+      return;
+    }
+
+    void refetchSection();
   };
 
   const updateSectionFilters = (sectionKey: ManagerSectionKey, next: DashboardFilterState) => {
@@ -301,7 +349,7 @@ export default function ManagerDashboard() {
         value={scopedFilters}
         onChange={handleGlobalFilterChange}
         onRefresh={refreshAll}
-        isRefreshing={isFetching || sectionQueries.some((query) => query.isFetching)}
+        isRefreshing={isFetching || activeSectionQueries.some((query) => query.isFetching)}
         cinemaOptions={cinemaOptions}
         isCinemaLoading={false}
         hideCinemaFilter
@@ -309,12 +357,20 @@ export default function ManagerDashboard() {
 
       <OverviewStats metrics={overview} isLoading={isLoading} getDetailPath={managerMetricPath} />
 
+      <DashboardTabs
+        tabs={managerDashboardTabs}
+        value={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {activeTab === "finance" && (
+      <>
       <section className="space-y-3">
         <DashboardSectionToolbar
           title="Loc rieng: Doanh thu"
           value={sectionFilters.revenue}
           onChange={(next) => updateSectionFilters("revenue", next)}
-          onRefresh={() => void revenueQuery.refetch()}
+          onRefresh={() => refreshSection("revenue", revenueQuery.refetch)}
           onExport={() =>
             revenueData &&
             exportSection("doanh thu", "manager-dashboard-revenue", "revenue", [
@@ -350,7 +406,7 @@ export default function ManagerDashboard() {
           title="Lọc riêng: Đơn hàng và thanh toán"
           value={sectionFilters.orders}
           onChange={(next) => updateSectionFilters("orders", next)}
-          onRefresh={() => void orderQuery.refetch()}
+          onRefresh={() => refreshSection("orders", orderQuery.refetch)}
           onExport={() =>
             orderData &&
             exportSection("đơn hàng", "manager-dashboard-orders", "orders", [
@@ -372,13 +428,17 @@ export default function ManagerDashboard() {
           />
         </ScrollableDashboardPanel>
       </section>
+      </>
+      )}
 
+      {activeTab === "movies" && (
+      <>
       <section className="space-y-3">
         <DashboardSectionToolbar
           title="Lọc riêng: Phim"
           value={sectionFilters.movies}
           onChange={(next) => updateSectionFilters("movies", next)}
-          onRefresh={() => void movieQuery.refetch()}
+          onRefresh={() => refreshSection("movies", movieQuery.refetch)}
           onExport={() =>
             movieData &&
             exportSection("phim", "manager-dashboard-movies", "movies", [
@@ -406,7 +466,7 @@ export default function ManagerDashboard() {
             title="Lọc riêng: Suất chiếu"
             value={sectionFilters.schedules}
             onChange={(next) => updateSectionFilters("schedules", next)}
-            onRefresh={() => void scheduleQuery.refetch()}
+            onRefresh={() => refreshSection("schedules", scheduleQuery.refetch)}
             onExport={() =>
               scheduleData &&
               exportSection("suất chiếu", "manager-dashboard-schedules", "schedules", [
@@ -426,13 +486,17 @@ export default function ManagerDashboard() {
             />
           </ScrollableDashboardPanel>
         </section>
+      </div>
+      </>
+      )}
 
+      {activeTab === "products" && (
         <section className="space-y-3">
           <DashboardSectionToolbar
             title="Lọc riêng: Sản phẩm"
             value={sectionFilters.products}
             onChange={(next) => updateSectionFilters("products", next)}
-            onRefresh={() => void productQuery.refetch()}
+            onRefresh={() => refreshSection("products", productQuery.refetch)}
             onExport={() =>
               productData &&
               exportSection("sản phẩm", "manager-dashboard-products", "products", [
@@ -452,14 +516,15 @@ export default function ManagerDashboard() {
             />
           </ScrollableDashboardPanel>
         </section>
-      </div>
+      )}
 
+      {activeTab === "employees" && (
       <section className="space-y-3">
         <DashboardSectionToolbar
           title="Lọc riêng: Nhân viên"
           value={sectionFilters.employees}
           onChange={(next) => updateSectionFilters("employees", next)}
-          onRefresh={() => void employeeQuery.refetch()}
+          onRefresh={() => refreshSection("employees", employeeQuery.refetch)}
           onExport={() =>
             employeeData &&
             exportSection("nhân viên", "manager-dashboard-employees", "employees", [
@@ -487,6 +552,7 @@ export default function ManagerDashboard() {
           />
         </ScrollableDashboardPanel>
       </section>
+      )}
     </div>
   );
 }

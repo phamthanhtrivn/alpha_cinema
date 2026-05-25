@@ -32,7 +32,8 @@ spring:
         spring.json.type.mapping: >
           loyalty_event:com.movieticket.order.event.model.UserLoyaltyUpdateEvent,
           order_event:com.movieticket.order.event.model.OrderSuccessfulEvent,
-          payment-by-cash-requests:com.movieticket.order.event.model.PaymentByCashRequestEvent
+          payment-by-cash-requests:com.movieticket.order.event.model.PaymentByCashRequestEvent,
+          seat_lock_event:com.movieticket.order.event.model.SeatLockEvent
     consumer:
       group-id: order-service
       auto-offset-reset: earliest

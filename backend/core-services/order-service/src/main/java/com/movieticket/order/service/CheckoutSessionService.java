@@ -26,8 +26,10 @@ import com.movieticket.order.entity.ShowSeatType;
 import com.movieticket.order.enums.SessionStatus;
 import com.movieticket.order.event.model.OrderProductItem;
 import com.movieticket.order.event.model.OrderSuccessfulEvent;
+import com.movieticket.order.event.model.SeatLockEvent;
 import com.movieticket.order.event.model.UserLoyaltyUpdateEvent;
 import com.movieticket.order.event.producer.OrderSuccessfulEventProducer;
+import com.movieticket.order.event.producer.SeatLockEventProducer;
 import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import com.movieticket.order.exception.BusinessException;
 import com.movieticket.order.model.cache.CheckoutProductItemCache;
@@ -74,6 +76,7 @@ public class CheckoutSessionService {
     private final TicketPriceCacheService ticketPriceCacheService;
     private final OrderSuccessfulEventProducer orderSuccessfulEventProducer;
     private final UserLoyaltyEventProducer userLoyaltyEventProducer;
+    private final SeatLockEventProducer seatLockEventProducer;
 
     public CheckoutSessionResponse createSession(CreateCheckoutSessionRequest request) {
         String sessionId = UUID.randomUUID().toString();
@@ -126,6 +129,8 @@ public class CheckoutSessionService {
                 .build();
 
         saveSession(cache);
+        publishSeatEvent(cache.getShowScheduleId(), cache.getSeats(), "LOCKED", cache.getSessionId(),
+                "CHECKOUT_SESSION", cache.getExpiresAt());
         return toSessionResponse(cache);
     }
 
@@ -193,6 +198,8 @@ public class CheckoutSessionService {
         cache.setStatus(SessionStatus.PAYMENT_PENDING);
         cache.setExpiresAt(LocalDateTime.now().plusHours(ORDER_CACHE_TTL_HOURS));
         saveSession(cache);
+        publishSeatEvent(cache.getShowScheduleId(), cache.getSeats(), "LOCKED", cache.getSessionId(),
+                "SHOW_SCHEDULE_DETAIL", cache.getExpiresAt());
 
         PaymentInitiateSnapshot paymentSnapshot;
         try {
@@ -272,6 +279,8 @@ public class CheckoutSessionService {
                 userLoyaltyEventProducer.publish(loyaltyEvent);
             }
 
+            publishSeatEvent(cache.getShowScheduleId(), cache.getSeats(), "SOLD", cache.getSessionId(),
+                    "PAYMENT", null);
             deleteCheckoutCache(cache);
 
             return CheckoutConfirmResponse.builder()
@@ -295,10 +304,10 @@ public class CheckoutSessionService {
 
     public void cancelSession(String sessionId) {
         CheckoutSessionCache cache = getSession(sessionId);
-        showScheduleDetailService.releaseSeatLocks(
-                sessionId,
-                toSeatLockRequest(cache.getShowScheduleId(), cache.getSeats())
-        );
+        CreateShowScheduleDetailRequestDto seatValidationRequest = toSeatLockRequest(cache.getShowScheduleId(), cache.getSeats());
+        showScheduleDetailService.releaseSeatLocks(sessionId, seatValidationRequest);
+        publishSeatEvent(cache.getShowScheduleId(), cache.getSeats(), "AVAILABLE", cache.getSessionId(),
+                "SESSION_CANCEL", null);
         deleteCheckoutCache(cache);
     }
 
@@ -461,6 +470,38 @@ public class CheckoutSessionService {
 
     private String buildOrderCacheKey(String orderId) {
         return "checkout:session:order:" + orderId;
+    }
+
+    private void publishSeatEvent(
+            String showScheduleId,
+            List<SeatRequestDto> seats,
+            String status,
+            String sessionId,
+            String source,
+            LocalDateTime expiresAt
+    ) {
+        List<String> seatIds = seats == null
+                ? List.of()
+                : seats.stream()
+                .map(SeatRequestDto::getSeatId)
+                .filter(seatId -> seatId != null && !seatId.isBlank())
+                .distinct()
+                .toList();
+
+        if (showScheduleId == null || showScheduleId.isBlank() || seatIds.isEmpty()) {
+            return;
+        }
+
+        seatLockEventProducer.publish(SeatLockEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .showScheduleId(showScheduleId)
+                .seatIds(seatIds)
+                .status(status)
+                .sessionId(sessionId)
+                .source(source)
+                .expiresAt(expiresAt)
+                .occurredAt(LocalDateTime.now())
+                .build());
     }
 
     private double calculateTotalPayment(CheckoutSessionCache cache) {
