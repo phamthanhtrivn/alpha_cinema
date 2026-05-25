@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Menu, LogOut, UserCircle, History } from "lucide-react";
+import { User, Menu, LogOut, UserCircle, History, ChevronDown } from "lucide-react";
 import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";
@@ -58,12 +58,26 @@ const MainHeader: React.FC = () => {
             <Link to="/movies" className="hover:text-alpha-blue transition-colors">
               Phim
             </Link>
-            <Link
-              to="/cinematic"
-              className="hover:text-alpha-blue transition-colors"
-            >
-              Góc điện ảnh
-            </Link>
+            <div className="relative group py-2 flex items-center space-x-1 cursor-pointer hover:text-alpha-blue transition-colors">
+              <span>Góc điện ảnh</span>
+              <ChevronDown size={14} className="text-slate-400 group-hover:text-alpha-blue transition-colors duration-300" />
+              
+              {/* DROPDOWN MENU */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded shadow-2xl border border-slate-100 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-100 normal-case font-bold text-slate-700 text-xs tracking-normal overflow-hidden">
+                <Link
+                  to="/cinematic/genres"
+                  className="block px-4 py-3 border-l-4 border-l-transparent hover:border-l-alpha-orange hover:bg-alpha-orange/10 hover:text-alpha-orange transition-all duration-200 border-b border-slate-50 text-center"
+                >
+                  Thể Loại Phim
+                </Link>
+                <Link
+                  to="/cinematic/actors-directors"
+                  className="block px-4 py-3 border-l-4 border-l-transparent hover:border-l-alpha-orange hover:bg-alpha-orange/10 hover:text-alpha-orange transition-all duration-200 text-center"
+                >
+                  Diễn Viên/Đạo Diễn
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* 3. USER ACTIONS & SEARCH */}

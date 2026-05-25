@@ -5,8 +5,16 @@ export const artistsService = {
         const response = await apiClient.get(`/artists/admin`, { params });
         return response.data;
     },
+    getPublicArtists: async (params?: any) => {
+        const response = await apiClient.get(`/artists/public`, { params });
+        return response.data;
+    },
     getArtistById: async (id: string) => {
         const response = await apiClient.get(`/artists/admin/${id}`);
+        return response.data;
+    },
+    getPublicArtistById: async (id: string) => {
+        const response = await apiClient.get(`/artists/public/${id}`);
         return response.data;
     },
     createArtist: async (data: any, imageFile?: File) => {
