@@ -22,5 +22,6 @@ public class ReviewResponseDTO {
     private List<String> pictures;
     private LocalDateTime createdAt;
     private String status; // Sẽ là "PENDING"
+    private String moderationReason;
     private String movieId;
 }

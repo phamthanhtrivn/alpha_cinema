@@ -40,13 +40,13 @@ export function EmployeeStats({ data, isLoading, detailPath, hiddenRoles = [] }:
     );
   }
 
-  const visibleRoles = data.roles.filter((role) => !hiddenRoles.includes(role.role));
-  const visibleTopEmployees = data.topEmployees.filter((employee) => !hiddenRoles.includes(employee.role));
-  const hiddenRoleTotal = data.roles
+  const visibleRoles = (data.roles || []).filter((role) => !hiddenRoles.includes(role.role));
+  const visibleTopEmployees = (data.topEmployees || []).filter((employee) => !hiddenRoles.includes(employee.role));
+  const hiddenRoleTotal = (data.roles || [])
     .filter((role) => hiddenRoles.includes(role.role))
     .reduce((total, role) => total + role.total, 0);
-  const totalEmployees = Math.max(data.totalEmployees - hiddenRoleTotal, 0);
-  const activeEmployees = Math.min(data.activeEmployees, totalEmployees);
+  const totalEmployees = Math.max((data.totalEmployees || 0) - hiddenRoleTotal, 0);
+  const activeEmployees = Math.min((data.activeEmployees || 0), totalEmployees);
   const inactiveEmployees = Math.max(totalEmployees - activeEmployees, 0);
   const maxRoleCount = Math.max(...visibleRoles.map((role) => role.total), 1);
 
@@ -103,7 +103,7 @@ export function EmployeeStats({ data, isLoading, detailPath, hiddenRoles = [] }:
           {visibleRoles.map((role) => (
             <div key={role.role}>
               <div className="mb-1 flex items-center justify-between text-xs">
-                <Badge variant="outline" className={roleClassName[role.role]}>
+                <Badge variant="outline" className={roleClassName[role.role] ?? "border-slate-200 bg-white text-slate-600"}>
                   {role.role}
                 </Badge>
                 <span className="font-semibold text-slate-500">

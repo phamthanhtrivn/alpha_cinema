@@ -2,7 +2,7 @@ name: Deploy Product Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
     paths:
       - 'backend/core-services/product-service/**'
       - 'backend/docker-compose.prod.yml' # Bồi thêm file compose tổng
@@ -31,6 +31,8 @@ jobs:
         push: true
         # Dùng biến cho đồng bộ tài khoản Docker Hub
         tags: ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
@@ -68,3 +70,4 @@ jobs:
           # Kéo bản mới và khởi chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull product-service
           sudo docker compose -f docker-compose.prod.yml up -d product-service
+
