@@ -17,6 +17,7 @@ public class MoviePublicDTO {
     private String title;
     private String trailerUrl;
     private LocalDate premiereDate;
+    private String description;
     private String thumbnailUrl;
     private String bannerUrl;
     private String ageType;
