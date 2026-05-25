@@ -62,7 +62,9 @@ public class PaymentResultEventListener {
             orderRepository.save(order);
 
             UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
-            userLoyaltyEventProducer.publish(loyaltyEvent);
+            if (loyaltyEvent != null) {
+                userLoyaltyEventProducer.publish(loyaltyEvent);
+            }
 
             OrderSuccessfulEvent orderEvent = buildOrderSuccessfulEvent(order, cache, event);
             if (orderEvent.getCustomerEmail() != null && !orderEvent.getCustomerEmail().isBlank()) {
