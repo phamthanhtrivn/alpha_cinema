@@ -58,7 +58,7 @@ const CinematicActorsDirectors: React.FC = () => {
 
               {/* Filters & Divider Row */}
               <div className="space-y-4 mb-6">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-row items-center gap-3">
                   {/* Filter Nationality */}
                   <select
                     value={nationality}

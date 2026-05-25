@@ -59,7 +59,7 @@ const MovieHorizontalCard: React.FC<MovieHorizontalCardProps> = ({ movie }) => {
 
           {/* Description / Summary */}
           <p className="text-slate-500 text-xs leading-relaxed text-justify line-clamp-3">
-            {movie.description || "Chưa có tóm tắt nội dung phim."}
+            {movie?.description || "Chưa có tóm tắt nội dung phim."}
           </p>
         </div>
       </div>

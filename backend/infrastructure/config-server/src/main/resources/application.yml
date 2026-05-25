@@ -1,7 +1,7 @@
 # Config Server là nơi cấu hình cho các service khác
 # Các service khác sẽ đăng ký với Eureka Server và lấy cấu hình từ Config Server
 # Config Server sẽ đọc cấu hình từ file .yml trong thư mục config
-
+# test
 server:
   port: 8888 # Port mặc định của Config Server
 

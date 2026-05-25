@@ -1,8 +1,8 @@
-﻿name: Deploy Cinema Management Service
+name: Deploy Cinema Management Service
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
     paths:
       - 'backend/core-services/cinema-management-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu có cập nhật file compose
