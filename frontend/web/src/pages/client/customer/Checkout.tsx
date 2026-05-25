@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
   ArrowLeft,
@@ -39,6 +41,12 @@ import type {
   UpdateCheckoutSessionRequest,
 } from "@/types/checkout";
 import { ALL_TRANSLATION } from "@/types/movie";
+import type { AppDispatch } from "@/store";
+import {
+  releaseSeatLocksForSession,
+  unwatchSeatLocks,
+  watchSeatLocks,
+} from "@/store/slices/seatLockSlice";
 
 type ProductItem = {
   id: string;
@@ -72,6 +80,8 @@ export const Checkout = () => {
   const { id, sessionId } = useParams<{ id: string; sessionId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const initialSession = (location.state as LocationState | null)?.session;
   const movieId = searchParams.get("movieId");
@@ -121,6 +131,33 @@ export const Checkout = () => {
   });
 
   const session = initialSession || sessionData;
+  const sessionSeatIds = useMemo(
+    () => session?.seats.map((seat) => seat.seatId) ?? [],
+    [session?.seats],
+  );
+
+  useEffect(() => {
+    if (!id) return;
+
+    dispatch(watchSeatLocks(id));
+    return () => {
+      dispatch(unwatchSeatLocks(id));
+    };
+  }, [dispatch, id]);
+
+  const releaseCurrentSessionSeatLocks = useCallback(() => {
+    if (!id || !sessionId) return;
+
+    dispatch(
+      releaseSeatLocksForSession({
+        showScheduleId: id,
+        sessionId,
+        seatIds: sessionSeatIds,
+      }),
+    );
+    void queryClient.invalidateQueries({ queryKey: ["booking-layout", id] });
+  }, [dispatch, id, queryClient, sessionId, sessionSeatIds]);
+
   const bookingUrl = useMemo(() => {
     const stateBookingUrl = (location.state as LocationState | null)
       ?.bookingUrl;
@@ -167,6 +204,9 @@ export const Checkout = () => {
       cancellingSessionRef.current = true;
       void checkoutService
         .cancelSession(sessionId)
+        .then(() => {
+          releaseCurrentSessionSeatLocks();
+        })
         .catch(() => undefined)
         .finally(() => {
           cancellingSessionRef.current = false;
@@ -177,7 +217,7 @@ export const Checkout = () => {
     return () => {
       window.removeEventListener("popstate", cancelSessionOnBrowserBack);
     };
-  }, [sessionId]);
+  }, [releaseCurrentSessionSeatLocks, sessionId]);
 
   const selectedProducts = useMemo(() => {
     return Object.entries(quantities)
@@ -237,8 +277,7 @@ export const Checkout = () => {
         setGoBackInProgress(true);
         cancellingSessionRef.current = true;
         await checkoutService.cancelSession(sessionId);
-      } catch {
-        toast.error("Không thể hủy phiên thanh toán hiện tại.");
+        releaseCurrentSessionSeatLocks();
       } finally {
         cancellingSessionRef.current = false;
         setGoBackInProgress(false);
