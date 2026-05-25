@@ -18,6 +18,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8888:8888"
     restart: always
@@ -31,6 +32,7 @@ services:
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - RSA_PRIVATE_PATH=${RSA_PRIVATE_PATH}
       - RSA_PUBLIC_PATH=${RSA_PUBLIC_PATH}
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
@@ -66,6 +68,7 @@ services:
       - APP_NAME=user-service
       - RSA_PRIVATE_PATH=${RSA_PRIVATE_PATH}
       - RSA_PUBLIC_PATH=${RSA_PUBLIC_PATH}
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
@@ -80,6 +83,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=ticket-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8085:8085"
     restart: always
@@ -92,6 +96,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=cinema-management-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8081:8081"
     restart: always
@@ -104,6 +109,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=payment-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8083:8083"
     restart: always
@@ -116,6 +122,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=product-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8084:8084"
     restart: always
@@ -128,6 +135,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=order-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8082:8082"
     restart: always
@@ -143,6 +151,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=notification-service
+      - TZ=Asia/Ho_Chi_Minh
     ports:
       - "8087:8087"
     restart: always
@@ -155,6 +164,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
       - APP_NAME=ai-service
+      - TZ=Asia/Ho_Chi_Minh
     volumes:
       - /home/ubuntu/alpha_cinema/backend/keys:/app/keys
     ports:
@@ -177,11 +187,12 @@ services:
       - "9092:9092"
       - "9094:9094"
     environment:
+      KAFKA_CLUSTER_ID: "4L62YDgNSOCX3a3mQ9edGA"
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093 # Sửa thành localhost vì chạy nội bộ cụm Kafka
       KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL://${KAFKA_PUBLIC_IP}:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://alpha-kafka:9092,EXTERNAL://${KAFKA_PUBLIC_IP}:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
