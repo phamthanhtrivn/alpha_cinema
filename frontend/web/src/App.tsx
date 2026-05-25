@@ -70,6 +70,10 @@ import { useEffect } from "react";
 import { Booking } from "./pages/client/customer/Booking";
 import { store } from "./store";
 import Cinematic from "./pages/client/customer/Cinematic";
+import CinematicGenres from "./pages/client/customer/CinematicGenres";
+import CinematicActorsDirectors from "./pages/client/customer/CinematicActorsDirectors";
+import CinematicArtistDetail from "./pages/client/customer/CinematicArtistDetail";
+import ScrollToTop from "./components/common/ScrollToTop";
 import SellProduct from "./pages/employee/staff/SellProduct";
 
 function App() {
@@ -102,6 +106,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* ================= CLIENT ================= */}
         <Route element={<MainLayout />}>
@@ -121,6 +126,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/cinematic" element={<Cinematic />} />
+            <Route path="/cinematic/genres" element={<CinematicGenres />} />
+            <Route path="/cinematic/actors-directors" element={<CinematicActorsDirectors />} />
+            <Route path="/cinematic/artist/:id" element={<CinematicArtistDetail />} />
             <Route path="/movies" element={<MoviesPage />} />
             <Route path="/chinh-sach-bao-mat" element={<PrivacyPolicy />} />
             <Route path="/chinh-sach-thanh-toan" element={<PaymentPolicy />} />

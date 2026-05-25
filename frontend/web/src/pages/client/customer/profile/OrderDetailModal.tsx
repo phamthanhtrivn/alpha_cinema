@@ -67,35 +67,34 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     : null;
   const scheduleDateLabel = scheduleStartDate
     ? scheduleStartDate.toLocaleDateString("vi-VN", {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+      weekday: "long",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
     : "Chưa có ngày chiếu";
   const scheduleTimeLabel = scheduleStartDate
     ? scheduleStartDate.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
     : "Chưa có giờ chiếu";
   const scheduleEndTimeLabel = scheduleEndDate
     ? scheduleEndDate.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
     : null;
   const scheduleTimeRangeLabel = scheduleEndTimeLabel
     ? `${scheduleTimeLabel} - ${scheduleEndTimeLabel}`
     : scheduleTimeLabel;
   const scheduleFormatLabel = scheduleSnapshot
-    ? `${scheduleSnapshot.projectionType} · ${
-        ALL_TRANSLATION.find(
-          (t) => t.value === scheduleSnapshot.translationType,
-        )?.label ?? scheduleSnapshot.translationType
-      }`
+    ? `${scheduleSnapshot.projectionType} · ${ALL_TRANSLATION.find(
+      (t) => t.value === scheduleSnapshot.translationType,
+    )?.label ?? scheduleSnapshot.translationType
+    }`
     : "Chưa có thông tin suất chiếu";
 
   if (!isOpen) return null;

@@ -23,6 +23,21 @@ import org.springframework.web.multipart.MultipartFile;
 public class ArtistController {
     private final ArtistService artistService;
 
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<Page<ArtistResDTO>>> searchPublicArtists(@RequestParam(defaultValue = "0") int page,
+                                                                               @RequestParam(defaultValue = "10") int size,
+                                                                               @ModelAttribute ArtistSearchDTO dto) {
+        Page<ArtistResDTO> artists = artistService.searchArtists(dto, page, size);
+        ApiResponse<Page<ArtistResDTO>> pageApiResponse = ApiResponse.success(artists, "Tìm kiếm thành công!");
+        return ResponseEntity.ok(pageApiResponse);
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ApiResponse<Artist>> getPublicById(@PathVariable String id) {
+        Artist artist = artistService.getById(id);
+        return ResponseEntity.ok(ApiResponse.success(artist, ""));
+    }
+
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Page<ArtistResDTO>>> searchAritst(@RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "10") int size,

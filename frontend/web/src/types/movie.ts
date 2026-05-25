@@ -37,6 +37,7 @@ export interface MoviePublic {
   thumbnailUrl: string;
   trailerUrl: string;
   bannerUrl: string;
+  description: string;
   ageType: string;
   avgRating: number;
 }
