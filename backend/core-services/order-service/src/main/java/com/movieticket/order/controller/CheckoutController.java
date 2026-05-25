@@ -2,6 +2,7 @@ package com.movieticket.order.controller;
 
 import com.movieticket.order.common.ApiResponse;
 import com.movieticket.order.dto.request.ConfirmCheckoutSessionRequest;
+import com.movieticket.order.dto.client.PaymentInitiateSnapshot;
 import com.movieticket.order.dto.request.CreateCheckoutSessionRequest;
 import com.movieticket.order.dto.request.UpdateCheckoutSessionRequest;
 import com.movieticket.order.dto.response.CheckoutConfirmResponse;
@@ -34,6 +35,17 @@ public class CheckoutController {
         } else {
             return ResponseEntity.badRequest().body(ApiResponse.fail("Payment failed"));
         }
+    }
+
+    @PostMapping("/payment-by-momo")
+    public ResponseEntity<ApiResponse<PaymentInitiateSnapshot>> paymentByMomo(
+            @RequestHeader("X-User-Id") String userID,
+            @RequestHeader("X-Cinema-Id") String cinemaID,
+            @RequestHeader(value = "X-User-IP", required = false) String userIp,
+            @RequestBody(required = true) CheckoutEmployeeRequest request
+    ) {
+        PaymentInitiateSnapshot response = orderService.paymentByMomo(userID, cinemaID, request, userIp);
+        return ResponseEntity.ok(ApiResponse.success(response, "Payment by MoMo initiated"));
     }
     @PostMapping("/sessions")
     public ResponseEntity<ApiResponse<CheckoutSessionResponse>> createSession(
