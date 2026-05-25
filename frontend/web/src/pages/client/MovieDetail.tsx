@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { movieService } from '../../services/movie.service';
 import { Container, Section } from '../../components/common/Layout';
@@ -77,14 +77,30 @@ const MovieDetail = () => {
             <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Đạo diễn:</span>
                 <div className="flex flex-wrap gap-2">
-                    {movie.directors?.map(d => <span key={d.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{d.fullName}</span>)}
+                    {movie.directors?.map(d => (
+                        <Link
+                            key={d.id}
+                            to={`/cinematic/artist/${d.id}`}
+                            className="px-3 py-1 bg-white border border-slate-200 hover:border-alpha-blue hover:text-alpha-blue rounded text-slate-600 transition-colors cursor-pointer text-xs font-medium"
+                        >
+                            {d.fullName}
+                        </Link>
+                    ))}
                 </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="w-[120px] shrink-0 text-slate-400 mb-1 sm:mb-0">Diễn viên:</span>
                 <div className="flex flex-wrap gap-2">
-                    {movie.actors?.map(a => <span key={a.id} className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600">{a.fullName}</span>)}
+                    {movie.actors?.map(a => (
+                        <Link
+                            key={a.id}
+                            to={`/cinematic/artist/${a.id}`}
+                            className="px-3 py-1 bg-white border border-slate-200 hover:border-alpha-blue hover:text-alpha-blue rounded text-slate-600 transition-colors cursor-pointer text-xs font-medium"
+                        >
+                            {a.fullName}
+                        </Link>
+                    ))}
                 </div>
             </div>
         </div>
@@ -191,8 +207,8 @@ const MovieDetail = () => {
 
                     {/* CỘT PHẢI: Sidebar (Chỉ hiện trên Desktop) */}
                     <div className="hidden lg:block w-[32%] shrink-0 pl-8">
-                        <div className="border-l-4 border-alpha-blue pl-4 mb-6">
-                            <h2 className="text-lg font-black uppercase text-slate-800">Phim đang chiếu</h2>
+                        <div className="border-l-4 border-alpha-blue pl-4 mb-4">
+                            <h2 className="text-slate-800 font-medium text-lg">Phim Đang Chiếu</h2>
                         </div>
                         <NowShowingMovies />
                     </div>

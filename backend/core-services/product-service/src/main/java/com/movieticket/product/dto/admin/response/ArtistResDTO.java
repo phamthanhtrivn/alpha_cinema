@@ -1,5 +1,6 @@
 package com.movieticket.product.dto.admin.response;
 
+import com.movieticket.product.enums.ArtistType;
 import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,4 +20,5 @@ public class ArtistResDTO {
     private LocalDate dateOfBirth;
     private String nationality;
     private String avatarUrl;
+    private ArtistType type;
 }

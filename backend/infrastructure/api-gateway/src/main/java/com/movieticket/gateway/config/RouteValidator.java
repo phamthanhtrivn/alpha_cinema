@@ -21,6 +21,7 @@ public class RouteValidator {
             "api/cinemas/public",
             "api/show-schedules/public",
             "api/promotions/public",
+            "api/artists/public",
             "/api/payments/vn-pay-callback",
             "/api/payments/momo-pay-callback",
             "/api/payments/result",
