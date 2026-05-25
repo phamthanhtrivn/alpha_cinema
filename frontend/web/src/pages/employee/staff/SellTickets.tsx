@@ -21,7 +21,7 @@ import { cinemaService } from "@/services/cinema.service";
 import { useSelector } from "react-redux";
 
 type Step = "seat" | "food" | "payment" | "ticket";
-type PaymentMethod = "cash" | "bank_qr";
+type PaymentMethod = "cash" | "momo";
 
 interface ShowSchedule {
   id: string;
@@ -88,6 +88,9 @@ const SellTickets: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     "cash",
   );
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [momoPaymentUrl, setMomoPaymentUrl] = useState<string | null>(null);
+  const [isCheckingMomo, setIsCheckingMomo] = useState(false);
   const ticketPriceDataCacheRef = useRef<
     Record<string, { price: number; ticketPriceId: string }>
   >({});
@@ -131,6 +134,13 @@ const SellTickets: React.FC = () => {
     fetchMovies();
     fetchCinemaInfo();
   }, []);
+
+  useEffect(() => {
+    if (paymentMethod !== "momo") {
+      setPendingOrderId(null);
+      setMomoPaymentUrl(null);
+    }
+  }, [paymentMethod]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -331,6 +341,8 @@ const SellTickets: React.FC = () => {
     setTicketPriceDataBySeatCode({});
     setQuantities({});
     setPaymentMethod("cash");
+    setPendingOrderId(null);
+    setMomoPaymentUrl(null);
     fetchSeats();
   };
 
@@ -417,6 +429,21 @@ const SellTickets: React.FC = () => {
             price: p.unitPrice,
           })),
       };
+
+      if (paymentMethod === "momo") {
+        const req = await orderService.checkoutEmployeeMomo(payload);
+        const momoUrl = req?.data?.paymentUrl || req?.data?.qrCodeUrl || req?.data?.deeplink || null;
+        if (req.success && momoUrl) {
+          setPendingOrderId(req.data?.orderId ?? null);
+          setMomoPaymentUrl(momoUrl);
+          window.open(momoUrl, "_blank", "noopener,noreferrer");
+          toast.info("Vui lòng khách thanh toán MoMo để hoàn tất.");
+        } else {
+          toast.error(req.message || "Không thể khởi tạo thanh toán MoMo");
+        }
+        return;
+      }
+
       const req = await orderService.checkoutEmployee(payload);
       if (req.success) {
         toast.success("Thanh toán thành công");
@@ -429,6 +456,31 @@ const SellTickets: React.FC = () => {
       alert("Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkMomoStatus = async () => {
+    if (!pendingOrderId) {
+      return;
+    }
+
+    try {
+      setIsCheckingMomo(true);
+      const response = await orderService.getOrderDetail(pendingOrderId);
+      const status = response?.data?.status;
+      if (status === "PAID" || status === "CONFIRMED") {
+        toast.success("MoMo đã thanh toán thành công");
+        setStep("ticket");
+        setPendingOrderId(null);
+        return;
+      }
+
+      toast.info(`Trạng thái thanh toán: ${status || "PENDING_PAYMENT"}`);
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái MoMo:", error);
+      toast.error("Không thể kiểm tra trạng thái thanh toán");
+    } finally {
+      setIsCheckingMomo(false);
     }
   };
 
@@ -644,6 +696,10 @@ const SellTickets: React.FC = () => {
                 <PaymentSelection
                   paymentMethod={paymentMethod}
                   onSelectPaymentMethod={setPaymentMethod}
+                  momoPending={Boolean(pendingOrderId)}
+                  momoPaymentUrl={momoPaymentUrl}
+                  onCheckMomoStatus={checkMomoStatus}
+                  isCheckingMomo={isCheckingMomo}
                 />
               )}
 
@@ -706,7 +762,10 @@ const SellTickets: React.FC = () => {
               onPreviousStep={previousStep}
               onNextStep={nextStep}
               onComplete={handleComplete}
-              canComplete={step !== "payment" || Boolean(paymentMethod)}
+              canComplete={
+                step !== "payment" ||
+                (Boolean(paymentMethod) && !(paymentMethod === "momo" && Boolean(pendingOrderId)))
+              }
             />
           </div>
         </>

@@ -60,6 +60,7 @@ const TicketSummaryPanel: React.FC<TicketSummaryPanelProps> = ({
   onPreviousStep,
   onNextStep,
   onComplete,
+  canComplete,
 }) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -144,6 +145,7 @@ const TicketSummaryPanel: React.FC<TicketSummaryPanelProps> = ({
                 <button
                   type="button"
                   onClick={onComplete}
+                  disabled={!canComplete}
                   className="rounded-xl bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-300"
                 >
                   Hoàn tất bán vé
