@@ -11,6 +11,7 @@ import com.movieticket.order.event.producer.SeatLockEventProducer;
 import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import com.movieticket.order.model.cache.CheckoutSessionCache;
 import com.movieticket.order.repository.OrderRepository;
+import com.movieticket.order.service.OrderDetailService;
 import com.movieticket.order.service.ShowScheduleDetailService;
 import com.movieticket.order.util.LoyalPointUtil;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class PaymentResultEventListener {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final ShowScheduleDetailService showScheduleDetailService;
+    private final OrderDetailService orderDetailService;
     private final SeatLockEventProducer seatLockEventProducer;
 
     @Transactional
@@ -86,6 +88,7 @@ public class PaymentResultEventListener {
 
         orderRepository.save(order);
         showScheduleDetailService.releaseBookedSeats(order.getId());
+        orderDetailService.deleteOrderDetailByOrderId(order.getId());
         deleteCheckoutCache(cache, order.getId());
 
         List<ShowScheduleDetail> releasedSeats = order.getShowScheduleDetails();
