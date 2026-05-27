@@ -29,27 +29,37 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT s FROM ShowSchedule s WHERE s.movie.id = :movieId " +
             "AND CAST(s.startTime AS date) = :date " +
-            "AND s.status = true")
+            "AND s.status = true " +
+            "AND s.startTime >= :cutoff")
     List<ShowScheduleView> findAllByMovieIdAndDate(
             @Param("movieId") String movieId,
-            @Param("date") LocalDate date
+            @Param("date") LocalDate date,
+            @Param("cutoff") LocalDateTime cutoff
     );
 
     @Query("SELECT s.id AS id, s.startTime AS startTime FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId " +
             "AND s.cinemaId = :cinemaId " +
             "AND CAST(s.startTime AS date) = :date " +
+            "AND s.status = true " +
+            "AND s.startTime >= :cutoff " +
             "ORDER BY s.startTime ASC")
     List<ShowTimeView> findShowtimesByMovieAndCinemaAndDate(
             @Param("movieId") String movieId,
             @Param("cinemaId") String cinemaId,
-            @Param("date") LocalDate date
+            @Param("date") LocalDate date,
+            @Param("cutoff") LocalDateTime cutoff
     );
 
     @Query("SELECT DISTINCT CAST(s.startTime AS date) FROM ShowSchedule s " +
-            "WHERE s.movie.id = :movieId AND s.startTime >= CURRENT_TIMESTAMP " +
+            "WHERE s.movie.id = :movieId " +
+            "AND s.status = true " +
+            "AND s.startTime >= :cutoff " +
             "ORDER BY 1")
-    List<Date> getAvailableDatesByMovie(@Param("movieId") String movieId);
+    List<Date> getAvailableDatesByMovie(
+            @Param("movieId") String movieId,
+            @Param("cutoff") LocalDateTime cutoff
+    );
 
 
      @Query("SELECT s FROM ShowSchedule s " +
@@ -64,16 +74,23 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
     );
 
     @Query("SELECT DISTINCT s.cinemaId FROM ShowSchedule s " +
-            "WHERE s.movie.id = :movieId AND s.startTime >= CURRENT_TIMESTAMP")
-    List<String> findActiveCinemaIdsByMovie(@Param("movieId") String movieId);
+            "WHERE s.movie.id = :movieId " +
+            "AND s.status = true " +
+            "AND s.startTime >= :cutoff")
+    List<String> findActiveCinemaIdsByMovie(
+            @Param("movieId") String movieId,
+            @Param("cutoff") LocalDateTime cutoff
+    );
 
     @Query("SELECT DISTINCT CAST(s.startTime AS date) FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId AND s.cinemaId = :cinemaId " +
-            "AND s.startTime >= CURRENT_TIMESTAMP " +
+            "AND s.status = true " +
+            "AND s.startTime >= :cutoff " +
             "ORDER BY 1 ASC")
     List<java.sql.Date> findActiveDatesByMovieAndCinema(
             @Param("movieId") String movieId,
-            @Param("cinemaId") String cinemaId);
+            @Param("cinemaId") String cinemaId,
+            @Param("cutoff") LocalDateTime cutoff);
 
     @Query("SELECT s FROM ShowSchedule s JOIN FETCH s.movie WHERE s.id IN :ids")
     List<ShowSchedule> findAllByIdWithMovie(@Param("ids") List<String> ids);
