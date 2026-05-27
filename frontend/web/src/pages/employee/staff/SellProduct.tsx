@@ -10,7 +10,7 @@ import PointOfSaleComponent from "@/components/employee/PointOfSaleComponent";
 import { useSelector } from "react-redux";
 
 type Step = "food" | "payment" | "ticket";
-type PaymentMethod = "cash" | "bank_qr";
+type PaymentMethod = "cash" | "momo";
 
 const STEP_CONFIG: Array<{ id: Step; label: string }> = [
   { id: "food", label: "Chọn thức ăn" },
@@ -28,6 +28,9 @@ const SellProduct: React.FC = () => {
   );
   const [posOpen, setPosOpen] = useState(false);
   const [cinema, setCinema] = useState<{ address?: string; phone?: string } | undefined>(undefined);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [momoPaymentUrl, setMomoPaymentUrl] = useState<string | null>(null);
+  const [isCheckingMomo, setIsCheckingMomo] = useState(false);
 
   const cinemaId = useSelector(
     (state: { auth: { cinemaId?: string } }) => state.auth.cinemaId,
@@ -69,6 +72,14 @@ const SellProduct: React.FC = () => {
     void fetchCinemaInfo();
   }, [fetchCinemaInfo]);
 
+  // Clear MoMo pending state khi đổi sang phương thức khác
+  useEffect(() => {
+    if (paymentMethod !== "momo") {
+      setPendingOrderId(null);
+      setMomoPaymentUrl(null);
+    }
+  }, [paymentMethod]);
+
   const snackTotal = useMemo(() => {
     let total = 0;
     products.forEach((product) => {
@@ -84,6 +95,8 @@ const SellProduct: React.FC = () => {
     setStep("food");
     setQuantities({});
     setPaymentMethod("cash");
+    setPendingOrderId(null);
+    setMomoPaymentUrl(null);
   };
 
   const nextStep = () => {
@@ -136,6 +149,20 @@ const SellProduct: React.FC = () => {
           })),
       };
 
+      if (paymentMethod === "momo") {
+        const req = await orderService.checkoutEmployeeMomo(payload);
+        const momoUrl = req?.data?.paymentUrl || req?.data?.qrCodeUrl || req?.data?.deeplink || null;
+        if (req.success && momoUrl) {
+          setPendingOrderId(req.data?.orderId ?? null);
+          setMomoPaymentUrl(momoUrl);
+          window.open(momoUrl, "_blank", "noopener,noreferrer");
+          toast.info("Vui lòng yêu cầu khách thanh toán MoMo để hoàn tất.");
+        } else {
+          toast.error(req.message || "Không thể khởi tạo thanh toán MoMo");
+        }
+        return;
+      }
+
       const req = await orderService.checkoutEmployee(payload);
       if (req.success) {
         toast.success("Thanh toán thành công");
@@ -145,9 +172,30 @@ const SellProduct: React.FC = () => {
       }
     } catch (error) {
       console.error("Lỗi khi thanh toán:", error);
-      alert("Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại.");
+      toast.error("Đã xảy ra lỗi khi thanh toán. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkMomoStatus = async () => {
+    if (!pendingOrderId) return;
+    try {
+      setIsCheckingMomo(true);
+      const response = await orderService.getOrderDetail(pendingOrderId);
+      const status = response?.data?.status;
+      if (status === "PAID" || status === "CONFIRMED") {
+        toast.success("MoMo đã thanh toán thành công");
+        setPendingOrderId(null);
+        setStep("ticket");
+        return;
+      }
+      toast.info(`Trạng thái thanh toán: ${status || "PENDING_PAYMENT"}`);
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái MoMo:", error);
+      toast.error("Không thể kiểm tra trạng thái thanh toán");
+    } finally {
+      setIsCheckingMomo(false);
     }
   };
 
@@ -247,6 +295,10 @@ const SellProduct: React.FC = () => {
                 <PaymentSelection
                   paymentMethod={paymentMethod}
                   onSelectPaymentMethod={setPaymentMethod}
+                  momoPending={Boolean(pendingOrderId)}
+                  momoPaymentUrl={momoPaymentUrl}
+                  onCheckMomoStatus={checkMomoStatus}
+                  isCheckingMomo={isCheckingMomo}
                 />
               )}
 
@@ -367,9 +419,9 @@ const SellProduct: React.FC = () => {
                     type="button"
                     onClick={handleComplete}
                     className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 font-bold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isLoading || !paymentMethod}
+                    disabled={isLoading || !paymentMethod || (paymentMethod === "momo" && Boolean(pendingOrderId))}
                   >
-                    Hoàn tất
+                    {isLoading ? "Đang xử lý..." : "Hoàn tất"}
                   </button>
                 )}
               </div>
