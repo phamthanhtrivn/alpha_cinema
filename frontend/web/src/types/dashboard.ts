@@ -99,7 +99,7 @@ export interface RecentOrder {
   customerName: string;
   movieTitle: string;
   paymentMethod: PaymentMethodSummary["method"];
-  status: "PAID" | "PENDING_PAYMENT" | "CANCELLED" | "EXPIRED" | "FAILED";
+  status: "PAID" | "CONFIRMED" | "PENDING_PAYMENT" | "CANCELLED" | "EXPIRED" | "FAILED";
   totalPayment: number;
   createdAt: string;
 }

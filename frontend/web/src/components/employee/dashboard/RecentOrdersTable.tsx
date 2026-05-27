@@ -14,12 +14,18 @@ interface RecentOrdersTableProps {
   orders: RecentOrder[];
 }
 
-const orderStatusConfig: Record<
-  RecentOrder["status"],
-  { label: string; className: string }
-> = {
+type OrderStatusConfig = {
+  label: string;
+  className: string;
+};
+
+const orderStatusConfig: Record<RecentOrder["status"], OrderStatusConfig> = {
   PAID: {
     label: "Đã thanh toán",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  CONFIRMED: {
+    label: "Đã xác nhận",
     className: "border-emerald-200 bg-emerald-50 text-emerald-700",
   },
   PENDING_PAYMENT: {
@@ -38,6 +44,24 @@ const orderStatusConfig: Record<
     label: "Thất bại",
     className: "border-rose-200 bg-rose-50 text-rose-700",
   },
+};
+
+const fallbackStatusConfig: OrderStatusConfig = {
+  label: "Không xác định",
+  className: "border-slate-200 bg-slate-100 text-slate-600",
+};
+
+const getOrderStatusConfig = (status?: string | null): OrderStatusConfig => {
+  if (!status) {
+    return fallbackStatusConfig;
+  }
+
+  return (
+    orderStatusConfig[status as RecentOrder["status"]] ?? {
+      ...fallbackStatusConfig,
+      label: status,
+    }
+  );
 };
 
 export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
@@ -62,7 +86,7 @@ export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
       </TableHeader>
       <TableBody>
         {orders.map((order) => {
-          const status = orderStatusConfig[order.status];
+          const status = getOrderStatusConfig(order.status);
 
           return (
             <TableRow key={order.id}>
