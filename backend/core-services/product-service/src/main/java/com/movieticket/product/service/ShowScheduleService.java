@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ShowScheduleService {
+    private static final long CUSTOMER_BOOKING_GRACE_MINUTES = 30L;
+
     record FormatKey(ProjectionType projection, TranslationType translation) {
     }
 
@@ -56,6 +58,10 @@ public class ShowScheduleService {
     private final CacheService cacheService;
     private final WebClient.Builder webClientBuilder;
     private final ProductRepository productRepository;
+
+    private LocalDateTime customerBookingCutoff() {
+        return LocalDateTime.now().minusMinutes(CUSTOMER_BOOKING_GRACE_MINUTES);
+    }
 
     public Page<ShowScheduleResDTO> searchSchedules(ShowScheduleSearchDTO dto, Pageable pageable) {
         Specification<ShowSchedule> spec = Specification
@@ -186,7 +192,8 @@ public class ShowScheduleService {
     }
 
     public List<CinemaShowtimeDTO> getMovieShowtimes(String movieId, LocalDate date) {
-        List<ShowScheduleView> schedules = showScheduleRepository.findAllByMovieIdAndDate(movieId, date);
+        List<ShowScheduleView> schedules =
+                showScheduleRepository.findAllByMovieIdAndDate(movieId, date, customerBookingCutoff());
 
         if (schedules.isEmpty()) return Collections.emptyList();
 
@@ -269,7 +276,7 @@ public class ShowScheduleService {
     }
 
     public List<ShowtimeDTO> getListShowTime(String movieId, String cinemaId, LocalDate date) {
-        return showScheduleRepository.findShowtimesByMovieAndCinemaAndDate(movieId, cinemaId, date)
+        return showScheduleRepository.findShowtimesByMovieAndCinemaAndDate(movieId, cinemaId, date, customerBookingCutoff())
                 .stream()
                 .map(v -> ShowtimeDTO.builder()
                         .id(v.getId())
@@ -279,7 +286,7 @@ public class ShowScheduleService {
     }
 
     public List<LocalDate> getAvailableDates(String movieId) {
-        List<Date> rawDates = showScheduleRepository.getAvailableDatesByMovie(movieId);
+        List<Date> rawDates = showScheduleRepository.getAvailableDatesByMovie(movieId, customerBookingCutoff());
 
         return rawDates.stream()
                 .map(java.sql.Date::toLocalDate)
@@ -302,9 +309,14 @@ public class ShowScheduleService {
         int safeLimit = Math.max(1, Math.min(limit == null ? 50 : limit, 100));
         String safeMovieTitle = movieTitle == null || movieTitle.isBlank() ? null : movieTitle.trim();
         String safeCinemaId = cinemaId == null || cinemaId.isBlank() ? null : cinemaId.trim();
+        LocalDateTime effectiveStartTime = effectiveStartDate.atStartOfDay();
+        LocalDateTime cutoff = customerBookingCutoff();
+        if (effectiveStartTime.isBefore(cutoff)) {
+            effectiveStartTime = cutoff;
+        }
 
         return showScheduleRepository.findPublicSchedulesInRange(
-                        effectiveStartDate.atStartOfDay(),
+                        effectiveStartTime,
                         effectiveEndDate.plusDays(1).atStartOfDay(),
                         safeMovieTitle,
                         safeCinemaId,
@@ -403,14 +415,14 @@ public class ShowScheduleService {
     }
     //Ha Thanh Tuan
     public List<SelectionDTO> getCinemasByMovie(String movieId) {
-        List<String> cinemaIds = showScheduleRepository.findActiveCinemaIdsByMovie(movieId);
+        List<String> cinemaIds = showScheduleRepository.findActiveCinemaIdsByMovie(movieId, customerBookingCutoff());
         if (cinemaIds.isEmpty()) return Collections.emptyList();
 
         return cinemaClient.getCinemaSelectionsByIds(cinemaIds);
     }
 
     public List<LocalDate> getDatesByMovieAndCinema(String movieId, String cinemaId) {
-        return showScheduleRepository.findActiveDatesByMovieAndCinema(movieId, cinemaId)
+        return showScheduleRepository.findActiveDatesByMovieAndCinema(movieId, cinemaId, customerBookingCutoff())
                 .stream()
                 .map(java.sql.Date::toLocalDate)
                 .toList();
