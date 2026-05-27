@@ -290,7 +290,7 @@ const BaseFormModal: React.FC<Props> = ({
             placeholder={field.placeholder}
             value={values[field.name] ?? ""}
             onChange={(e) => onChange(field.name, e.target.value)}
-            className="w-full min-h-25 rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full min-h-65 rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white/50 focus:bg-white transition-all font-medium text-slate-700 shadow-sm resize-none"
           />
         );
 
