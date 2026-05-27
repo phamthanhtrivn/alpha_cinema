@@ -30,6 +30,12 @@ const RoomName: React.FC<{ roomId: string; cinemaId: string }> = ({ roomId, cine
   return <>{room ? room.label : roomId}</>;
 };
 
+const normalizeProjectionTypeForQuery = (projectionType?: string) => {
+  if (projectionType === "2D") return "_2D";
+  if (projectionType === "3D") return "_3D";
+  return projectionType;
+};
+
 interface ScheduleManagementProps {
   scopeToCurrentCinema?: boolean;
   scopedCinemaId?: string | null;
@@ -75,13 +81,16 @@ const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
   const [appliedFilters, setAppliedFilters] = useState<any>(defaultFilters);
 
   const buildParams = () => {
+    const params = {
+      ...appliedFilters,
+      projectionType: normalizeProjectionTypeForQuery(appliedFilters.projectionType),
+      cinemaId: isCinemaScoped ? normalizedScopedCinemaId : appliedFilters.cinemaId,
+      page: currentPage - 1,
+      size: pageSize,
+    };
+
     return Object.fromEntries(
-      Object.entries({
-        ...appliedFilters,
-        cinemaId: isCinemaScoped ? normalizedScopedCinemaId : appliedFilters.cinemaId,
-        page: currentPage - 1,
-        size: pageSize,
-      }).filter(([_, v]) => v !== undefined && v !== "")
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== "")
     );
   };
 
