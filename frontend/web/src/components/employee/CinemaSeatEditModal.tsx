@@ -12,6 +12,21 @@ import { toast } from "react-toastify";
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
+// Palette màu gán theo thứ tự index của loại ghế (không phụ thuộc tên)
+const SEAT_TYPE_PALETTES = [
+  { bg: 'bg-sky-200',    text: 'text-sky-800',    border: 'border-sky-300',    active: 'bg-sky-200 text-sky-800 border-b-[4px] border-sky-300' },
+  { bg: 'bg-amber-400',  text: 'text-amber-950',  border: 'border-amber-500',  active: 'bg-amber-400 text-amber-950 border-b-[4px] border-amber-500' },
+  { bg: 'bg-pink-400',   text: 'text-pink-950',   border: 'border-pink-500',   active: 'bg-pink-400 text-pink-950 border-b-[4px] border-pink-500' },
+  { bg: 'bg-green-300',  text: 'text-green-900',  border: 'border-green-400',  active: 'bg-green-300 text-green-900 border-b-[4px] border-green-400' },
+  { bg: 'bg-purple-300', text: 'text-purple-900', border: 'border-purple-400', active: 'bg-purple-300 text-purple-900 border-b-[4px] border-purple-400' },
+];
+
+// Nhận diện ghế đôi bằng nhiều từ khóa, không phụ thuộc ngôn ngữ
+const isCoupleType = (name: string) => {
+  const n = name.toLowerCase();
+  return n.includes('couple') || n.includes('đôi') || n.includes('doi') || n.includes('double');
+};
+
 const CinemaSeatEditModal = ({ isOpen, onClose, roomId, capacity, existingSeats, onSaveSuccess }: any) => {
   const [seatTypes, setSeatTypes] = useState<any[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<{ rowName: string, columnName: string }[]>([]);
@@ -71,14 +86,20 @@ const CinemaSeatEditModal = ({ isOpen, onClose, roomId, capacity, existingSeats,
     }
   };
 
+  // Map seatTypeId -> palette index (xây dựng từ danh sách seatTypes)
+  const typeColorMap = useMemo(() => {
+    const map = new Map<string, typeof SEAT_TYPE_PALETTES[0]>();
+    seatTypes.forEach((type: any, idx: number) => {
+      map.set(type.id, SEAT_TYPE_PALETTES[idx % SEAT_TYPE_PALETTES.length]);
+    });
+    return map;
+  }, [seatTypes]);
+
   const getSeatStyle = (seat: any, isSelected: boolean) => {
-    let baseClass = "h-9 rounded text-xs font-semibold flex items-center justify-center cursor-pointer transition-all shadow-sm ";
-    
-    // Width based on type if it exists, assume standard if not
-    let widthClass = 'w-9';
-    if (seat && seat.seatType?.name?.toLowerCase().includes('couple')) {
-      widthClass = 'w-[82px]';
-    }
+    const baseClass = 'h-9 rounded text-xs font-semibold flex items-center justify-center cursor-pointer transition-all shadow-sm ';
+
+    // Width dựa theo tên loại ghế (nhận diện ghế đôi)
+    const widthClass = (seat && isCoupleType(seat.seatType?.name || '')) ? 'w-[82px]' : 'w-9';
 
     // Colors
     let colorClass = '';
@@ -87,20 +108,13 @@ const CinemaSeatEditModal = ({ isOpen, onClose, roomId, capacity, existingSeats,
     } else if (!seat.status) {
       colorClass = 'bg-slate-200 text-slate-500 border-b-[4px] border-slate-300 opacity-70';
     } else {
-      const typeName = seat.seatType?.name?.toLowerCase() || '';
-      if (typeName.includes('vip')) {
-        colorClass = 'bg-amber-400 text-amber-950 border-b-[4px] border-amber-500';
-      } else if (typeName.includes('couple')) {
-        colorClass = 'bg-pink-400 text-pink-950 border-b-[4px] border-pink-500';
-      } else {
-        colorClass = 'bg-sky-200 text-sky-800 border-b-[4px] border-sky-300';
-      }
+      const palette = typeColorMap.get(seat.seatType?.id) ?? SEAT_TYPE_PALETTES[0];
+      colorClass = palette.active;
     }
 
     if (isSelected) {
       return baseClass + widthClass + ' ' + colorClass + ' ring-4 ring-sky-500 ring-opacity-50 scale-105 z-10';
     }
-
     return baseClass + widthClass + ' ' + colorClass + ' hover:opacity-80';
   };
 
@@ -253,7 +267,7 @@ const CinemaSeatEditModal = ({ isOpen, onClose, roomId, capacity, existingSeats,
               ))}
             </div>
 
-            {/* Chú thích màu sắc */}
+            {/* Chú thích màu sắc - dynamic theo seat types từ API */}
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-8 p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-4 rounded-sm bg-white border-2 border-dashed border-slate-300"></div>
@@ -263,18 +277,15 @@ const CinemaSeatEditModal = ({ isOpen, onClose, roomId, capacity, existingSeats,
                 <div className="w-8 h-4 rounded-sm bg-slate-200 border-b-[4px] border-slate-300 opacity-70"></div>
                 <span className="text-sm font-semibold text-slate-600">Ngừng HD</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-4 rounded-sm bg-sky-200 border-b-[4px] border-sky-300"></div>
-                <span className="text-sm font-semibold text-slate-600">Standard</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-4 rounded-sm bg-amber-400 border-b-[4px] border-amber-500"></div>
-                <span className="text-sm font-semibold text-slate-600">VIP</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-4 rounded-sm bg-pink-400 border-b-[4px] border-pink-500"></div>
-                <span className="text-sm font-semibold text-slate-600">Couple</span>
-              </div>
+              {seatTypes.map((type: any) => {
+                const palette = typeColorMap.get(type.id) ?? SEAT_TYPE_PALETTES[0];
+                return (
+                  <div key={type.id} className="flex items-center gap-3">
+                    <div className={`w-8 h-4 rounded-sm border-b-[4px] ${palette.bg} ${palette.border}`}></div>
+                    <span className="text-sm font-semibold text-slate-600">{type.name}</span>
+                  </div>
+                );
+              })}
               <div className="flex items-center gap-3">
                 <div className="w-8 h-4 rounded-sm ring-2 ring-sky-500 bg-white"></div>
                 <span className="text-sm font-semibold text-slate-600">Đang chọn ({selectedSeats.length})</span>
