@@ -33,7 +33,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         </SelectTrigger>
         <SelectContent className="rounded-2xl border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.08)] bg-white/95 backdrop-blur-sm p-1">
           {options.map((opt) => {
-            const value = typeof opt === "string" ? opt : opt.value;
+            const value = String(typeof opt === "string" ? opt : opt.value);
             const label = typeof opt === "string" ? opt : opt.label;
 
             return (
