@@ -135,26 +135,23 @@ const AiPolicyManagement = () => {
     return policies.slice(startIndex, startIndex + pageSize);
   }, [policies, currentPage]);
 
-  const fetchPolicies = useCallback(
-    async (nextFilters = filters) => {
-      try {
-        setLoading(true);
-        const response = await aiPolicyService.getPolicies(buildSearchParams(nextFilters));
-        if (response.success) {
-          setPolicies(response.data);
-          setCurrentPage(1);
-          return;
-        }
-        toast.error(response.message || "Không thể tải danh sách policy AI.");
-      } catch (error) {
-        console.error(error);
-        toast.error("Không thể tải danh sách policy AI.");
-      } finally {
-        setLoading(false);
+  const fetchPolicies = useCallback(async (nextFilters: typeof emptyFilters) => {
+    try {
+      setLoading(true);
+      const response = await aiPolicyService.getPolicies(buildSearchParams(nextFilters));
+      if (response.success) {
+        setPolicies(response.data);
+        setCurrentPage(1);
+        return;
       }
-    },
-    [filters],
-  );
+      toast.error(response.message || "Không thể tải danh sách policy AI.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể tải danh sách policy AI.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void fetchPolicies(emptyFilters);
@@ -199,7 +196,7 @@ const AiPolicyManagement = () => {
       if (response.success) {
         toast.success("Thêm policy AI thành công.");
         handleCancelAdd();
-        void fetchPolicies();
+        void fetchPolicies(filters);
       } else {
         toast.error(response.message || "Không thể thêm policy AI.");
       }
@@ -229,7 +226,7 @@ const AiPolicyManagement = () => {
       if (response.success) {
         toast.success("Cập nhật policy AI thành công.");
         handleCancelUpdate();
-        void fetchPolicies();
+        void fetchPolicies(filters);
       } else {
         toast.error(response.message || "Không thể cập nhật policy AI.");
       }
@@ -258,7 +255,7 @@ const AiPolicyManagement = () => {
       const response = await aiPolicyService.deletePolicy(policy.id);
       if (response.success) {
         toast.success("Xóa policy AI thành công.");
-        void fetchPolicies();
+        void fetchPolicies(filters);
         return;
       }
       toast.error(response.message || "Không thể xóa policy AI.");
@@ -284,7 +281,7 @@ const AiPolicyManagement = () => {
         toast.success(
           `Đã đồng bộ ${response.data.policyCount} policy, ${response.data.chunkCount} chunks vào Vector DB.`,
         );
-        void fetchPolicies();
+        void fetchPolicies(filters);
         return;
       }
       toast.error(response.message || "Không thể đồng bộ policy AI.");
@@ -302,6 +299,11 @@ const AiPolicyManagement = () => {
         onChange={(event) =>
           setFilters((prev) => ({ ...prev, keyword: event.target.value }))
         }
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            handleApplyFilters();
+          }
+        }}
         placeholder="Tìm tiêu đề, nội dung..."
         className="h-11 rounded-2xl border-slate-100 bg-white/70 text-sm font-medium"
       />
@@ -336,9 +338,10 @@ const AiPolicyManagement = () => {
       <Button
         type="button"
         onClick={handleApplyFilters}
+        disabled={loading}
         className="h-11 rounded-2xl bg-slate-900 text-xs font-black uppercase tracking-widest text-white"
       >
-        Áp dụng
+        {loading ? "Đang tìm..." : "Tìm kiếm"}
       </Button>
     </div>
   );
@@ -348,7 +351,7 @@ const AiPolicyManagement = () => {
       title="Quản lý Policy AI"
       subtitle="Thêm, cập nhật và xóa chính sách AI đang lưu trong Vector DB."
       onAdd={() => setIsAddOpen(true)}
-      addLabel="THEM POLICY"
+      addLabel="THÊM POLICY"
       totalItems={policies.length}
       currentPage={currentPage}
       pageSize={pageSize}
@@ -371,7 +374,7 @@ const AiPolicyManagement = () => {
               ) : (
                 <DatabaseZap className="mr-2" size={16} />
               )}
-              Dong bo
+              Đồng bộ
             </Button>
           }
         >
