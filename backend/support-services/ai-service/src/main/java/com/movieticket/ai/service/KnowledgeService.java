@@ -14,10 +14,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.text.Normalizer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -82,22 +84,6 @@ public class KnowledgeService {
                 WHERE metadata->>'type' = 'policy'
                 """);
 
-        if (StringUtils.hasText(keyword)) {
-            sql.append("""
-                    AND (
-                        LOWER(content) LIKE ?
-                        OR LOWER(COALESCE(metadata->>'title', '')) LIKE ?
-                        OR LOWER(COALESCE(metadata->>'topic', '')) LIKE ?
-                        OR LOWER(COALESCE(metadata->>'source', '')) LIKE ?
-                    )
-                    """);
-            String likeKeyword = "%" + keyword.trim().toLowerCase() + "%";
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-        }
-
         if (StringUtils.hasText(topic)) {
             sql.append("AND LOWER(COALESCE(metadata->>'topic', 'general')) = ?\n");
             params.add(topic.trim().toLowerCase());
@@ -119,7 +105,8 @@ public class KnowledgeService {
                          COALESCE(MAX(metadata->>'title'), MAX(metadata->>'source'), 'Untitled policy') ASC
                 """);
 
-        return jdbcTemplate.query(sql.toString(), policyRowMapper(), params.toArray());
+        List<PolicyResponse> policies = jdbcTemplate.query(sql.toString(), policyRowMapper(), params.toArray());
+        return filterPoliciesByKeyword(policies, keyword);
     }
 
     public PolicyResponse createPolicy(PolicyRequest request) {
@@ -227,6 +214,44 @@ public class KnowledgeService {
                 rs.getString("created_at"),
                 rs.getString("updated_at")
         );
+    }
+
+    private List<PolicyResponse> filterPoliciesByKeyword(List<PolicyResponse> policies, String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return policies;
+        }
+
+        String normalizedKeyword = normalizeSearchText(keyword);
+        if (normalizedKeyword.isBlank()) {
+            return policies;
+        }
+
+        return policies.stream()
+                .filter(policy -> normalizeSearchText(String.join(" ",
+                        safe(policy.title()),
+                        safe(policy.topic()),
+                        safe(policy.source()),
+                        safe(policy.content())
+                )).contains(normalizedKeyword))
+                .toList();
+    }
+
+    private String normalizeSearchText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D')
+                .toLowerCase(Locale.ROOT);
+
+        return normalized.replaceAll("\\s+", " ").trim();
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private List<SeedPolicy> loadPolicyDocuments() {
