@@ -234,21 +234,28 @@ const BaseFormModal: React.FC<Props> = ({
 
       // SELECT
       case "select": {
-        const normalizedOptions = (field.options || []).map((opt: any) =>
-          typeof opt === "string" ? { label: opt, value: opt } : opt,
-        );
+        const normalizedOptions = (field.options || []).map((opt: any) => {
+          const label = typeof opt === "string" ? opt : opt.label;
+          const originalValue = typeof opt === "string" ? opt : opt.value;
+
+          return {
+            label,
+            value: String(originalValue),
+            originalValue,
+          };
+        });
+
+        const currentValue = values[field.name];
 
         return (
           <FilterSelect
             placeholder={field.placeholder}
             options={normalizedOptions}
-            value={values[field.name]}
+            value={currentValue === undefined || currentValue === null ? undefined : String(currentValue)}
             disabled={field.disabled}
             onChange={(val) => {
-              let parsed: any = val;
-              if (val === "true") parsed = true;
-              if (val === "false") parsed = false;
-              onChange(field.name, parsed);
+              const selectedOption = normalizedOptions.find((opt) => opt.value === val);
+              onChange(field.name, selectedOption ? selectedOption.originalValue : val);
             }}
           />
         );
