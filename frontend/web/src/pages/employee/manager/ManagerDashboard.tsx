@@ -25,7 +25,13 @@ import type {
   OverviewMetric,
 } from "@/types/dashboard";
 
-type ManagerSectionKey = "revenue" | "movies" | "schedules" | "orders" | "products" | "employees";
+type ManagerSectionKey =
+  | "revenue"
+  | "movies"
+  | "schedules"
+  | "orders"
+  | "products"
+  | "employees";
 type ManagerSectionFilters = Record<ManagerSectionKey, DashboardFilterState>;
 type ManagerDashboardTabKey = "finance" | "movies" | "products" | "employees";
 
@@ -57,8 +63,13 @@ const rangeLabels: Record<DashboardRange, string> = {
 };
 
 const managerMetricPath = (metric: OverviewMetric) => {
-  if (metric.id.includes("revenue") || metric.id.includes("order")) return "/employee/manager/orders";
-  if (metric.id.includes("ticket") || metric.id.includes("schedule") || metric.id.includes("seat")) {
+  if (metric.id.includes("revenue") || metric.id.includes("order"))
+    return "/employee/manager/orders";
+  if (
+    metric.id.includes("ticket") ||
+    metric.id.includes("schedule") ||
+    metric.id.includes("seat")
+  ) {
     return "/employee/manager/schedules";
   }
   return "/employee/manager/dashboard";
@@ -83,12 +94,13 @@ const managerDashboardTabs = [
   { value: "employees", label: "Nhân viên" },
 ] satisfies { value: ManagerDashboardTabKey; label: string }[];
 
-const managerTabSections: Record<ManagerDashboardTabKey, ManagerSectionKey[]> = {
-  finance: ["revenue", "orders"],
-  movies: ["movies", "schedules"],
-  products: ["products"],
-  employees: ["employees"],
-};
+const managerTabSections: Record<ManagerDashboardTabKey, ManagerSectionKey[]> =
+  {
+    finance: ["revenue", "orders"],
+    movies: ["movies", "schedules"],
+    products: ["products"],
+    employees: ["employees"],
+  };
 
 const sameFilters = (left: DashboardFilterState, right: DashboardFilterState) =>
   left.range === right.range &&
@@ -165,7 +177,9 @@ const overviewRows = (data: AdminDashboardData) =>
     "Chỉ số": metric.title,
     "Giá trị": metric.value,
     "Định dạng": metric.format,
-    "Xu hướng": metric.trend ? `${metric.trend.value}% ${metric.trend.label}` : "",
+    "Xu hướng": metric.trend
+      ? `${metric.trend.value}% ${metric.trend.label}`
+      : "",
   }));
 
 const exportFullDashboardReport = (
@@ -198,7 +212,8 @@ const useManagerSectionData = (
 ) =>
   useQuery({
     queryKey: ["manager-dashboard-section", sectionKey, filters],
-    queryFn: () => dashboardService.getManagerDashboard({ ...filters, cinemaId }),
+    queryFn: () =>
+      dashboardService.getManagerDashboard({ ...filters, cinemaId }),
     enabled: Boolean(cinemaId) && enabled,
   });
 
@@ -206,7 +221,11 @@ export default function ManagerDashboard() {
   const auth = useSelector(selectAuth);
   const now = useMemo(() => new Date(), []);
   const cinemaId = auth.cinemaId || auth.user?.cinemaId || "";
-  const cinemaLabel = auth.user?.cinemaName || auth.user?.cinema?.name || cinemaId || "Rap dang quan ly";
+  const cinemaLabel =
+    auth.user?.cinemaName ||
+    auth.user?.cinema?.name ||
+    cinemaId ||
+    "Rap dang quan ly";
   const initialFilters = useMemo<DashboardFilterState>(
     () => ({
       range: "week",
@@ -239,23 +258,39 @@ export default function ManagerDashboard() {
   const scopedFilters = { ...filters, cinemaId };
   const activeSections = managerTabSections[activeTab];
   const shouldFetchSection = (sectionKey: ManagerSectionKey) =>
-    activeSections.includes(sectionKey) && !sameFilters(sectionFilters[sectionKey], scopedFilters);
+    activeSections.includes(sectionKey) &&
+    !sameFilters(sectionFilters[sectionKey], scopedFilters);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["manager-dashboard", scopedFilters],
     queryFn: () => dashboardService.getManagerDashboard(scopedFilters),
     enabled: Boolean(cinemaId),
   });
 
-  const revenueQuery = useManagerSectionData("revenue", sectionFilters.revenue, cinemaId, shouldFetchSection("revenue"));
-  const movieQuery = useManagerSectionData("movies", sectionFilters.movies, cinemaId, shouldFetchSection("movies"));
+  const revenueQuery = useManagerSectionData(
+    "revenue",
+    sectionFilters.revenue,
+    cinemaId,
+    shouldFetchSection("revenue"),
+  );
+  const movieQuery = useManagerSectionData(
+    "movies",
+    sectionFilters.movies,
+    cinemaId,
+    shouldFetchSection("movies"),
+  );
   const scheduleQuery = useManagerSectionData(
     "schedules",
     sectionFilters.schedules,
     cinemaId,
     shouldFetchSection("schedules"),
   );
-  const orderQuery = useManagerSectionData("orders", sectionFilters.orders, cinemaId, shouldFetchSection("orders"));
+  const orderQuery = useManagerSectionData(
+    "orders",
+    sectionFilters.orders,
+    cinemaId,
+    shouldFetchSection("orders"),
+  );
   const productQuery = useManagerSectionData(
     "products",
     sectionFilters.products,
@@ -268,9 +303,25 @@ export default function ManagerDashboard() {
     cinemaId,
     shouldFetchSection("employees"),
   );
-  const sectionKeys: ManagerSectionKey[] = ["revenue", "movies", "schedules", "orders", "products", "employees"];
-  const sectionQueries = [revenueQuery, movieQuery, scheduleQuery, orderQuery, productQuery, employeeQuery];
-  const activeSectionQueries = sectionQueries.filter((_, index) => shouldFetchSection(sectionKeys[index]));
+  const sectionKeys: ManagerSectionKey[] = [
+    "revenue",
+    "movies",
+    "schedules",
+    "orders",
+    "products",
+    "employees",
+  ];
+  const sectionQueries = [
+    revenueQuery,
+    movieQuery,
+    scheduleQuery,
+    orderQuery,
+    productQuery,
+    employeeQuery,
+  ];
+  const activeSectionQueries = sectionQueries.filter((_, index) =>
+    shouldFetchSection(sectionKeys[index]),
+  );
 
   const revenueData = revenueQuery.data ?? data;
   const movieData = movieQuery.data ?? data;
@@ -292,10 +343,16 @@ export default function ManagerDashboard() {
   };
 
   const refreshAll = () => {
-    void Promise.all([refetch(), ...activeSectionQueries.map((query) => query.refetch())]);
+    void Promise.all([
+      refetch(),
+      ...activeSectionQueries.map((query) => query.refetch()),
+    ]);
   };
 
-  const refreshSection = (sectionKey: ManagerSectionKey, refetchSection: () => unknown) => {
+  const refreshSection = (
+    sectionKey: ManagerSectionKey,
+    refetchSection: () => unknown,
+  ) => {
     if (sameFilters(sectionFilters[sectionKey], scopedFilters)) {
       void refetch();
       return;
@@ -304,7 +361,10 @@ export default function ManagerDashboard() {
     void refetchSection();
   };
 
-  const updateSectionFilters = (sectionKey: ManagerSectionKey, next: DashboardFilterState) => {
+  const updateSectionFilters = (
+    sectionKey: ManagerSectionKey,
+    next: DashboardFilterState,
+  ) => {
     setSectionFilters((current) => ({
       ...current,
       [sectionKey]: { ...next, cinemaId },
@@ -318,10 +378,47 @@ export default function ManagerDashboard() {
     sections: { title: string; rows: object[] }[],
   ) => {
     downloadExcelReport(fileSlug, [
-      { title: `Bộ lọc ${title}`, rows: filterRows(sectionFilters[sectionKey], cinemaLabel) },
+      {
+        title: `Bộ lọc ${title}`,
+        rows: filterRows(sectionFilters[sectionKey], cinemaLabel),
+      },
       ...sections,
     ]);
   };
+
+  if (isError && !data) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold uppercase text-sky-600">
+            <LayoutDashboard size={16} />
+            Dashboard Quản lý rạp
+          </div>
+          <h1 className="text-2xl font-black text-slate-900">
+            Tổng quan vận hành
+          </h1>
+        </div>
+
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
+          <h2 className="text-base font-black">
+            Không thể tải dữ liệu dashboard
+          </h2>
+          <p className="mt-2 text-sm font-medium">
+            Hệ thống không thể tải dữ liệu cho dashboard nhân viên quản lý. Vui
+            lòng kiểm tra server hoặc thử tải lại.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 border-red-300 bg-white text-red-900 hover:bg-red-100"
+            onClick={() => void refetch()}
+          >
+            Tải lại dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -331,13 +428,17 @@ export default function ManagerDashboard() {
             <LayoutDashboard size={16} />
             Dashboard Quản lý rạp
           </div>
-          <h1 className="text-2xl font-black text-slate-900">Tổng quan vận hành</h1>
+          <h1 className="text-2xl font-black text-slate-900">
+            Tổng quan vận hành
+          </h1>
         </div>
         <Button
           type="button"
           variant="outline"
           className="h-10"
-          onClick={() => data && exportFullDashboardReport(data, scopedFilters, cinemaLabel)}
+          onClick={() =>
+            data && exportFullDashboardReport(data, scopedFilters, cinemaLabel)
+          }
           disabled={!data || isLoading}
         >
           <FileSpreadsheet size={16} />
@@ -349,13 +450,19 @@ export default function ManagerDashboard() {
         value={scopedFilters}
         onChange={handleGlobalFilterChange}
         onRefresh={refreshAll}
-        isRefreshing={isFetching || activeSectionQueries.some((query) => query.isFetching)}
+        isRefreshing={
+          isFetching || activeSectionQueries.some((query) => query.isFetching)
+        }
         cinemaOptions={cinemaOptions}
         isCinemaLoading={false}
         hideCinemaFilter
       />
 
-      <OverviewStats metrics={overview} isLoading={isLoading} getDetailPath={managerMetricPath} />
+      <OverviewStats
+        metrics={overview}
+        isLoading={isLoading}
+        getDetailPath={managerMetricPath}
+      />
 
       <DashboardTabs
         tabs={managerDashboardTabs}
@@ -364,130 +471,167 @@ export default function ManagerDashboard() {
       />
 
       {activeTab === "finance" && (
-      <>
-      <section className="space-y-3">
-        <DashboardSectionToolbar
-          title="Loc rieng: Doanh thu"
-          value={sectionFilters.revenue}
-          onChange={(next) => updateSectionFilters("revenue", next)}
-          onRefresh={() => refreshSection("revenue", revenueQuery.refetch)}
-          onExport={() =>
-            revenueData &&
-            exportSection("doanh thu", "manager-dashboard-revenue", "revenue", [
-              {
-                title: "Tổng hợp doanh thu",
-                rows: [
-                  {
-                    "Doanh thu": revenueData.revenue.totalRevenue,
-                    "Vé bán": revenueData.revenue.totalTickets,
-                    "Sản phẩm": revenueData.revenue.totalProducts,
-                  },
-                ],
-              },
-              { title: "Doanh thu theo kỳ", rows: revenueData.revenue.series },
-            ])
-          }
-          isExportDisabled={!revenueData || revenueQuery.isLoading}
-          isRefreshing={revenueQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          hideCinemaFilter
-        />
-        <ScrollableDashboardPanel>
-          <RevenueChart
-            data={revenueData?.revenue}
-            isLoading={revenueQuery.isLoading || (isLoading && !revenueData)}
-            detailPath="/employee/manager/orders"
-          />
-        </ScrollableDashboardPanel>
-      </section>
+        <>
+          <section className="space-y-3">
+            <DashboardSectionToolbar
+              title="Loc rieng: Doanh thu"
+              value={sectionFilters.revenue}
+              onChange={(next) => updateSectionFilters("revenue", next)}
+              onRefresh={() => refreshSection("revenue", revenueQuery.refetch)}
+              onExport={() =>
+                revenueData &&
+                exportSection(
+                  "doanh thu",
+                  "manager-dashboard-revenue",
+                  "revenue",
+                  [
+                    {
+                      title: "Tổng hợp doanh thu",
+                      rows: [
+                        {
+                          "Doanh thu": revenueData.revenue.totalRevenue,
+                          "Vé bán": revenueData.revenue.totalTickets,
+                          "Sản phẩm": revenueData.revenue.totalProducts,
+                        },
+                      ],
+                    },
+                    {
+                      title: "Doanh thu theo kỳ",
+                      rows: revenueData.revenue.series,
+                    },
+                  ],
+                )
+              }
+              isExportDisabled={!revenueData || revenueQuery.isLoading}
+              isRefreshing={revenueQuery.isFetching}
+              cinemaOptions={cinemaOptions}
+              hideCinemaFilter
+            />
+            <ScrollableDashboardPanel>
+              <RevenueChart
+                data={revenueData?.revenue}
+                isLoading={
+                  revenueQuery.isLoading || (isLoading && !revenueData)
+                }
+                detailPath="/employee/manager/orders"
+              />
+            </ScrollableDashboardPanel>
+          </section>
 
-      <section className="space-y-3">
-        <DashboardSectionToolbar
-          title="Lọc riêng: Đơn hàng và thanh toán"
-          value={sectionFilters.orders}
-          onChange={(next) => updateSectionFilters("orders", next)}
-          onRefresh={() => refreshSection("orders", orderQuery.refetch)}
-          onExport={() =>
-            orderData &&
-            exportSection("đơn hàng", "manager-dashboard-orders", "orders", [
-              { title: "Trạng thái đơn hàng", rows: [orderData.orders.statuses] },
-              { title: "Phương thức thanh toán", rows: orderData.orders.paymentMethods },
-              { title: "Đơn gần đây", rows: orderData.orders.recentOrders },
-            ])
-          }
-          isExportDisabled={!orderData || orderQuery.isLoading}
-          isRefreshing={orderQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          hideCinemaFilter
-        />
-        <ScrollableDashboardPanel>
-          <OrderPaymentStats
-            data={orderData?.orders}
-            isLoading={orderQuery.isLoading || (isLoading && !orderData)}
-            detailPath="/employee/manager/orders"
-          />
-        </ScrollableDashboardPanel>
-      </section>
-      </>
+          <section className="space-y-3">
+            <DashboardSectionToolbar
+              title="Lọc riêng: Đơn hàng và thanh toán"
+              value={sectionFilters.orders}
+              onChange={(next) => updateSectionFilters("orders", next)}
+              onRefresh={() => refreshSection("orders", orderQuery.refetch)}
+              onExport={() =>
+                orderData &&
+                exportSection(
+                  "đơn hàng",
+                  "manager-dashboard-orders",
+                  "orders",
+                  [
+                    {
+                      title: "Trạng thái đơn hàng",
+                      rows: [orderData.orders.statuses],
+                    },
+                    {
+                      title: "Phương thức thanh toán",
+                      rows: orderData.orders.paymentMethods,
+                    },
+                    {
+                      title: "Đơn gần đây",
+                      rows: orderData.orders.recentOrders,
+                    },
+                  ],
+                )
+              }
+              isExportDisabled={!orderData || orderQuery.isLoading}
+              isRefreshing={orderQuery.isFetching}
+              cinemaOptions={cinemaOptions}
+              hideCinemaFilter
+            />
+            <ScrollableDashboardPanel>
+              <OrderPaymentStats
+                data={orderData?.orders}
+                isLoading={orderQuery.isLoading || (isLoading && !orderData)}
+                detailPath="/employee/manager/orders"
+              />
+            </ScrollableDashboardPanel>
+          </section>
+        </>
       )}
 
       {activeTab === "movies" && (
-      <>
-      <section className="space-y-3">
-        <DashboardSectionToolbar
-          title="Lọc riêng: Phim"
-          value={sectionFilters.movies}
-          onChange={(next) => updateSectionFilters("movies", next)}
-          onRefresh={() => refreshSection("movies", movieQuery.refetch)}
-          onExport={() =>
-            movieData &&
-            exportSection("phim", "manager-dashboard-movies", "movies", [
-              { title: "Top phim theo doanh thu", rows: movieData.movies.topRevenue },
-              { title: "Top phim theo vé bán", rows: movieData.movies.topTickets },
-            ])
-          }
-          isExportDisabled={!movieData || movieQuery.isLoading}
-          isRefreshing={movieQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          hideCinemaFilter
-        />
-        <ScrollableDashboardPanel>
-          <MoviePerformance
-            data={movieData?.movies}
-            isLoading={movieQuery.isLoading || (isLoading && !movieData)}
-            detailPath="/employee/manager/schedules"
-          />
-        </ScrollableDashboardPanel>
-      </section>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <section className="space-y-3">
-          <DashboardSectionToolbar
-            title="Lọc riêng: Suất chiếu"
-            value={sectionFilters.schedules}
-            onChange={(next) => updateSectionFilters("schedules", next)}
-            onRefresh={() => refreshSection("schedules", scheduleQuery.refetch)}
-            onExport={() =>
-              scheduleData &&
-              exportSection("suất chiếu", "manager-dashboard-schedules", "schedules", [
-                { title: "Suất chiếu", rows: scheduleData.schedules },
-              ])
-            }
-            isExportDisabled={!scheduleData || scheduleQuery.isLoading}
-            isRefreshing={scheduleQuery.isFetching}
-            cinemaOptions={cinemaOptions}
-            hideCinemaFilter
-          />
-          <ScrollableDashboardPanel minWidth="560px">
-            <ShowScheduleOverview
-              schedules={scheduleData?.schedules ?? []}
-              isLoading={scheduleQuery.isLoading || (isLoading && !scheduleData)}
-              detailPath="/employee/manager/schedules"
+        <>
+          <section className="space-y-3">
+            <DashboardSectionToolbar
+              title="Lọc riêng: Phim"
+              value={sectionFilters.movies}
+              onChange={(next) => updateSectionFilters("movies", next)}
+              onRefresh={() => refreshSection("movies", movieQuery.refetch)}
+              onExport={() =>
+                movieData &&
+                exportSection("phim", "manager-dashboard-movies", "movies", [
+                  {
+                    title: "Top phim theo doanh thu",
+                    rows: movieData.movies.topRevenue,
+                  },
+                  {
+                    title: "Top phim theo vé bán",
+                    rows: movieData.movies.topTickets,
+                  },
+                ])
+              }
+              isExportDisabled={!movieData || movieQuery.isLoading}
+              isRefreshing={movieQuery.isFetching}
+              cinemaOptions={cinemaOptions}
+              hideCinemaFilter
             />
-          </ScrollableDashboardPanel>
-        </section>
-      </div>
-      </>
+            <ScrollableDashboardPanel>
+              <MoviePerformance
+                data={movieData?.movies}
+                isLoading={movieQuery.isLoading || (isLoading && !movieData)}
+                detailPath="/employee/manager/schedules"
+              />
+            </ScrollableDashboardPanel>
+          </section>
+
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <section className="space-y-3">
+              <DashboardSectionToolbar
+                title="Lọc riêng: Suất chiếu"
+                value={sectionFilters.schedules}
+                onChange={(next) => updateSectionFilters("schedules", next)}
+                onRefresh={() =>
+                  refreshSection("schedules", scheduleQuery.refetch)
+                }
+                onExport={() =>
+                  scheduleData &&
+                  exportSection(
+                    "suất chiếu",
+                    "manager-dashboard-schedules",
+                    "schedules",
+                    [{ title: "Suất chiếu", rows: scheduleData.schedules }],
+                  )
+                }
+                isExportDisabled={!scheduleData || scheduleQuery.isLoading}
+                isRefreshing={scheduleQuery.isFetching}
+                cinemaOptions={cinemaOptions}
+                hideCinemaFilter
+              />
+              <ScrollableDashboardPanel minWidth="560px">
+                <ShowScheduleOverview
+                  schedules={scheduleData?.schedules ?? []}
+                  isLoading={
+                    scheduleQuery.isLoading || (isLoading && !scheduleData)
+                  }
+                  detailPath="/employee/manager/schedules"
+                />
+              </ScrollableDashboardPanel>
+            </section>
+          </div>
+        </>
       )}
 
       {activeTab === "products" && (
@@ -499,10 +643,21 @@ export default function ManagerDashboard() {
             onRefresh={() => refreshSection("products", productQuery.refetch)}
             onExport={() =>
               productData &&
-              exportSection("sản phẩm", "manager-dashboard-products", "products", [
-                { title: "Top sản phẩm", rows: productData.products.topProducts },
-                { title: "Sản phẩm sắp hết hàng", rows: productData.products.lowStockProducts },
-              ])
+              exportSection(
+                "sản phẩm",
+                "manager-dashboard-products",
+                "products",
+                [
+                  {
+                    title: "Top sản phẩm",
+                    rows: productData.products.topProducts,
+                  },
+                  {
+                    title: "Sản phẩm sắp hết hàng",
+                    rows: productData.products.lowStockProducts,
+                  },
+                ],
+              )
             }
             isExportDisabled={!productData || productQuery.isLoading}
             isRefreshing={productQuery.isFetching}
@@ -519,39 +674,50 @@ export default function ManagerDashboard() {
       )}
 
       {activeTab === "employees" && (
-      <section className="space-y-3">
-        <DashboardSectionToolbar
-          title="Lọc riêng: Nhân viên"
-          value={sectionFilters.employees}
-          onChange={(next) => updateSectionFilters("employees", next)}
-          onRefresh={() => refreshSection("employees", employeeQuery.refetch)}
-          onExport={() =>
-            employeeData &&
-            exportSection("nhân viên", "manager-dashboard-employees", "employees", [
-              {
-                title: "Nhân viên theo vai trò",
-                rows: employeeData.employees.roles.filter((role) => role.role !== "ADMIN"),
-              },
-              {
-                title: "Top nhân viên",
-                rows: employeeData.employees.topEmployees.filter((employee) => employee.role !== "ADMIN"),
-              },
-            ])
-          }
-          isExportDisabled={!employeeData || employeeQuery.isLoading}
-          isRefreshing={employeeQuery.isFetching}
-          cinemaOptions={cinemaOptions}
-          hideCinemaFilter
-        />
-        <ScrollableDashboardPanel>
-          <EmployeeStats
-            data={employeeData?.employees}
-            isLoading={employeeQuery.isLoading || (isLoading && !employeeData)}
-            detailPath="/employee/manager/staff"
-            hiddenRoles={["ADMIN"]}
+        <section className="space-y-3">
+          <DashboardSectionToolbar
+            title="Lọc riêng: Nhân viên"
+            value={sectionFilters.employees}
+            onChange={(next) => updateSectionFilters("employees", next)}
+            onRefresh={() => refreshSection("employees", employeeQuery.refetch)}
+            onExport={() =>
+              employeeData &&
+              exportSection(
+                "nhân viên",
+                "manager-dashboard-employees",
+                "employees",
+                [
+                  {
+                    title: "Nhân viên theo vai trò",
+                    rows: employeeData.employees.roles.filter(
+                      (role) => role.role !== "ADMIN",
+                    ),
+                  },
+                  {
+                    title: "Top nhân viên",
+                    rows: employeeData.employees.topEmployees.filter(
+                      (employee) => employee.role !== "ADMIN",
+                    ),
+                  },
+                ],
+              )
+            }
+            isExportDisabled={!employeeData || employeeQuery.isLoading}
+            isRefreshing={employeeQuery.isFetching}
+            cinemaOptions={cinemaOptions}
+            hideCinemaFilter
           />
-        </ScrollableDashboardPanel>
-      </section>
+          <ScrollableDashboardPanel>
+            <EmployeeStats
+              data={employeeData?.employees}
+              isLoading={
+                employeeQuery.isLoading || (isLoading && !employeeData)
+              }
+              detailPath="/employee/manager/staff"
+              hiddenRoles={["ADMIN"]}
+            />
+          </ScrollableDashboardPanel>
+        </section>
       )}
     </div>
   );

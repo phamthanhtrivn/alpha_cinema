@@ -7,7 +7,11 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const ButtonGoogle = () => {
+type ButtonGoogleProps = {
+  redirectTo?: string;
+};
+
+const ButtonGoogle = ({ redirectTo = "/" }: ButtonGoogleProps) => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -29,7 +33,7 @@ const ButtonGoogle = () => {
               cinemaId: data.data.user.cinemaId ?? "",
             }),
           );
-          navigate("/");
+          navigate(redirectTo, { replace: true });
         }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error: any) {
