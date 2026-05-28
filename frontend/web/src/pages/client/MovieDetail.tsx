@@ -13,15 +13,24 @@ import {
 import TrailerModal from '@/components/client/TrailerModel';
 import MovieShowtimes from '@/components/client/MovieShowtimes';
 import MovieReviews from '@/components/client/MovieReviews';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { showScheduleService } from '@/services/show-schedule.service';
 import { formatDDMMYYYY } from '@/utils/formatTime';
 import NowShowingMovies from '@/components/client/NowShowingMovies';
+
+const getYouTubeVideoId = (url?: string | null) => {
+    if (!url) return null;
+
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+};
 
 const MovieDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [isTrailerOpen, setIsTrailerOpen] = useState<boolean>(false);
+    const [heroImageIndex, setHeroImageIndex] = useState(0);
     const reviewsRef = useRef<HTMLDivElement>(null);
 
     const scrollToReviews = () => {
@@ -43,6 +52,24 @@ const MovieDetail = () => {
         queryFn: () => showScheduleService.getAvailableDateOnMovie(id!).then((res: any) => res.data),
         enabled: !!id,
     });
+
+    const trailerVideoId = useMemo(() => getYouTubeVideoId(movie?.trailerUrl), [movie?.trailerUrl]);
+
+    const heroImageSources = useMemo(() => {
+        const sources = [
+            trailerVideoId ? `https://img.youtube.com/vi/${trailerVideoId}/maxresdefault.jpg` : null,
+            movie?.bannerUrl,
+            movie?.thumbnailUrl,
+        ];
+
+        return Array.from(new Set(sources.filter((source): source is string => Boolean(source))));
+    }, [trailerVideoId, movie?.bannerUrl, movie?.thumbnailUrl]);
+
+    useEffect(() => {
+        setHeroImageIndex(0);
+    }, [id, trailerVideoId, movie?.bannerUrl, movie?.thumbnailUrl]);
+
+    const heroImageSrc = heroImageSources[heroImageIndex] ?? movie?.thumbnailUrl ?? '';
 
     if (isLoading) {
         return (
@@ -111,7 +138,17 @@ const MovieDetail = () => {
             {/* SECTION 1: HERO BANNER */}
             <div className="w-full bg-black">
                 <div className="max-w-6xl mx-auto relative h-[400px] md:h-[500px]">
-                    <img src={movie.bannerUrl} className="w-full h-full object-contain" alt="banner" />
+                    {heroImageSrc && (
+                        <img
+                            key={heroImageSrc}
+                            src={heroImageSrc}
+                            className="w-full h-full object-cover"
+                            alt={`${movie.title} trailer preview`}
+                            onError={() => {
+                                setHeroImageIndex((currentIndex) => Math.min(currentIndex + 1, heroImageSources.length - 1));
+                            }}
+                        />
+                    )}
                     <div className="absolute inset-0 z-10">
                         <div className="absolute inset-y-0 left-0 w-1/4 bg-linear-to-r from-black via-black/60 to-transparent" />
                         <div className="absolute inset-y-0 right-0 w-1/4 bg-linear-to-l from-black via-black/60 to-transparent" />
