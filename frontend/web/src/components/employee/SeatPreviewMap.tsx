@@ -1,6 +1,34 @@
 import React from "react";
 
 const ROW_ORDER = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+const normalizeSeatTypeName = (typeName = "") =>
+  typeName
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const isCoupleSeatType = (typeName = "") => {
+  const normalizedName = normalizeSeatTypeName(typeName);
+  return (
+    normalizedName.includes("couple") ||
+    normalizedName.includes("doi") ||
+    normalizedName.includes("double")
+  );
+};
+
+const isVipSeatType = (typeName = "") =>
+  normalizeSeatTypeName(typeName).includes("vip");
+
+const isCoupleSeat = (seat: SeatItem) =>
+  isCoupleSeatType(seat.seatTypeName) ||
+  normalizeSeatTypeName(seat.seatTypeId).includes("st02") ||
+  normalizeSeatTypeName(seat.seatTypeId).includes("double");
+
+const isVipSeat = (seat: SeatItem) =>
+  isVipSeatType(seat.seatTypeName) ||
+  normalizeSeatTypeName(seat.seatTypeId).includes("st03") ||
+  normalizeSeatTypeName(seat.seatTypeId).includes("vip");
 
 type SeatItem = {
   id: string;
@@ -42,10 +70,9 @@ const SeatPreviewMap: React.FC<SeatPreviewMapProps> = ({
     } else if (seat.status !== "AVAILABLE") {
       colorClass = "bg-slate-200 text-slate-500 border-slate-300 opacity-70 cursor-not-allowed";
     } else {
-      const typeName = seat.seatTypeName.toLowerCase();
-      if (typeName.includes("vip")) {
+      if (isVipSeat(seat)) {
         colorClass = "bg-amber-400 text-amber-950 border-amber-500";
-      } else if (typeName.includes("couple")) {
+      } else if (isCoupleSeat(seat)) {
         colorClass = "bg-pink-400 text-pink-950 border-pink-500";
       } else {
         colorClass = "bg-sky-200 text-sky-800 border-sky-300";
@@ -109,10 +136,9 @@ const SeatPreviewMap: React.FC<SeatPreviewMapProps> = ({
           <span className="h-4 w-4 rounded bg-slate-200 border-b-4 border-slate-300 opacity-70" /> Ghế đã bị đặt
         </span>
         {uniqueSeatTypes.map((typeName) => {
-          const typeNameLower = typeName.toLowerCase();
-          const legendClass = typeNameLower.includes("vip")
+          const legendClass = isVipSeatType(typeName)
             ? "bg-amber-400 border-amber-500"
-            : typeNameLower.includes("couple")
+            : isCoupleSeatType(typeName)
             ? "bg-pink-400 border-pink-500"
             : "bg-sky-200 border-sky-300";
 
