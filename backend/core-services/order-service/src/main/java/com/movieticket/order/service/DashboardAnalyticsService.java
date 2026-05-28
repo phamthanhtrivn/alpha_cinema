@@ -315,7 +315,7 @@ public class DashboardAnalyticsService {
                     PaymentSnapshot payment = paymentMap.get(order.getId());
                     return row(
                             "id", order.getId(),
-                            "customerName", customerNameMap.getOrDefault(order.getCustomerId(), order.getCustomerId()),
+                            "customerName", customerNameForOrder(order, customerNameMap),
                             "movieTitle", firstOrderItemLabel(order, scheduleMap, movieLookup, productMap),
                             "paymentMethod", payment == null ? "-" : payment.getMethod(),
                             "paymentStatus", payment == null ? null : payment.getStatus(),
@@ -340,6 +340,19 @@ public class DashboardAnalyticsService {
                 "paymentMethods", paymentMethods,
                 "recentOrders", recentOrders
         );
+    }
+
+    private String customerNameForOrder(Order order, Map<String, String> customerNameMap) {
+        String customerId = order.getCustomerId();
+        if (customerId == null || customerId.isBlank()) {
+            return "Khách tại quầy";
+        }
+
+        if (customerNameMap == null || customerNameMap.isEmpty()) {
+            return customerId;
+        }
+
+        return customerNameMap.getOrDefault(customerId, customerId);
     }
 
     private double scopedPaymentSuccessRate(Map<String, PaymentSnapshot> paymentMap) {
