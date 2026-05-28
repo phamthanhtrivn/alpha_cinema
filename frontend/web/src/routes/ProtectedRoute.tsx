@@ -11,7 +11,26 @@ interface Props {
   allowedRoles?: UserRole[];
 }
 
+type RedirectLocationState = {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+};
+
 const EMPLOYEE_ROLES: UserRole[] = ["ADMIN", "MANAGER", "STAFF"];
+
+const getRedirectPath = (state: unknown) => {
+  const from = (state as RedirectLocationState | null)?.from;
+  const pathname = from?.pathname;
+
+  if (!pathname || pathname === "/login" || pathname === "/employee/login") {
+    return "/";
+  }
+
+  return `${pathname}${from?.search || ""}${from?.hash || ""}`;
+};
 
 const ProtectedRoute = ({ type, allowedRoles }: Props) => {
   const isAuth = useSelector(selectIsAuthenticated);
@@ -37,7 +56,7 @@ const ProtectedRoute = ({ type, allowedRoles }: Props) => {
         return <Navigate to="/employee/redirect" replace />;
       }
 
-      return <Navigate to="/" replace />;
+      return <Navigate to={getRedirectPath(location.state)} replace />;
     }
 
     return <Outlet />;

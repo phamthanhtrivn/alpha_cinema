@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { userService } from "../../services/user.service";
 import type LoginRequest from "@/types/loginRequest";
 import { toast } from "react-toastify";
@@ -7,6 +7,14 @@ import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/slices/authSlice";
 import { Loader2 } from "lucide-react";
 import ButtonGoogle from "@/components/client/ButtonGoogle";
+
+type LoginLocationState = {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+};
 
 const ClientLogin: React.FC = () => {
   const [loginData, setLoginData] = useState<LoginRequest>({
@@ -18,7 +26,12 @@ const ClientLogin: React.FC = () => {
 
 
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
+  const from = (location.state as LoginLocationState | null)?.from;
+  const redirectTo = from
+    ? `${from.pathname || "/"}${from.search || ""}${from.hash || ""}`
+    : "/";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -43,7 +56,7 @@ const ClientLogin: React.FC = () => {
             cinemaId: data.data.user.cinemaId,
           })
         );
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Đăng nhập thất bại");
@@ -128,7 +141,7 @@ const ClientLogin: React.FC = () => {
         </div>
 
         {/* Google Login Button */}
-        <ButtonGoogle />
+        <ButtonGoogle redirectTo={redirectTo} />
 
         {/* Footer Section */}
         <div className="mt-12 text-center text-sm font-bold text-slate-400">
