@@ -112,15 +112,6 @@ function App() {
         <Route element={<MainLayout />}>
           {/* PUBLIC */}
           <Route element={<ProtectedRoute type="public" />}>
-            <Route path="/booking/:id" element={<Booking />} />
-            <Route
-              path="/booking/:id/checkout/:sessionId"
-              element={<Checkout />}
-            />
-            <Route
-              path="/booking/:id/checkout/:sessionId/confirm"
-              element={<CheckoutConfirm />}
-            />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/failed" element={<PaymentFailed />} />
             <Route path="/" element={<Home />} />

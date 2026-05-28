@@ -1,12 +1,14 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { showScheduleService } from '@/services/show-schedule.service';
 import { cinemaService } from '@/services/cinema.service';
 import { formatHHmm } from '@/utils/formatTime';
 import { ALL_TRANSLATION } from '@/types/movie';
 import type { CinemaShowtime } from '@/types/show-schedule';
+import { selectAuth } from '@/store/slices/authSlice';
 
 interface MovieShowtimesProps {
     movieId: string;
@@ -15,6 +17,7 @@ interface MovieShowtimesProps {
 
 const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
     const navigate = useNavigate();
+    const { isAuthenticated } = useSelector(selectAuth);
 
     const dateTabs = useMemo(() => {
         const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
@@ -72,6 +75,25 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
         if (selectedCinema === 'Tất cả rạp') return showtimes;
         return showtimes.filter(s => s.cinemaName === selectedCinema);
     }, [showtimes, selectedCinema]);
+
+    const handleShowtimeClick = (showtimeId: string) => {
+        const bookingPath = `/booking/${showtimeId}`;
+        const bookingSearch = `?movieId=${movieId}`;
+
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: {
+                    from: {
+                        pathname: bookingPath,
+                        search: bookingSearch,
+                    },
+                },
+            });
+            return;
+        }
+
+        navigate(`${bookingPath}${bookingSearch}`);
+    };
 
     return (
         <div className="mt-12">
@@ -173,7 +195,7 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
                                                 <button
                                                     key={st.id}
                                                     className="border hover:cursor-pointer border-slate-200 rounded-md px-5 py-2.5 text-sm text-slate-700 hover:bg-alpha-blue hover:text-white transition-all bg-white active:scale-95"
-                                                    onClick={() => navigate(`/booking/${st.id}?movieId=${movieId}`)}
+                                                    onClick={() => handleShowtimeClick(st.id)}
                                                 >
                                                     {formatHHmm(st.time)}
                                                 </button>

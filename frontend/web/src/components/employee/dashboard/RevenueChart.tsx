@@ -32,8 +32,17 @@ export function RevenueChart({ data, isLoading, detailPath }: RevenueChartProps)
     );
   }
 
-  const chartSeries = data.series.length
-    ? data.series
+  const sortedSeries = data.series ? [...data.series].sort((a, b) => {
+    const numA = parseInt(a.label.replace(/\\D/g, ''));
+    const numB = parseInt(b.label.replace(/\\D/g, ''));
+    if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+    }
+    return a.label.localeCompare(b.label);
+  }) : [];
+
+  const chartSeries = sortedSeries.length
+    ? sortedSeries
     : data.totalRevenue > 0
       ? [
           {

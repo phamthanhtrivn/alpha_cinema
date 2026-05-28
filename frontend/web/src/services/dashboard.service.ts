@@ -773,6 +773,5 @@ export const dashboardService = {
           employeeId,
         },
       })
-      .then((response) => restoreOverviewStats(unwrapDashboardResponse(response.data) as AdminDashboardData))
-      .catch(() => withMockFallback(filters)),
+      .then((response) => restoreOverviewStats(unwrapDashboardResponse(response.data) as AdminDashboardData)),
 };
