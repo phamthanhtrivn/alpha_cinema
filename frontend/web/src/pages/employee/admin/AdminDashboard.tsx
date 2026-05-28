@@ -389,6 +389,35 @@ const AdminDashboard = () => {
     year: "numeric",
   }).format(now);
 
+  if (isError && !dashboardData) {
+        return (
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-bold uppercase text-sky-600">
+                <LayoutDashboard size={16} />
+                Dashboard Admin
+              </div>
+              <h1 className="text-2xl font-black text-slate-900">Tổng quan vận hành</h1>
+            </div>
+    
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
+              <h2 className="text-base font-black">Không thể tải dữ liệu dashboard</h2>
+              <p className="mt-2 text-sm font-medium">
+                Hệ thống không thể tải dữ liệu cho dashboard admin. Vui lòng kiểm tra server hoặc thử tải lại.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 border-red-300 bg-white text-red-900 hover:bg-red-100"
+                onClick={() => void refetch()}
+              >
+                Tải lại dashboard
+              </Button>
+            </div>
+          </div>
+        );
+      }
+
   return (
     <div className="space-y-6 scroll-auto">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">

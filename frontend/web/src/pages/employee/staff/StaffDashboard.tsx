@@ -239,7 +239,7 @@ export default function StaffDashboard() {
   const shouldFetchSection = (sectionKey: StaffSectionKey) =>
     activeSections.includes(sectionKey) && !sameFilters(sectionFilters[sectionKey], scopedFilters);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["staff-dashboard", scopedFilters, employeeId],
     queryFn: () => dashboardService.getStaffDashboard(scopedFilters, employeeId),
     enabled: Boolean(cinemaId && employeeId),
@@ -283,6 +283,7 @@ export default function StaffDashboard() {
   const sectionKeys: StaffSectionKey[] = ["revenue", "orders", "products", "movies", "schedules"];
   const sectionQueries = [revenueQuery, orderQuery, productQuery, movieQuery, scheduleQuery];
   const activeSectionQueries = sectionQueries.filter((_, index) => shouldFetchSection(sectionKeys[index]));
+  const hasActiveSectionError = activeSectionQueries.some((query) => query.isError);
 
   const revenueData = revenueQuery.data ?? data;
   const orderData = orderQuery.data ?? data;
@@ -338,6 +339,64 @@ export default function StaffDashboard() {
     ]);
   };
 
+  if (!cinemaId || !employeeId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold uppercase text-sky-600">
+            <LayoutDashboard size={16} />
+            Dashboard nhân viên
+          </div>
+          <h1 className="text-2xl font-black text-slate-900">Hiệu suất ca làm việc</h1>
+        </div>
+
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+          <h2 className="text-base font-black">Thiếu thông tin nhân viên</h2>
+          <p className="mt-2 text-sm font-medium">
+            Không tìm thấy mã rạp hoặc mã nhân viên trong phiên đăng nhập. Vui lòng đăng nhập lại để tải dashboard đúng dữ liệu.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+            onClick={() => window.location.reload()}
+          >
+            Tải lại phiên
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError && !data) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-bold uppercase text-sky-600">
+            <LayoutDashboard size={16} />
+            Dashboard nhân viên
+          </div>
+          <h1 className="text-2xl font-black text-slate-900">Hiệu suất ca làm việc</h1>
+        </div>
+
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
+          <h2 className="text-base font-black">Không thể tải dữ liệu dashboard</h2>
+          <p className="mt-2 text-sm font-medium">
+            Hệ thống không thể tải dữ liệu cho dashboard nhân viên. Vui lòng kiểm tra server hoặc thử tải lại.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 border-red-300 bg-white text-red-900 hover:bg-red-100"
+            onClick={() => void refetch()}
+          >
+            Tải lại dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
@@ -369,6 +428,12 @@ export default function StaffDashboard() {
         isCinemaLoading={false}
         hideCinemaFilter
       />
+
+      {hasActiveSectionError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+          Không thể tải dữ liệu theo bộ lọc riêng. Dashboard đang giữ dữ liệu thật gần nhất, không dùng dữ liệu giả.
+        </div>
+      )}
 
       <OverviewStats metrics={overview} isLoading={isLoading} getDetailPath={staffMetricPath} />
 
