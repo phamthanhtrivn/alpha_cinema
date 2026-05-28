@@ -19,6 +19,7 @@ import StatusBadge from "@/components/employee/StatusBadge";
 import TableActions from "@/components/employee/TableActions";
 import { FilterSelect } from "@/components/employee/FilterSelect";
 import { Button } from "@/components/ui/button";
+import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -534,7 +535,7 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
                   {order.customerEmail || "-"}
                 </div>
                 <div className="text-[11px] text-slate-400 uppercase tracking-widest truncate">
-                  NV: {order.employeeId || "-"}
+                  NV: {order.employeeName || order.employeeId || "-"}
                 </div>
               </div>
             </TableCell>
@@ -751,9 +752,9 @@ const OrderManagementPage: React.FC<OrderManagementPageProps> = ({
                           label="QR thanh toán"
                           value={
                             selectedOrder.qrCode ? (
-                              <span className="font-mono text-[11px] break-all">
-                                {selectedOrder.qrCode}
-                              </span>
+                              <div className="mt-2 bg-white p-2 rounded-xl border-2 border-slate-50 shadow-inner inline-flex items-center justify-center w-32 h-32">
+                                <QRCodeSVG value={selectedOrder.qrCode} size={112} />
+                              </div>
                             ) : (
                               "-"
                             )
