@@ -1,10 +1,25 @@
 import { useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
+// Palette màu gán theo thứ tự index của loại ghế (không phụ thuộc tên)
+const SEAT_TYPE_PALETTES = [
+  { bg: "bg-sky-200",   text: "text-sky-800",   border: "border-sky-300",   legend: "bg-sky-200" },
+  { bg: "bg-amber-400", text: "text-amber-950", border: "border-amber-500", legend: "bg-amber-400" },
+  { bg: "bg-pink-400",  text: "text-pink-950",  border: "border-pink-500",  legend: "bg-pink-400" },
+  { bg: "bg-green-300", text: "text-green-900", border: "border-green-400", legend: "bg-green-300" },
+  { bg: "bg-purple-300",text: "text-purple-900",border: "border-purple-400",legend: "bg-purple-300" },
+];
+
+// Nhận diện ghế đôi (couple) bằng nhiều từ khóa, không phụ thuộc ngôn ngữ
+const isCoupleType = (name: string) => {
+  const n = name.toLowerCase();
+  return n.includes("couple") || n.includes("đôi") || n.includes("doi") || n.includes("double");
+};
+
 const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose }: any) => {
-  const { rowsObj, uniqueSeatTypes } = useMemo(() => {
+  const { rowsObj, uniqueSeatTypes, typeColorMap } = useMemo(() => {
     if (!rawData || rawData.length === 0)
-      return { rowsObj: {}, uniqueSeatTypes: [] };
+      return { rowsObj: {}, uniqueSeatTypes: [], typeColorMap: new Map() };
 
     const grouped: any = {};
     const typesMap = new Map();
@@ -26,29 +41,28 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose }: any) => {
       );
     });
 
+    // Gán màu theo index thứ tự xuất hiện
+    const colorMap = new Map<string, typeof SEAT_TYPE_PALETTES[0]>();
+    Array.from(typesMap.values()).forEach((type, idx) => {
+      colorMap.set(type.id, SEAT_TYPE_PALETTES[idx % SEAT_TYPE_PALETTES.length]);
+    });
+
     return {
       rowsObj: grouped,
       uniqueSeatTypes: Array.from(typesMap.values()),
+      typeColorMap: colorMap,
     };
   }, [rawData]);
 
   // ==========================================
-  // 2. CẤP MÀU GHẾ
+  // 2. CẤP MÀU GHẾ (dynamic, không hardcode tên)
   // ==========================================
-  const getSeatStyle = (typeName: string, status: boolean = true) => {
-    if (status === false) {
+  const getSeatClasses = (seatTypeId: string, status: boolean = true) => {
+    if (!status) {
       return "bg-slate-200 text-slate-400 border-slate-300 opacity-70";
     }
-
-    const nameLower = typeName.toLowerCase();
-
-    if (nameLower.includes("vip")) {
-      return "bg-amber-400 text-amber-950 border-amber-500";
-    }
-    if (nameLower.includes("couple")) {
-      return "bg-pink-400 text-pink-950 border-pink-500";
-    }
-    return "bg-sky-200 text-sky-800 border-sky-300";
+    const palette = typeColorMap.get(seatTypeId) ?? SEAT_TYPE_PALETTES[0];
+    return `${palette.bg} ${palette.text} ${palette.border}`;
   };
 
   const sortedRowKeys = Object.keys(rowsObj).sort();
@@ -92,7 +106,7 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose }: any) => {
                 <div className="flex gap-2.5">
                   {rowsObj[rowName].map((seat: any) => {
                     const typeName = seat.seatType.name;
-                    const isCouple = typeName.toLowerCase().includes("couple");
+                    const isCouple = isCoupleType(typeName);
                     const widthClass = isCouple ? "w-[82px]" : "w-9";
 
                     return (
@@ -101,7 +115,7 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose }: any) => {
                         className={`
                           ${widthClass} h-9 rounded text-xs font-semibold 
                           border-b-[4px] flex items-center justify-center cursor-default shadow-sm
-                          ${getSeatStyle(typeName, seat.status)}
+                          ${getSeatClasses(seat.seatType.id, seat.status)}
                         `}
                         title={`Ghế: ${rowName}${seat.columnName} - Loại: ${typeName} - Trạng thái: ${seat.status ? "Hoạt động" : "Ngừng hoạt động"}`}
                       >
@@ -129,18 +143,19 @@ const CinemaRoomPreviewModal = ({ rawData, isOpen, onClose }: any) => {
                 </span>
               </div>
             </div>
-            {uniqueSeatTypes.map((type) => (
-              <div key={type.id} className="flex items-center gap-3">
-                <div
-                  className={`w-8 h-4 rounded-sm ${getSeatStyle(type.name, true).split(" ")[0]}`}
-                ></div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800">
-                    {type.name}
-                  </span>
+            {uniqueSeatTypes.map((type) => {
+              const palette = typeColorMap.get(type.id) ?? SEAT_TYPE_PALETTES[0];
+              return (
+                <div key={type.id} className="flex items-center gap-3">
+                  <div className={`w-8 h-4 rounded-sm border-b-[3px] ${palette.legend} ${palette.border}`}></div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-800">
+                      {type.name}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </DialogContent>
