@@ -17,7 +17,6 @@ public class ArtistCreateDTO {
     @NotBlank(message = "Tên nghệ sĩ không được để trống")
     private String fullName;
     private String bio;
-    private String description;
     private LocalDate dateOfBirth;
 
     @NotBlank(message = "Quốc gia không được để trống")

@@ -21,8 +21,6 @@ public class Artist {
 
   @Column(columnDefinition = "TEXT")
   private String bio;
-  @Column(columnDefinition = "TEXT")
-  private String description;
 
   private LocalDate dateOfBirth;
   private String nationality;
