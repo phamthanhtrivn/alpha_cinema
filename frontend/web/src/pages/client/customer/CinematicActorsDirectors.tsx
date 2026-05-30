@@ -9,14 +9,14 @@ import { Users, Loader2 } from "lucide-react";
 
 const CinematicActorsDirectors: React.FC = () => {
   const [nationality, setNationality] = useState<string>("");
-  const [type, setType] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [page, setPage] = useState<number>(0);
   const size = 10; // Hiển thị 5 nghệ sĩ mỗi trang giống ảnh mẫu
 
   // Cuộn lên đầu trang khi chuyển trang hoặc thay đổi bộ lọc
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page, nationality, type]);
+  }, [page, nationality, name]);
 
   // Reset page về 0 khi bộ lọc thay đổi
   const handleNationalityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -24,19 +24,19 @@ const CinematicActorsDirectors: React.FC = () => {
     setPage(0);
   };
 
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setType(e.target.value);
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
     setPage(0);
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["public-artists", page, nationality, type],
+    queryKey: ["public-artists", page, nationality, name],
     queryFn: () =>
       artistsService.getPublicArtists({
         page,
         size,
         nationality: nationality || undefined,
-        type: type || undefined,
+        name: name || undefined,
       }),
   });
 
@@ -58,12 +58,21 @@ const CinematicActorsDirectors: React.FC = () => {
 
               {/* Filters & Divider Row */}
               <div className="space-y-4 mb-6">
-                <div className="flex flex-row items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  {/* Input Search Name */}
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên nghệ sĩ..."
+                    value={name}
+                    onChange={handleNameChange}
+                    className="bg-white border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 focus:outline-none focus:border-alpha-orange shadow-xs placeholder-slate-400 w-full sm:w-64"
+                  />
+
                   {/* Filter Nationality */}
                   <select
                     value={nationality}
                     onChange={handleNationalityChange}
-                    className="hover:cursor-pointer min-w-36 bg-white border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 focus:outline-none focus:border-alpha-orange shadow-xs"
+                    className="hover:cursor-pointer min-w-36 bg-white border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 focus:outline-none focus:border-alpha-orange shadow-xs w-full sm:w-auto"
                   >
                     <option value="">Quốc Gia (Tất cả)</option>
                     <option value="Mỹ">Mỹ</option>
@@ -72,17 +81,6 @@ const CinematicActorsDirectors: React.FC = () => {
                     <option value="Trung Quốc">Trung Quốc</option>
                     <option value="Anh">Anh</option>
                     <option value="Pháp">Pháp</option>
-                  </select>
-
-                  {/* Filter Type */}
-                  <select
-                    value={type}
-                    onChange={handleTypeChange}
-                    className="hover:cursor-pointer min-w-36 bg-white border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 focus:outline-none focus:border-alpha-orange shadow-xs"
-                  >
-                    <option value="">Vai Trò (Tất cả)</option>
-                    <option value="ACTOR">Diễn Viên</option>
-                    <option value="DIRECTOR">Đạo Diễn</option>
                   </select>
                 </div>
 

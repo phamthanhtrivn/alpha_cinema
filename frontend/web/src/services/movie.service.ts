@@ -10,22 +10,28 @@ export const movieService = {
     const response = await apiClient.get(`/movies/admin/${id}`);
     return response.data;
   },
-  updateMovie: async (id: string, data: any, imageFile?: File) => {
+  updateMovie: async (id: string, data: any, imageFile?: File, bannerFile?: File) => {
     const formData = new FormData();
     formData.append("movie", new Blob([JSON.stringify(data)], { type: "application/json" }));
     if (imageFile) {
       formData.append("imageFile", imageFile);
+    }
+    if (bannerFile) {
+      formData.append("bannerFile", bannerFile);
     }
     const response = await apiClient.put(`/movies/admin/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" }
     });
     return response.data;
   },
-  createMovie: async (data: any, imageFile?: File) => {
+  createMovie: async (data: any, imageFile?: File, bannerFile?: File) => {
     const formData = new FormData();
     formData.append("movie", new Blob([JSON.stringify(data)], { type: "application/json" }));
     if (imageFile) {
       formData.append("imageFile", imageFile);
+    }
+    if (bannerFile) {
+      formData.append("bannerFile", bannerFile);
     }
     const response = await apiClient.post(`/movies/admin`, formData, {
       headers: { "Content-Type": "multipart/form-data" }

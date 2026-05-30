@@ -49,6 +49,7 @@ const MovieManagement: React.FC = () => {
     supportedProjection: [] as string[],
     supportedTranslation: [] as string[],
     imageFile: null as any,
+    bannerFile: null as any,
   });
 
   const [updateForm, setUpdateForm] = useState({
@@ -68,6 +69,7 @@ const MovieManagement: React.FC = () => {
     supportedProjection: [] as string[],
     supportedTranslation: [] as string[],
     imageFile: null as any,
+    bannerFile: null as any,
   });
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -275,6 +277,7 @@ const MovieManagement: React.FC = () => {
         supportedProjection: fullMovie.supportedProjection || [],
         supportedTranslation: fullMovie.supportedTranslation || [],
         imageFile: fullMovie.thumbnailUrl || null,
+        bannerFile: fullMovie.bannerUrl || null,
       });
       setIsUpdateOpen(true);
     } catch (e) {
@@ -304,13 +307,15 @@ const MovieManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const { imageFile, ...payload } = updateForm;
+      const { imageFile, bannerFile, ...payload } = updateForm;
       const fileToUpload = imageFile instanceof File ? imageFile : undefined;
+      const bannerToUpload = bannerFile instanceof File ? bannerFile : undefined;
 
       const res = await movieService.updateMovie(
         selectedMovie.id,
         payload,
-        fileToUpload
+        fileToUpload,
+        bannerToUpload
       );
 
       if (res.success || res.id) { // Usually standard backend responds with the object or a success flag
@@ -353,8 +358,12 @@ const MovieManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const { imageFile, ...movieData } = form;
-      const res = await movieService.createMovie(movieData, imageFile instanceof File ? imageFile : undefined);
+      const { imageFile, bannerFile, ...movieData } = form;
+      const res = await movieService.createMovie(
+        movieData,
+        imageFile instanceof File ? imageFile : undefined,
+        bannerFile instanceof File ? bannerFile : undefined
+      );
 
       if (res.success || res.id) {
         toast.success(res.message || "Thêm phim thành công");
@@ -378,6 +387,7 @@ const MovieManagement: React.FC = () => {
           supportedProjection: [],
           supportedTranslation: [],
           imageFile: null,
+          bannerFile: null,
         });
       } else {
         toast.error(res.message || "Thêm phim thất bại");
@@ -428,7 +438,8 @@ const MovieManagement: React.FC = () => {
     { name: "genre", label: "Thể loại", type: "multi-select", options: ALL_GENRES, placeholder: "Thêm thể loại..." },
     { name: "supportedProjection", label: "Loại hình chiếu", type: "multi-select", options: ALL_PROJECTION, placeholder: "Thêm loại hình chiếu..." },
     { name: "supportedTranslation", label: "Loại dịch thuật", type: "multi-select", options: ALL_TRANSLATION, placeholder: "Thêm loại dịch thuật..." },
-    { name: "imageFile", label: "Hình ảnh (Thumbnail)", type: "file", preview: true },
+    { name: "imageFile", label: "Hình ảnh (Thumbnail dọc)", type: "file", preview: true },
+    { name: "bannerFile", label: "Hình ảnh (Banner ngang)", type: "file", preview: true },
   ];
 
   return (
