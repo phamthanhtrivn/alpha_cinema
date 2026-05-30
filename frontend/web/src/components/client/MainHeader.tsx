@@ -58,10 +58,13 @@ const MainHeader: React.FC = () => {
             <Link to="/movies" className="hover:text-alpha-blue transition-colors">
               Phim
             </Link>
+            <Link to="/star-shop" className="hover:text-alpha-blue transition-colors">
+              Alpha Shop
+            </Link>
             <div className="relative group py-2 flex items-center space-x-1 cursor-pointer hover:text-alpha-blue transition-colors">
               <span>Góc điện ảnh</span>
               <ChevronDown size={14} className="text-slate-400 group-hover:text-alpha-blue transition-colors duration-300" />
-              
+
               {/* DROPDOWN MENU */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded shadow-2xl border border-slate-100 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-100 normal-case font-bold text-slate-700 text-xs tracking-normal overflow-hidden">
                 <Link

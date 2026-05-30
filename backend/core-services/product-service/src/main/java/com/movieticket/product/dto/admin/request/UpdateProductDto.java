@@ -29,4 +29,6 @@ public class UpdateProductDto {
     private ProductType type;
     
     private boolean status;
+
+    private Integer stockQty;
 }

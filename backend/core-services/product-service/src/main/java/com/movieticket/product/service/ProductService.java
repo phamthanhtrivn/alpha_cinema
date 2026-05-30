@@ -3,7 +3,9 @@ package com.movieticket.product.service;
 import com.movieticket.product.dto.CreateProductDto;
 import com.movieticket.product.dto.admin.request.SearchProductDto;
 import com.movieticket.product.dto.admin.request.UpdateProductDto;
+import com.movieticket.product.dto.response.ProductListDTO;
 import com.movieticket.product.entity.Product;
+import com.movieticket.product.enums.ProductType;
 import com.movieticket.product.exception.BusinessException;
 import com.movieticket.product.repository.ProductRepository;
 import com.movieticket.product.util.CloudinaryUtil;
@@ -29,6 +31,18 @@ public class ProductService {
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    public List<ProductListDTO> getSouvenirProducts() {
+        return productRepository.findByTypeAndStatus(ProductType.SOUVENIR, true).stream()
+                .map(product -> ProductListDTO.builder()
+                        .id(product.getId())
+                        .name(product.getName())
+                        .unitPrice(product.getUnitPrice())
+                        .pictureUrl(product.getPictureUrl())
+                        .stockQty(product.getStockQty())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public Page<Product> searchProducts(Pageable pageable, SearchProductDto searchProductDto) {
@@ -88,6 +102,7 @@ public class ProductService {
         product.setUnitPrice(createProductDto.getUnitPrice());
         product.setDescription(createProductDto.getDescription());
         product.setType(createProductDto.getType());
+        product.setStockQty(createProductDto.getStockQty());
         product.setPictureUrl(pictureUrl);
         product.setStatus(true);
 
@@ -117,6 +132,7 @@ public class ProductService {
         product.setUnitPrice(updateProductDto.getUnitPrice());
         product.setDescription(updateProductDto.getDescription());
         product.setType(updateProductDto.getType() );
+        product.setStockQty(updateProductDto.getStockQty());
         product.setStatus(updateProductDto.isStatus());
 
         return productRepository.save(product);

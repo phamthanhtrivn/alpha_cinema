@@ -4,6 +4,7 @@ import com.movieticket.product.common.ApiResponse;
 import com.movieticket.product.dto.CreateProductDto;
 import com.movieticket.product.dto.admin.request.SearchProductDto;
 import com.movieticket.product.dto.admin.request.UpdateProductDto;
+import com.movieticket.product.dto.response.ProductListDTO;
 import com.movieticket.product.entity.Product;
 import com.movieticket.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -38,6 +39,13 @@ public class ProductController {
     public ResponseEntity<ApiResponse<List<Product>>> getAllProductsWithoutPagination() {
         List<Product> products = productService.getAllProducts();
         ApiResponse<List<Product>> response = ApiResponse.success(products, "Products retrieved successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/souvenirs")
+    public ResponseEntity<ApiResponse<List<ProductListDTO>>> getSouvenirProducts() {
+        List<ProductListDTO> products = productService.getSouvenirProducts();
+        ApiResponse<List<ProductListDTO>> response = ApiResponse.success(products, "Souvenir products retrieved successfully");
         return ResponseEntity.ok(response);
     }
 

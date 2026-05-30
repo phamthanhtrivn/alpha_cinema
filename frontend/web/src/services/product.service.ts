@@ -1,10 +1,17 @@
-
 import { apiClient } from "./api";
 import type { ProductFilterParams } from "@/types/product";
 
 export const productService = {
-  getAllProductsWithoutPagination : async () => {
+  getAllProductsWithoutPagination: async () => {
     const response = await apiClient.get(`/products/all`);
+    return response.data;
+  },
+  getSouvenirProducts: async () => {
+    const response = await apiClient.get(`/products/souvenirs`);
+    return response.data;
+  },
+  getProductById: async (id: string) => {
+    const response = await apiClient.get(`/products/admin/${id}`);
     return response.data;
   },
   getAllProduct: async (params: ProductFilterParams) => {

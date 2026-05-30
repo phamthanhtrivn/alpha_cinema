@@ -27,6 +27,7 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductType type;
 
+    private Integer stockQty;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private boolean status;
