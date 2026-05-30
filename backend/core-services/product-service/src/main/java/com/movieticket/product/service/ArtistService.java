@@ -39,8 +39,7 @@ public class ArtistService {
 
     public Page<ArtistResDTO> searchArtists(ArtistSearchDTO dto, int page, int size) {
         Specification<Artist> spec = Specification.where(ArtistSpecification.hasName(dto.getName())
-                        .and(ArtistSpecification.hasCountry(dto.getNationality())))
-                .and(ArtistSpecification.hasType(dto.getType()));
+                        .and(ArtistSpecification.hasCountry(dto.getNationality())));
 
         Pageable pageable = PageRequest.of(page, size);
 
