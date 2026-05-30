@@ -425,14 +425,22 @@ const MovieManagement: React.FC = () => {
       placeholder: "Chọn độ tuổi..."
     },
     {
-      name: "actorIds", label: "Diễn viên", type: "multi-select",
-      options: allArtists?.map((a: any) => ({ label: a.name || a.fullName || a.id, value: a.id })) || [],
-      placeholder: "Thêm diễn viên..."
+      name: "actorIds", label: "Diễn viên", type: "autocomplete-multi",
+      fetchOptions: async (query: string) => {
+        const res = await artistsService.getArtists({ name: query });
+        return (res.data?.content || []).map((a: any) => ({ label: a.fullName, value: a.id }));
+      },
+      initialLabels: selectedMovie?.actors?.map((a: any) => ({ label: a.fullName, value: a.id })) || [],
+      placeholder: "Tìm kiếm và thêm diễn viên..."
     },
     {
-      name: "directorIds", label: "Đạo diễn", type: "multi-select",
-      options: allArtists?.map((a: any) => ({ label: a.name || a.fullName || a.id, value: a.id })) || [],
-      placeholder: "Thêm đạo diễn..."
+      name: "directorIds", label: "Đạo diễn", type: "autocomplete-multi",
+      fetchOptions: async (query: string) => {
+        const res = await artistsService.getArtists({ name: query });
+        return (res.data?.content || []).map((a: any) => ({ label: a.fullName, value: a.id }));
+      },
+      initialLabels: selectedMovie?.directors?.map((a: any) => ({ label: a.fullName, value: a.id })) || [],
+      placeholder: "Tìm kiếm và thêm đạo diễn..."
     },
     {
       name: "releaseStatus", label: "Trạng thái", type: "select", options: ALL_STATUS, placeholder: "Chọn trạng thái..."

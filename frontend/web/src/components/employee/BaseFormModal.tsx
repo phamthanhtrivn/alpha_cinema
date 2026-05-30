@@ -144,12 +144,114 @@ const AutocompleteField = ({ value, onChange, placeholder, fetchOptions, initial
   );
 };
 
+const MultiAutocompleteField = ({ values, onChange, placeholder, fetchOptions, initialLabels }: any) => {
+  const [query, setQuery] = React.useState("");
+  const [options, setOptions] = React.useState<any[]>([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedItems, setSelectedItems] = React.useState<any[]>(initialLabels || []);
+
+  React.useEffect(() => {
+    if (initialLabels && initialLabels.length > 0) {
+      setSelectedItems(initialLabels);
+    }
+  }, [initialLabels]);
+
+  React.useEffect(() => {
+    if (!values || values.length === 0) {
+      setSelectedItems([]);
+    }
+  }, [values]);
+
+  React.useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.trim()) {
+        const res = await fetchOptions(query);
+        const filtered = (res || []).filter((opt: any) => !values.includes(opt.value));
+        setOptions(filtered);
+      } else {
+        setOptions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, fetchOptions, values]);
+
+  const handleSelect = (opt: any) => {
+    const newValues = [...values, opt.value];
+    onChange(newValues);
+    
+    if (!selectedItems.some(item => item.value === opt.value)) {
+      setSelectedItems([...selectedItems, opt]);
+    }
+    
+    setQuery("");
+    setIsOpen(false);
+  };
+
+  const handleRemove = (val: any) => {
+    onChange(values.filter((v: any) => v !== val));
+    setSelectedItems(selectedItems.filter(item => item.value !== val));
+  };
+
+  return (
+    <div className="relative">
+      <div className="min-h-12 w-full pl-3 pr-3 py-2 rounded-2xl border border-slate-100 bg-white/50 flex flex-wrap items-center gap-2 focus-within:ring-4 focus-within:ring-sky-500/10 focus-within:border-sky-500 transition-all font-medium shadow-sm">
+        {selectedItems.map((item: any) => (
+          <span
+            key={item.value}
+            className="px-2.5 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-700 flex items-center gap-1 shadow-sm"
+          >
+            {item.label}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemove(item.value);
+              }}
+              className="text-sky-500 hover:text-red-500 ml-1 font-bold cursor-pointer"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+
+        <input
+          type="text"
+          placeholder={values.length === 0 ? (placeholder || "Tìm kiếm...") : ""}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          className="flex-1 min-w-[120px] bg-transparent text-sm text-slate-700 outline-none border-none py-1"
+        />
+      </div>
+
+      {isOpen && query.trim() && options.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-100 rounded-xl shadow-lg z-50 p-1 max-h-48 overflow-y-auto">
+          {options.map((opt: any) => (
+            <div
+              key={opt.value}
+              className="px-3 py-2 hover:bg-sky-50 cursor-pointer text-xs font-bold text-slate-600 rounded-lg transition-colors"
+              onClick={() => handleSelect(opt)}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export type FieldType =
   | "text"
   | "number"
   | "select"
   | "multi-select"
   | "autocomplete"
+  | "autocomplete-multi"
   | "textarea"
   | "file"
   | "date"
@@ -165,6 +267,7 @@ export interface FieldConfig {
   options?: string[] | { label: string; value: any }[];
   fetchOptions?: (query: string) => Promise<{ label: string; value: any }[]>;
   initialLabel?: string;
+  initialLabels?: { label: string; value: any }[];
   preview?: boolean;
   disabled?: boolean;
   hidden?: boolean;
@@ -289,6 +392,20 @@ const BaseFormModal: React.FC<Props> = ({
             initialLabel={field.initialLabel}
           />
         );
+
+      // AUTOCOMPLETE MULTI-SELECT
+      case "autocomplete-multi": {
+        const currentValues: any[] = Array.isArray(values[field.name]) ? values[field.name] : [];
+        return (
+          <MultiAutocompleteField
+            values={currentValues}
+            onChange={(newValues: any) => onChange(field.name, newValues)}
+            placeholder={field.placeholder}
+            fetchOptions={field.fetchOptions}
+            initialLabels={field.initialLabels}
+          />
+        );
+      }
 
       // TEXTAREA
       case "textarea":
