@@ -14,7 +14,6 @@ public class ArtistResDTO {
     private String fullName;
 
     private String bio;
-    private String description;
 
     private LocalDate dateOfBirth;
     private String nationality;

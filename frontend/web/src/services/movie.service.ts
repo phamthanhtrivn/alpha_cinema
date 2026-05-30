@@ -61,5 +61,13 @@ export const movieService = {
   getMoviesByIds: async (ids: string[]) => {
     const response = await apiClient.get(`/movies/public/list`, { params: { ids: ids.join(",") } });
     return response.data;
+  },
+  importMoviesExcel: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post(`/movies/admin/import`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return response.data;
   }
 };

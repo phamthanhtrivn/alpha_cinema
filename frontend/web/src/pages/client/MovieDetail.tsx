@@ -221,7 +221,7 @@ const MovieDetail = () => {
                             <div className="border-l-4 border-alpha-blue pl-4 mb-4">
                                 <h2 className="text-slate-800 font-medium text-lg">Nội dung phim</h2>
                             </div>
-                            <p className="text-slate-600 text-justify text-sm leading-relaxed">
+                            <p className="text-slate-600 text-justify text-sm leading-relaxed whitespace-pre-line">
                                 {movie.description}
                             </p>
                         </div>

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { User, Calendar, MapPin } from "lucide-react";
+import { User, Calendar, MapPin, FileSpreadsheet } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
 import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
 import ManagementTable from "@/components/employee/ManagementTable";
 import TableActions from "@/components/employee/TableActions";
 import { artistsService } from "@/services/artist.service";
+import ImportExcelModal from "@/components/employee/ImportExcelModal";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
 import BaseFormModal, { type FieldConfig } from "@/components/employee/BaseFormModal";
@@ -28,10 +29,10 @@ const ArtistManagement: React.FC = () => {
   const [isViewOpen, setIsViewOpen] = useState(false);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     bio: "",
-    description: "",
     dateOfBirth: "",
     nationality: "",
     imageFile: null as any,
@@ -40,7 +41,6 @@ const ArtistManagement: React.FC = () => {
   const [updateForm, setUpdateForm] = useState({
     fullName: "",
     bio: "",
-    description: "",
     dateOfBirth: "",
     nationality: "",
     imageFile: null as any,
@@ -142,7 +142,6 @@ const ArtistManagement: React.FC = () => {
       setUpdateForm({
         fullName: fullArtist.fullName || "",
         bio: fullArtist.bio || "",
-        description: fullArtist.description || "",
         dateOfBirth: fullArtist.dateOfBirth ? new Date(fullArtist.dateOfBirth).toISOString().split('T')[0] : "",
         nationality: fullArtist.nationality || "",
         imageFile: fullArtist.avatarUrl || null,
@@ -220,7 +219,6 @@ const ArtistManagement: React.FC = () => {
         setForm({
           fullName: "",
           bio: "",
-          description: "",
           dateOfBirth: "",
           nationality: "",
           imageFile: null,
@@ -270,8 +268,7 @@ const ArtistManagement: React.FC = () => {
     { name: "fullName", label: "Họ và tên", type: "text", placeholder: "Nhập họ tên nghệ sĩ..." },
     { name: "nationality", label: "Quốc gia", type: "text", placeholder: "Nhập quốc gia..." },
     { name: "dateOfBirth", label: "Ngày sinh", type: "date" },
-    { name: "bio", label: "Tiểu sử ngắn", type: "textarea", placeholder: "Nhập tiểu sử ngắn..." },
-    { name: "description", label: "Mô tả chi tiết", type: "textarea", placeholder: "Nhập mô tả chi tiết..." },
+    { name: "bio", label: "Tiểu sử", type: "textarea", placeholder: "Nhập tiểu sử nghệ sĩ..." },
     { name: "imageFile", label: "Ảnh đại diện (Avatar)", type: "file", preview: true },
   ];
 
@@ -281,6 +278,15 @@ const ArtistManagement: React.FC = () => {
       subtitle="Danh sách diễn viên, đạo diễn và biên kịch."
       onAdd={() => setIsAddOpen(true)}
       addLabel="THÊM NGHỆ SĨ"
+      extraActions={
+        <Button
+          onClick={() => setIsImportOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl px-6 py-7 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 group cursor-pointer flex items-center gap-2"
+        >
+          <FileSpreadsheet className="h-5 w-5" />
+          NHẬP EXCEL
+        </Button>
+      }
       totalItems={totalItems}
       currentPage={currentPage}
       pageSize={pageSize}
@@ -366,16 +372,9 @@ const ArtistManagement: React.FC = () => {
               {/* Content Section */}
               <div className="p-6 space-y-6">
                 <div className="space-y-3">
-                  <h3 className="font-black text-xs uppercase tracking-widest text-sky-600">Tiểu sử ngắn</h3>
-                  <p className="text-slate-600 leading-relaxed text-sm font-medium">
-                    {viewArtist.bio || "Chưa có tiểu sử ngắn cho nghệ sĩ này."}
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <h3 className="font-black text-xs uppercase tracking-widest text-sky-600">Mô tả chi tiết</h3>
+                  <h3 className="font-black text-xs uppercase tracking-widest text-sky-600">Tiểu sử</h3>
                   <p className="text-slate-600 leading-relaxed text-sm font-medium whitespace-pre-line">
-                    {viewArtist.description || "Chưa có mô tả chi tiết cho nghệ sĩ này."}
+                    {viewArtist.bio ? viewArtist.bio.split('\n').filter((line: string) => line.trim() !== '').join('\n\n') : "Chưa có thông tin tiểu sử nghệ sĩ."}
                   </p>
                 </div>
 
@@ -392,6 +391,16 @@ const ArtistManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ImportExcelModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={() => refetch()}
+        title="Nhập danh sách Nghệ sĩ từ Excel"
+        templateUrl="/templates/mau_nghe_si.xlsx"
+        templateName="mau_nghe_si.xlsx"
+        onImport={(file) => artistsService.importArtistsExcel(file)}
+      />
 
       <ManagementTable
         headers={[

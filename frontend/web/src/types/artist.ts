@@ -2,7 +2,6 @@ export interface ArtistResDTO {
     id: string;
     fullName: string;
     bio: string;
-    description?: string;
     dateOfBirth: string;
     nationality: string;
     avatarUrl: string;
