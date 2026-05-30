@@ -10,9 +10,12 @@ import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
 import BaseFormModal, { type FieldConfig } from "@/components/employee/BaseFormModal";
 import { Input } from "@/components/ui/input";
-import { FilterSelect } from "@/components/employee/FilterSelect";
 import { Button } from "@/components/ui/button";
-import { ALL_ARTIST_TYPES, type ArtistResDTO } from "@/types/artist";
+import { type ArtistResDTO } from "@/types/artist";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 const ArtistManagement: React.FC = () => {
   const pageSize = 10;
@@ -21,23 +24,25 @@ const ArtistManagement: React.FC = () => {
 
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
+  const [viewArtist, setViewArtist] = useState<any>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     bio: "",
+    description: "",
     dateOfBirth: "",
     nationality: "",
-    type: "ACTOR",
     imageFile: null as any,
   });
 
   const [updateForm, setUpdateForm] = useState({
     fullName: "",
     bio: "",
+    description: "",
     dateOfBirth: "",
     nationality: "",
-    type: "ACTOR",
     imageFile: null as any,
   });
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -46,13 +51,11 @@ const ArtistManagement: React.FC = () => {
   const [filters, setFilters] = useState<any>({
     name: undefined,
     nationality: undefined,
-    type: undefined,
   });
 
   const [appliedFilters, setAppliedFilters] = useState<any>({
     name: undefined,
     nationality: undefined,
-    type: undefined,
   });
 
   const buildParams = () => {
@@ -81,7 +84,6 @@ const ArtistManagement: React.FC = () => {
     const reset = {
       name: undefined,
       nationality: undefined,
-      type: undefined,
     };
     setFilters(reset);
     setAppliedFilters(reset);
@@ -89,7 +91,7 @@ const ArtistManagement: React.FC = () => {
   };
 
   const FilterContent = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tên nghệ sĩ</label>
         <Input
@@ -109,20 +111,7 @@ const ArtistManagement: React.FC = () => {
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vai trò</label>
-        <FilterSelect
-          placeholder="Tất cả vai trò"
-          options={["Tất cả", ...ALL_ARTIST_TYPES.map(t => t.label)]}
-          value={filters.type ? ALL_ARTIST_TYPES.find(t => t.value === filters.type)?.label : "Tất cả"}
-          onChange={(label) => {
-            const selected = ALL_ARTIST_TYPES.find(t => t.label === label);
-            setFilters({ ...filters, type: selected?.value || undefined });
-          }}
-        />
-      </div>
-
-      <div className="col-span-1 md:col-span-3 flex items-end gap-3 mt-2">
+      <div className="col-span-1 md:col-span-2 flex items-end gap-3 mt-2">
         <Button
           className="h-11 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-widest bg-sky-500 hover:bg-sky-600 text-white shadow-sm transition-all cursor-pointer"
           onClick={() => {
@@ -153,9 +142,9 @@ const ArtistManagement: React.FC = () => {
       setUpdateForm({
         fullName: fullArtist.fullName || "",
         bio: fullArtist.bio || "",
+        description: fullArtist.description || "",
         dateOfBirth: fullArtist.dateOfBirth ? new Date(fullArtist.dateOfBirth).toISOString().split('T')[0] : "",
         nationality: fullArtist.nationality || "",
-        type: fullArtist.type || "ACTOR",
         imageFile: fullArtist.avatarUrl || null,
       });
       setIsUpdateOpen(true);
@@ -231,9 +220,9 @@ const ArtistManagement: React.FC = () => {
         setForm({
           fullName: "",
           bio: "",
+          description: "",
           dateOfBirth: "",
           nationality: "",
-          type: "ACTOR",
           imageFile: null,
         });
       } else {
@@ -255,6 +244,16 @@ const ArtistManagement: React.FC = () => {
     }
   };
 
+  const handleView = async (artist: any) => {
+    try {
+      const res = await artistsService.getArtistById(artist.id);
+      setViewArtist(res.data);
+      setIsViewOpen(true);
+    } catch (e) {
+      toast.error("Không thể tải thông tin chi tiết nghệ sĩ!");
+    }
+  };
+
   const handleDelete = async (artist: any) => {
     if (window.confirm(`Bạn có chắc muốn xoá nghệ sĩ ${artist.fullName}?`)) {
       try {
@@ -271,12 +270,8 @@ const ArtistManagement: React.FC = () => {
     { name: "fullName", label: "Họ và tên", type: "text", placeholder: "Nhập họ tên nghệ sĩ..." },
     { name: "nationality", label: "Quốc gia", type: "text", placeholder: "Nhập quốc gia..." },
     { name: "dateOfBirth", label: "Ngày sinh", type: "date" },
-    {
-      name: "type", label: "Vai trò chính", type: "select",
-      options: ALL_ARTIST_TYPES,
-      placeholder: "Chọn vai trò..."
-    },
-    { name: "bio", label: "Tiểu sử", type: "textarea", placeholder: "Nhập tiểu sử..." },
+    { name: "bio", label: "Tiểu sử ngắn", type: "textarea", placeholder: "Nhập tiểu sử ngắn..." },
+    { name: "description", label: "Mô tả chi tiết", type: "textarea", placeholder: "Nhập mô tả chi tiết..." },
     { name: "imageFile", label: "Ảnh đại diện (Avatar)", type: "file", preview: true },
   ];
 
@@ -331,10 +326,76 @@ const ArtistManagement: React.FC = () => {
         loading={loadingSubmit}
       />
 
+      {/* View Detail Modal */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-3xl border-none shadow-2xl bg-white">
+          {viewArtist && (
+            <div className="flex flex-col">
+              {/* Header/Hero Section */}
+              <div className="relative h-48 md:h-56 w-full overflow-hidden bg-slate-900">
+                {viewArtist.avatarUrl ? (
+                  <img
+                    src={viewArtist.avatarUrl}
+                    alt={viewArtist.fullName}
+                    className="w-full h-full object-cover blur-sm brightness-50 scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-sky-900 to-indigo-950" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 w-full p-6 flex flex-col md:flex-row items-end gap-5">
+                  <div className="w-24 h-32 md:w-32 md:h-44 rounded-2xl overflow-hidden shadow-2xl border-4 border-white flex-shrink-0 bg-slate-100">
+                    {viewArtist.avatarUrl ? (
+                      <img src={viewArtist.avatarUrl} alt={viewArtist.fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><User className="text-slate-300" size={40} /></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col space-y-2 pb-2">
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-tight uppercase italic">{viewArtist.fullName}</h2>
+                    <div className="flex flex-wrap gap-2 text-slate-500 text-xs font-semibold">
+                      <span className="flex items-center gap-1"><MapPin size={12} className="text-sky-500" /> {viewArtist.nationality || "N/A"}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1"><Calendar size={12} className="text-rose-500" /> {viewArtist.dateOfBirth ? new Date(viewArtist.dateOfBirth).toLocaleDateString("vi-VN") : "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="p-6 space-y-6">
+                <div className="space-y-3">
+                  <h3 className="font-black text-xs uppercase tracking-widest text-sky-600">Tiểu sử ngắn</h3>
+                  <p className="text-slate-600 leading-relaxed text-sm font-medium">
+                    {viewArtist.bio || "Chưa có tiểu sử ngắn cho nghệ sĩ này."}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-black text-xs uppercase tracking-widest text-sky-600">Mô tả chi tiết</h3>
+                  <p className="text-slate-600 leading-relaxed text-sm font-medium whitespace-pre-line">
+                    {viewArtist.description || "Chưa có mô tả chi tiết cho nghệ sĩ này."}
+                  </p>
+                </div>
+
+                <div className="flex justify-end pt-4 border-t border-slate-100">
+                  <Button
+                    className="h-11 px-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all active:scale-95 cursor-pointer"
+                    onClick={() => setIsViewOpen(false)}
+                  >
+                    Đóng cửa sổ
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <ManagementTable
         headers={[
           "Nghệ sĩ",
-          "Vai trò",
           "Quốc gia",
           "Ngày sinh",
           "Hành động",
@@ -368,13 +429,6 @@ const ArtistManagement: React.FC = () => {
               </div>
             </TableCell>
 
-            {/* Cell: Role */}
-            <TableCell className="px-8 py-5">
-              <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${artist.type === "DIRECTOR" ? "bg-amber-100 text-amber-700" : "bg-sky-100 text-sky-700"}`}>
-                {artist.type === "DIRECTOR" ? "Đạo diễn" : "Diễn viên"}
-              </span>
-            </TableCell>
-
             {/* Cell: Nationality */}
             <TableCell className="px-8 py-5">
               <div className="flex items-center text-sm font-semibold text-slate-600">
@@ -394,7 +448,7 @@ const ArtistManagement: React.FC = () => {
             {/* Cell: Actions */}
             <TableCell className="px-8 py-5 text-right">
               <TableActions
-                onView={() => alert("Xem chi tiết nghệ sĩ")}
+                onView={() => handleView(artist)}
                 onEdit={() => handleEdit(artist)}
                 onDelete={() => handleDelete(artist)}
               />

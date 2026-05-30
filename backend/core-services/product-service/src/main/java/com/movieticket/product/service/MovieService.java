@@ -97,7 +97,7 @@ public class MovieService {
     }
 
     @Transactional
-    public MovieSummaryDTO createMovie(MovieCreateDTO dto, MultipartFile thumbnail) {
+    public MovieSummaryDTO createMovie(MovieCreateDTO dto, MultipartFile thumbnail, MultipartFile banner) {
         Movie movie = movieMapper.toEntity(dto);
 
         if (dto.getAgeTypeId() != null) {
@@ -119,16 +119,31 @@ public class MovieService {
         }
         movie.setThumbnailUrl(thumbnailUrl);
 
+        String bannerUrl = null;
+        if (banner != null && !banner.isEmpty()) {
+            bannerUrl = cloudinaryUtil.uploadImage(banner);
+        }
+        movie.setBannerUrl(bannerUrl);
+
         return movieMapper.toResponseAdmin(movieRepository.save(movie));
     }
 
     @Transactional
-    public MovieSummaryDTO updateMovie(String id, MovieCreateDTO dto, MultipartFile thumbnail) {
+    public MovieSummaryDTO updateMovie(String id, MovieCreateDTO dto, MultipartFile thumbnail, MultipartFile banner) {
         Movie movie = getById(id);
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
-            cloudinaryUtil.deleteByUrl(movie.getThumbnailUrl());
+            if (movie.getThumbnailUrl() != null && !movie.getThumbnailUrl().isBlank()) {
+                cloudinaryUtil.deleteByUrl(movie.getThumbnailUrl());
+            }
             movie.setThumbnailUrl(cloudinaryUtil.uploadImage(thumbnail));
+        }
+
+        if (banner != null && !banner.isEmpty()) {
+            if (movie.getBannerUrl() != null && !movie.getBannerUrl().isBlank()) {
+                cloudinaryUtil.deleteByUrl(movie.getBannerUrl());
+            }
+            movie.setBannerUrl(cloudinaryUtil.uploadImage(banner));
         }
 
         movieMapper.updateEntityFromDto(dto, movie);
