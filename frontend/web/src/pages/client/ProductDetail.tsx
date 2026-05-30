@@ -3,64 +3,38 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Container } from "@/components/common/Layout";
 import { productService } from "@/services/product.service";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { ShoppingCart, ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
+import type { RootState, AppDispatch } from "@/store";
+import { ShoppingCart, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types/product";
+import { addToCartThunk, setCartOpen } from "@/store/slices/cartSlice";
+import { useQuery } from "@tanstack/react-query";
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeImgIndex, setActiveImgIndex] = useState<number>(0);
+
+  const { data: product = null, isLoading: loading } = useQuery<Product | null>({
+    queryKey: ["product-detail", id],
+    queryFn: () => productService.getProductById(id!).then((res: any) => res.data || null),
+    enabled: !!id,
+  });
 
   useEffect(() => {
-    if (id) {
-      loadProductDetail(id);
-    }
-  }, [id]);
-
-  const loadProductDetail = async (productId: string) => {
-    try {
-      setLoading(true);
-      const response = await productService.getProductById(productId);
-      if (response.success && response.data) {
-        setProduct(response.data);
-        // Reset quantity based on stock
-        const stock = response.data.stockQty;
-        if (stock !== null && stock <= 0) {
-          setQuantity(0);
-        } else {
-          setQuantity(1);
-        }
+    if (product) {
+      const stock = product.stockQty;
+      if (stock !== null && stock <= 0) {
+        setQuantity(0);
       } else {
-        toast.error("Không thể tải chi tiết sản phẩm");
+        setQuantity(1);
       }
-    } catch (error) {
-      toast.error("Lỗi khi kết nối hệ thống");
-      console.error(error);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  // Logic phân loại động để hiển thị Breadcrumb giống trang StarShop
-  const getProductCategory = (name: string): string => {
-    const lowercaseName = name.toLowerCase();
-    if (lowercaseName.includes("wibu") || lowercaseName.includes("anime") || lowercaseName.includes("otaku")) {
-      return "Fan Wibu";
-    }
-    if (lowercaseName.includes("cute") || lowercaseName.includes("kid") || lowercaseName.includes("child") || lowercaseName.includes("toy")) {
-      return "Inner Child";
-    }
-    return "Movie-verse";
-  };
-
+  }, [product]);
   const handleIncrement = () => {
     if (!product) return;
     const maxStock = product.stockQty;
@@ -102,11 +76,14 @@ const ProductDetail: React.FC = () => {
     }
     if (!product) return;
 
-    try {
-      toast.success(`Đã thêm ${quantity} sản phẩm "${product.name}" vào giỏ hàng`);
-    } catch (error) {
-      toast.error("Thêm vào giỏ hàng thất bại");
-    }
+    dispatch(addToCartThunk({ productId: product.id, quantity }))
+      .unwrap()
+      .then(() => {
+        toast.success(`Đã thêm ${quantity} sản phẩm "${product.name}" vào giỏ hàng`);
+      })
+      .catch((err) => {
+        toast.error(err || "Thêm vào giỏ hàng thất bại");
+      });
   };
 
   const handleBuyNow = async () => {
@@ -116,11 +93,14 @@ const ProductDetail: React.FC = () => {
     }
     if (!product) return;
 
-    try {
-      toast.success(`Đang xử lý mua ngay ${quantity} sản phẩm "${product.name}"`);
-    } catch (error) {
-      toast.error("Thao tác thất bại");
-    }
+    dispatch(addToCartThunk({ productId: product.id, quantity }))
+      .unwrap()
+      .then(() => {
+        dispatch(setCartOpen(true));
+      })
+      .catch((err) => {
+        toast.error(err || "Thao tác mua ngay thất bại");
+      });
   };
 
   if (loading) {
@@ -153,11 +133,7 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const category = getProductCategory(product.name);
   const isOutOfStock = product.stockQty !== null && product.stockQty <= 0;
-
-  // Danh sách hình ảnh của gallery (hiện tại lấy pictureUrl, có thể giả lập thêm 1-2 ảnh thu nhỏ nếu muốn sinh động)
-  const images = [product.pictureUrl || "/placeholder.png"];
 
   return (
     <div className="bg-white min-h-screen py-8">
@@ -182,7 +158,7 @@ const ProductDetail: React.FC = () => {
             {/* Large Image View */}
             <div className="w-full aspect-4/3 overflow-hidden bg-slate-50 border border-alpha-orange rounded-lg shadow-sm relative group flex items-center justify-center">
               <img
-                src={images[activeImgIndex]}
+                src={product.pictureUrl}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
               />

@@ -40,4 +40,24 @@ export const productService = {
     });
     return response.data;
   },
+  getCart: async () => {
+    const response = await apiClient.get('/cart');
+    return response.data;
+  },
+  addToCart: async (productId: string, quantity: number) => {
+    const response = await apiClient.post('/cart/add', { productId, quantity });
+    return response.data;
+  },
+  updateCartItem: async (productId: string, quantity: number) => {
+    const response = await apiClient.put('/cart/update', { productId, quantity });
+    return response.data;
+  },
+  removeCartItem: async (productId: string) => {
+    const response = await apiClient.delete(`/cart/remove/${productId}`);
+    return response.data;
+  },
+  clearCart: async () => {
+    const response = await apiClient.delete('/cart/clear');
+    return response.data;
+  },
 };

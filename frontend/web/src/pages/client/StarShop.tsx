@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/Layout";
 import { productService } from "@/services/product.service";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import type { RootState, AppDispatch } from "@/store";
 import { ShoppingCart } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
+import { addToCartThunk, setCartOpen } from "@/store/slices/cartSlice";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProductListDTO {
   id: string;
@@ -17,34 +19,13 @@ interface ProductListDTO {
 }
 
 const StarShop: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
-  const [products, setProducts] = useState<ProductListDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("Movie-verse");
 
-  const tabs = ["Movie-verse", "Fan Wibu", "Inner Child"];
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await productService.getSouvenirProducts();
-      if (response.success) {
-        setProducts(response.data || []);
-      } else {
-        toast.error("Không thể tải danh sách sản phẩm");
-      }
-    } catch (error) {
-      toast.error("Lỗi khi tải danh sách sản phẩm");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: products = [], isLoading: loading } = useQuery<ProductListDTO[]>({
+    queryKey: ["souvenir-products"],
+    queryFn: () => productService.getSouvenirProducts().then((res: any) => res.data || []),
+  });
 
   const addToCart = async (productId: string, name: string) => {
     if (!user) {
@@ -52,11 +33,14 @@ const StarShop: React.FC = () => {
       return;
     }
 
-    try {
-      toast.success(`Đã thêm "${name}" vào giỏ hàng`);
-    } catch (error) {
-      toast.error("Thêm vào giỏ hàng thất bại");
-    }
+    dispatch(addToCartThunk({ productId, quantity: 1 }))
+      .unwrap()
+      .then(() => {
+        toast.success(`Đã thêm "${name}" vào giỏ hàng`);
+      })
+      .catch((err) => {
+        toast.error(err || "Thêm vào giỏ hàng thất bại");
+      });
   };
 
   const handleBuyNow = async (productId: string, name: string) => {
@@ -65,27 +49,17 @@ const StarShop: React.FC = () => {
       return;
     }
 
-    try {
-    } catch (error) {
-      toast.error("Thao tác thất bại");
-    }
+    dispatch(addToCartThunk({ productId, quantity: 1 }))
+      .unwrap()
+      .then(() => {
+        dispatch(setCartOpen(true));
+      })
+      .catch((err) => {
+        toast.error(err || "Thao tác mua ngay thất bại");
+      });
   };
 
-  // Logic phân loại ảo để hiển thị theo tab cho giống ảnh mẫu sinh động
-  const getFilteredProducts = () => {
-    if (activeTab === "Movie-verse") {
-      return products.filter(p => !p.name.toLowerCase().includes("wibu") && !p.name.toLowerCase().includes("cute") && !p.name.toLowerCase().includes("kid"));
-    }
-    if (activeTab === "Fan Wibu") {
-      return products.filter(p => p.name.toLowerCase().includes("wibu") || p.name.toLowerCase().includes("anime") || p.name.toLowerCase().includes("otaku"));
-    }
-    if (activeTab === "Inner Child") {
-      return products.filter(p => p.name.toLowerCase().includes("cute") || p.name.toLowerCase().includes("kid") || p.name.toLowerCase().includes("child") || p.name.toLowerCase().includes("toy"));
-    }
-    return products;
-  };
-
-  const filteredProducts = getFilteredProducts();
+  const filteredProducts = products;
 
   return (
     <div className="bg-slate-50 min-h-screen py-8">
@@ -113,7 +87,7 @@ const StarShop: React.FC = () => {
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm">
             <ShoppingCart size={48} className="text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 font-semibold">Chưa có sản phẩm nào thuộc nhóm này</p>
+            <p className="text-slate-500 font-semibold">Không có sản phẩm nào được bán</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

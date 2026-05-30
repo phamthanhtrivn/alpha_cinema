@@ -44,6 +44,7 @@ public class CartService {
                             .unitPrice(product.getUnitPrice())
                             .pictureUrl(product.getPictureUrl())
                             .quantity(quantity)
+                            .stockQty(product.getStockQty())
                             .build());
                 }
             }

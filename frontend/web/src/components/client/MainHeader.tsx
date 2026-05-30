@@ -1,17 +1,26 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Menu, LogOut, UserCircle, History, ChevronDown } from "lucide-react";
+import { User, Menu, LogOut, UserCircle, History, ChevronDown, ShoppingCart } from "lucide-react";
 import { Container } from "../common/Layout";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, selectAuth } from "../../store/slices/authSlice";
+import { toggleCart, selectCartTotalQuantity, fetchCart } from "../../store/slices/cartSlice";
 import { userService } from "../../services/user.service";
+import type { AppDispatch } from "../../store";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 
 const MainHeader: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { user } = useSelector(selectAuth);
+  const cartQuantity = useSelector(selectCartTotalQuantity);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchCart());
+    }
+  }, [user, dispatch]);
 
   const handleLogout = () => {
     Swal.fire({
@@ -85,6 +94,26 @@ const MainHeader: React.FC = () => {
 
           {/* 3. USER ACTIONS & SEARCH */}
           <div className="flex items-center space-x-6">
+            {/* Cart Icon Button (Orange, always on the left of profile/login) */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  toast.info("Vui lòng đăng nhập để xem giỏ hàng");
+                  return;
+                }
+                dispatch(toggleCart());
+              }}
+              className="relative p-2.5 rounded-full hover:bg-slate-50 transition-colors text-alpha-orange cursor-pointer"
+              title="Giỏ hàng"
+            >
+              <ShoppingCart size={22} className="stroke-[2.5]" />
+              {cartQuantity > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-fade-in">
+                  {cartQuantity}
+                </span>
+              )}
+            </button>
+
             {user ? (
               /* --- KHI ĐÃ ĐĂNG NHẬP --- */
               <div className="relative group flex items-center space-x-3 cursor-pointer py-2">
