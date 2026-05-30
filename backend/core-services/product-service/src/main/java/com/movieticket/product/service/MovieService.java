@@ -24,6 +24,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.movieticket.product.repository.ArtistRepository;
+import com.movieticket.product.entity.Artist;
+import com.movieticket.product.util.ExcelHelper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -35,6 +41,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final ArtistService artistService;
     private final AgeTypeRepository ageTypeRepository;
+    private final ArtistRepository artistRepository;
     private final CloudinaryUtil cloudinaryUtil;
     private final MovieMapper movieMapper;
 
@@ -190,5 +197,41 @@ public class MovieService {
         return movies.stream()
                 .map(movieMapper::toResponsePublic)
                 .toList();
+    }
+
+    @Transactional
+    public void importMoviesFromExcel(MultipartFile file) {
+        if (!ExcelHelper.hasExcelFormat(file)) {
+            throw new BusinessException("Vui lòng tải lên tệp Excel đúng định dạng (.xlsx)");
+        }
+        try {
+            // Load AgeTypes into map
+            List<AgeType> ageTypes = ageTypeRepository.findAll();
+            Map<String, AgeType> ageTypeMap = new HashMap<>();
+            for (AgeType at : ageTypes) {
+                ageTypeMap.put(at.getId().toLowerCase(), at);
+            }
+
+            // Load Artists into map
+            List<Artist> artists = artistRepository.findAll();
+            Map<String, Artist> artistMap = new HashMap<>();
+            for (Artist a : artists) {
+                artistMap.put(a.getFullName().toLowerCase(), a);
+            }
+
+            // Parse excel file
+            List<Movie> movies = ExcelHelper.parseMovieExcel(file.getInputStream(), ageTypeMap, artistMap);
+
+            // Validate duplicate movie titles
+            for (Movie movie : movies) {
+                if (movieRepository.existsByTitle(movie.getTitle())) {
+                    throw new BusinessException("Phim '" + movie.getTitle() + "' đã tồn tại trong hệ thống.");
+                }
+            }
+
+            movieRepository.saveAll(movies);
+        } catch (IOException e) {
+            throw new BusinessException("Không thể đọc tệp Excel: " + e.getMessage());
+        }
     }
 }

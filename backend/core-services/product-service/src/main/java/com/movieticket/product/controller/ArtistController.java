@@ -73,6 +73,12 @@ public class ArtistController {
         return ResponseEntity.ok(ApiResponse.success(updatedArtist, "Cập nhật nghệ sĩ thành công"));
     }
 
+    @PostMapping(value = "/admin/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> importArtists(@RequestPart("file") MultipartFile file) {
+        artistService.importArtistsFromExcel(file);
+        return ResponseEntity.ok(ApiResponse.success(null, "Nhập danh sách nghệ sĩ từ Excel thành công"));
+    }
+
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         artistService.delete(id);

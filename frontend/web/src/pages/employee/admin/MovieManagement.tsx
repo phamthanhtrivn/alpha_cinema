@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Clock, Star, PlayCircle, Film } from "lucide-react";
+import { Calendar, Clock, Star, PlayCircle, Film, FileSpreadsheet } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
 import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
@@ -7,6 +7,7 @@ import ManagementTable from "@/components/employee/ManagementTable";
 import StatusBadge from "@/components/employee/StatusBadge";
 import TableActions from "@/components/employee/TableActions";
 import { movieService } from "@/services/movie.service";
+import ImportExcelModal from "@/components/employee/ImportExcelModal";
 import { ReleaseStatus, type MovieSummaryResponse, ALL_GENRES, ALL_PROJECTION, ALL_TRANSLATION, ALL_STATUS } from "@/types/movie";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ const MovieManagement: React.FC = () => {
   const [viewMovie, setViewMovie] = useState<any>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
     duration: 0,
@@ -448,6 +450,15 @@ const MovieManagement: React.FC = () => {
       subtitle="Quản lý thư viện phim và lịch chiếu Alpha Cinema."
       onAdd={() => setIsAddOpen(true)}
       addLabel="THÊM PHIM MỚI"
+      extraActions={
+        <Button
+          onClick={() => setIsImportOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl px-6 py-7 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 group cursor-pointer flex items-center gap-2"
+        >
+          <FileSpreadsheet className="h-5 w-5" />
+          NHẬP EXCEL
+        </Button>
+      }
       totalItems={totalItems}
       currentPage={currentPage}
       pageSize={pageSize}
@@ -668,6 +679,16 @@ const MovieManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ImportExcelModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={() => refetch()}
+        title="Nhập danh sách Phim từ Excel"
+        templateUrl="/templates/mau_phim.xlsx"
+        templateName="mau_phim.xlsx"
+        onImport={(file) => movieService.importMoviesExcel(file)}
+      />
 
       <ManagementTable
         headers={[

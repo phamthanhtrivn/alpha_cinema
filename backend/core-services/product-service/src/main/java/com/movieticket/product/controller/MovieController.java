@@ -87,6 +87,12 @@ public class MovieController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping(value = "/admin/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> importMovies(@RequestPart("file") MultipartFile file) {
+        movieService.importMoviesFromExcel(file);
+        return ResponseEntity.ok(ApiResponse.success(null, "Nhập danh sách phim từ Excel thành công"));
+    }
+
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         movieService.deleteMovie(id);
