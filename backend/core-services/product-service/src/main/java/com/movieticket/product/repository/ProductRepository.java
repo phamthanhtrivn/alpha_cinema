@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
     boolean existsByNameAndUnitPrice(String name, double unitPrice);
@@ -32,4 +34,6 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             @Param("status") Boolean status,
             Pageable pageable
     );
+
+    List<Product> findByTypeAndStatus(ProductType type, boolean status);
 }

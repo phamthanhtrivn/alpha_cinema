@@ -23,4 +23,6 @@ public class CreateProductDto {
     
     @NotNull(message = "Loại sản phẩm là bắt buộc")
     private ProductType type;
+
+    private Integer stockQty;
 }

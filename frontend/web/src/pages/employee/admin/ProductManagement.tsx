@@ -34,6 +34,7 @@ const ProductManagement: React.FC = () => {
     unitPrice: "",
     description: "",
     type: "SINGLE",
+    stockQty: "",
     imageFile: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,6 +47,7 @@ const ProductManagement: React.FC = () => {
     unitPrice: "",
     description: "",
     type: "SINGLE",
+    stockQty: "",
     imageFile: null,
     status: true,
   });
@@ -130,6 +132,7 @@ const ProductManagement: React.FC = () => {
       unitPrice: "",
       description: "",
       type: "SINGLE",
+      stockQty: "",
       imageFile: null,
     });
     setErrors({});
@@ -148,6 +151,7 @@ const ProductManagement: React.FC = () => {
         unitPrice: Number(form.unitPrice),
         description: form.description,
         type: form.type,
+        stockQty: form.type === "SOUVENIR" ? Number(form.stockQty) : null,
       };
 
       const productBlob = new Blob([JSON.stringify(product)], {
@@ -171,6 +175,7 @@ const ProductManagement: React.FC = () => {
           unitPrice: "",
           description: "",
           type: "SINGLE",
+          stockQty: "",
           imageFile: null,
         });
         setIsAddOpen(false);
@@ -238,6 +243,7 @@ const ProductManagement: React.FC = () => {
       unitPrice: product.unitPrice,
       description: product.description,
       type: product.type,
+      stockQty: product.stockQty !== null && product.stockQty !== undefined ? product.stockQty.toString() : "",
       imageFile: product.pictureUrl,
       status: product.status,
     });
@@ -265,6 +271,7 @@ const ProductManagement: React.FC = () => {
         description: updateForm.description,
         type: updateForm.type,
         status: updateForm.status,
+        stockQty: updateForm.type === "SOUVENIR" ? Number(updateForm.stockQty) : null,
       };
 
       const productBlob = new Blob([JSON.stringify(product)], {
@@ -350,7 +357,7 @@ const ProductManagement: React.FC = () => {
         </label>
         <FilterSelect
           placeholder="Tất cả loại"
-          options={["Tất cả", "SINGLE", "COMBO"]}
+          options={["Tất cả", "SINGLE", "COMBO", "SOUVENIR"]}
           value={filters.type || "Tất cả"}
           onChange={(value) =>
             setFilters({
@@ -471,7 +478,14 @@ const ProductManagement: React.FC = () => {
       options: [
         { label: "SINGLE", value: "SINGLE" },
         { label: "COMBO", value: "COMBO" },
+        { label: "SOUVENIR", value: "SOUVENIR" },
       ],
+    },
+    {
+      name: "stockQty",
+      label: "Số lượng tồn kho (chỉ cho đồ lưu niệm)",
+      type: "number",
+      placeholder: "Nhập số lượng tồn kho...",
     },
     {
       name: "imageFile",
@@ -507,7 +521,14 @@ const ProductManagement: React.FC = () => {
       options: [
         { label: "SINGLE", value: "SINGLE" },
         { label: "COMBO", value: "COMBO" },
+        { label: "SOUVENIR", value: "SOUVENIR" },
       ],
+    },
+    {
+      name: "stockQty",
+      label: "Số lượng tồn kho (chỉ cho đồ lưu niệm)",
+      type: "number",
+      placeholder: "Nhập số lượng tồn kho...",
     },
     {
       name: "imageFile",
@@ -550,7 +571,17 @@ const ProductManagement: React.FC = () => {
     {
       key: "type",
       label: "Loại",
-      render: (val: string) => (val === "SINGLE" ? "Sản phẩm lẻ" : "Combo"),
+      render: (val: string) => {
+        if (val === "SINGLE") return "Sản phẩm lẻ";
+        if (val === "COMBO") return "Combo";
+        if (val === "SOUVENIR") return "Đồ lưu niệm";
+        return val;
+      },
+    },
+    {
+      key: "stockQty",
+      label: "Số lượng tồn kho",
+      render: (val: any) => (val !== null && val !== undefined ? val.toLocaleString("vi-VN") : "Không giới hạn"),
     },
     {
       key: "pictureUrl",
@@ -588,9 +619,8 @@ const ProductManagement: React.FC = () => {
       label: "Trạng thái",
       render: (val: boolean) => (
         <span
-          className={`px-2 py-1 rounded text-xs font-medium ${
-            val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-          }`}
+          className={`px-2 py-1 rounded text-xs font-medium ${val ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+            }`}
         >
           {val ? "Hoạt động" : "Ngừng"}
         </span>

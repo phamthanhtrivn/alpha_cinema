@@ -51,6 +51,7 @@ import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
 import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
+import { CartCheckout } from "./pages/client/customer/CartCheckout";
 import { PaymentFailed } from "./pages/client/customer/PaymentFailed";
 import { PaymentSuccess } from "./pages/client/customer/PaymentSuccess";
 import PrivacyPolicy from "./pages/client/PrivacyPolicy";
@@ -59,6 +60,8 @@ import TermsAndConditions from "./pages/client/TermsAndConditions";
 import AboutUs from "./pages/client/AboutUs";
 import Recruitment from "./pages/client/Recruitment";
 import MoviesPage from "./pages/client/Movies";
+import StarShop from "./pages/client/StarShop";
+import ProductDetail from "./pages/client/ProductDetail";
 
 // REDIRECT
 import RoleRedirect from "./routes/RoleRedirect";
@@ -121,6 +124,8 @@ function App() {
             <Route path="/cinematic/actors-directors" element={<CinematicActorsDirectors />} />
             <Route path="/cinematic/artist/:id" element={<CinematicArtistDetail />} />
             <Route path="/movies" element={<MoviesPage />} />
+            <Route path="/star-shop" element={<StarShop />} />
+            <Route path="/star-shop/product/:id" element={<ProductDetail />} />
             <Route path="/chinh-sach-bao-mat" element={<PrivacyPolicy />} />
             <Route path="/chinh-sach-thanh-toan" element={<PaymentPolicy />} />
             <Route path="/dieu-khoan-chung" element={<TermsAndConditions />} />
@@ -154,6 +159,7 @@ function App() {
               path="/booking/:id/checkout/:sessionId/confirm"
               element={<CheckoutConfirm />}
             />
+            <Route path="/cart/checkout" element={<CartCheckout />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/failed" element={<PaymentFailed />} />
           </Route>

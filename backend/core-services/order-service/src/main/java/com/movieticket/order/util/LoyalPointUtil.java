@@ -22,4 +22,19 @@ public class LoyalPointUtil {
                 .occurredAt(LocalDateTime.now())
                 .build();
     }
+
+    public static UserLoyaltyUpdateEvent buildUserLoyaltyEventProducer(com.movieticket.order.entity.Order order) {
+        if (order == null) {
+            return null;
+        }
+
+        return UserLoyaltyUpdateEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .customerId(order.getCustomerId())
+                .orderSpending(order.getTotalPayment())
+                .pointsUsed((int) Math.round(order.getPointDiscount() / 1000.0))
+                .orderId(order.getId())
+                .occurredAt(LocalDateTime.now())
+                .build();
+    }
 }

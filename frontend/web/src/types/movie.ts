@@ -70,6 +70,20 @@ export const ALL_GENRES = [
   "Hài hước",
   "Viễn tưởng",
   "Phiêu lưu",
+  "Gia Đình",
+  "Tâm lý",
+  "Hình sự",
+  "Khoa học viễn tưởng",
+  "Kịch tính",
+  "Hoạt hình",
+  "Thần thoại",
+  "Lịch sử",
+  "Chiến tranh",
+  "Âm nhạc",
+  "Kinh dị tâm lý",
+  "Giật gân",
+  "Tài liệu",
+  "Bí ẩn"
 ];
 export const ALL_PROJECTION = ["2D", "3D", "IMAX"];
 

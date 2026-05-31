@@ -1,4 +1,4 @@
-package com.movieticket.order.model.cache;
+package com.movieticket.product.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,14 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductCache {
+@Builder
+public class CartItemResponseDTO {
     private String productId;
     private String name;
-    private String imageUrl;
     private double unitPrice;
-    private boolean status;
+    private String pictureUrl;
+    private int quantity;
     private Integer stockQty;
 }

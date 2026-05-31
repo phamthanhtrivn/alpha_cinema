@@ -1,12 +1,14 @@
 package com.movieticket.order.controller;
 
 import com.movieticket.order.common.ApiResponse;
+import com.movieticket.order.dto.request.CartCheckoutRequest;
 import com.movieticket.order.dto.request.ConfirmCheckoutSessionRequest;
 import com.movieticket.order.dto.client.PaymentInitiateSnapshot;
 import com.movieticket.order.dto.request.CreateCheckoutSessionRequest;
 import com.movieticket.order.dto.request.UpdateCheckoutSessionRequest;
 import com.movieticket.order.dto.response.CheckoutConfirmResponse;
 import com.movieticket.order.dto.response.CheckoutSessionResponse;
+import com.movieticket.order.service.CartCheckoutService;
 import com.movieticket.order.service.CheckoutSessionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,6 +24,17 @@ import org.springframework.web.bind.annotation.*;
 public class CheckoutController {
     private final CheckoutSessionService checkoutSessionService;
     private final OrderService orderService;
+    private final CartCheckoutService cartCheckoutService;
+
+    @PostMapping("/cart/payment")
+    public ResponseEntity<ApiResponse<CheckoutConfirmResponse>> checkoutCart(
+            @RequestHeader("X-User-Id") String customerId,
+            @RequestHeader(value = "X-User-IP", required = false) String userIp,
+            @Valid @RequestBody CartCheckoutRequest request
+    ) {
+        CheckoutConfirmResponse response = cartCheckoutService.checkoutCart(customerId, request, userIp);
+        return ResponseEntity.ok(ApiResponse.success(response, "Đơn hàng đã được khởi tạo."));
+    }
 
     @PostMapping("/payment-by-cash")
     public ResponseEntity<ApiResponse<?>> paymentByCash(
