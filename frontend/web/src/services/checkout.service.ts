@@ -85,4 +85,20 @@ export const checkoutService = {
     const response = await apiClient.delete(`/checkouts/sessions/${sessionId}`);
     return response.data as { success: boolean; message?: string };
   },
+  checkoutCartByMomo: async (request: any, cinemaId: string) => {
+    const payload = {
+      cinemaId,
+      products: request.products.map((item: any) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
+      promotionCode: request.promotionCode,
+      pointsToRedeem: request.pointsToRedeem,
+      paymentMethod: request.paymentMethod || "MOMO",
+      bankCode: request.bankCode,
+    };
+    const response = await apiClient.post("/checkouts/cart/payment", payload);
+    return response.data;
+  },
 };

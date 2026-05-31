@@ -9,7 +9,7 @@ import type { CustomerProfile, Gender } from '@/types/customer';
 import type { OrderHistoryItem } from '@/types/order';
 import { OrderStatus } from '@/types/order';
 import { ALL_TRANSLATION } from '@/types/movie';
-import { Loader2, User, Star, Wallet, Phone, Mail, Calendar, Lock, MapPin, Clock, Film, AlertCircle, Bell, Check } from 'lucide-react';
+import { Loader2, User, Star, Wallet, Phone, Mail, Calendar, Lock, MapPin, Clock, Film, AlertCircle, Bell, Check, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { Container, Section } from '@/components/common/Layout';
@@ -95,6 +95,7 @@ const ProfilePage: React.FC = () => {
       orderService.getOrderHistory().then((res: any) => res.data ?? res),
     enabled: activeTab === "history",
   });
+  console.log(orderHistory)
 
   // ---- Notifications Fetching ----
   const {
@@ -586,7 +587,54 @@ const ProfilePage: React.FC = () => {
                         <div className="flex flex-col gap-3">
                           {orders.map((order) => {
                             const snap = order.showScheduleSnapshot;
-                            if (!snap) return null;
+                            if (!snap) {
+                              const orderDate = new Date(order.createdAt);
+                              const dateStr = orderDate.toLocaleDateString('vi-VN', {
+                                weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
+                              });
+                              const timeStr = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+                              return (
+                                <div
+                                  key={order.id}
+                                  onClick={() => handleShowOrderDetail(order.id)}
+                                  className="relative flex gap-3 border border-slate-100 rounded-sm p-3 hover:border-alpha-blue/30 hover:shadow-sm transition-all bg-white cursor-pointer"
+                                >
+                                  {order.status === OrderStatus.PAID && (
+                                    <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-full text-[10px] font-bold flex items-center gap-1">
+                                      <Check size={10} strokeWidth={3} />
+                                      Đã thanh toán
+                                    </div>
+                                  )}
+                                  {/* Thumbnail */}
+                                  <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center">
+                                    <ShoppingBag size={28} className="text-alpha-orange" />
+                                  </div>
+
+                                  {/* Info */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">Đơn hàng Bắp Nước & Đồ Lưu Niệm</p>
+
+                                    {/* Tags */}
+                                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                                      <span className="text-[11px] font-medium text-white bg-alpha-orange px-1.5 py-0.5 rounded">Bắp nước & Quà tặng</span>
+                                    </div>
+
+                                    {/* Time */}
+                                    <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-2">
+                                      <Clock size={11} className="text-slate-400 shrink-0" />
+                                      <span>{timeStr} - {dateStr}</span>
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="flex justify-between items-center mt-2">
+                                      <div className="flex-1 text-right">
+                                        <span className="font-bold text-alpha-orange text-sm">{formatCurrency(order.totalPayment)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
 
                             const startDate = new Date(snap.startTime);
                             const dateStr = startDate.toLocaleDateString('vi-VN', {

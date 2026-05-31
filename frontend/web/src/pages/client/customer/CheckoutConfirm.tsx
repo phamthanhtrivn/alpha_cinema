@@ -160,8 +160,8 @@ export const CheckoutConfirm = () => {
       const response = isZeroPayment
         ? await checkoutService.confirmZeroPaymentSession(sessionId)
         : await checkoutService.confirmSession(sessionId, {
-            paymentMethod,
-          });
+          paymentMethod,
+        });
 
       if (!response.success) {
         toast.error(response.message || "Không thể xác nhận đơn hàng.");
@@ -195,7 +195,7 @@ export const CheckoutConfirm = () => {
       const message =
         typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Không thể xác nhận đơn hàng."
+            ?.data?.message || "Không thể xác nhận đơn hàng."
           : "Không thể xác nhận đơn hàng.";
       toast.error(message);
     } finally {
@@ -353,8 +353,8 @@ export const CheckoutConfirm = () => {
                 <div className="mt-2 font-bold text-slate-800">
                   {productRows.length
                     ? productRows
-                        .map((item) => `${item.productName} x${item.quantity}`)
-                        .join(", ")
+                      .map((item) => `${item.productName} x${item.quantity}`)
+                      .join(", ")
                     : "Không chọn sản phẩm"}
                 </div>
               </div>
@@ -455,11 +455,10 @@ export const CheckoutConfirm = () => {
                   {PAYMENT_METHODS.map((method) => (
                     <label
                       key={method.value}
-                      className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${
-                        paymentMethod === method.value
-                          ? "border-alpha-orange bg-orange-50"
-                          : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
-                      }`}
+                      className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${paymentMethod === method.value
+                        ? "border-alpha-orange bg-orange-50"
+                        : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/50"
+                        }`}
                     >
                       {/* radio */}
                       <input

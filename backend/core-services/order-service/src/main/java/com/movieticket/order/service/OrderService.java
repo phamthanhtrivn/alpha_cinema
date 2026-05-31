@@ -316,14 +316,23 @@ public class OrderService {
 
                 // Gom id suất chiếu
                 List<String> scheduleIds = orders.stream()
+                                .filter(o -> o.getShowScheduleDetails() != null && !o.getShowScheduleDetails().isEmpty())
                                 .map(o -> o.getShowScheduleDetails().get(0).getShowScheduleId()).distinct().toList();
 
-                return productClient.getSchedulesBatch(scheduleIds).flatMap(schedules -> {
+                Mono<List<ShowScheduleSnapshot>> schedulesMono = scheduleIds.isEmpty()
+                                ? Mono.just(List.of())
+                                : productClient.getSchedulesBatch(scheduleIds);
+
+                return schedulesMono.flatMap(schedules -> {
                         var scheduleMap = schedules.stream()
                                         .collect(Collectors.toMap(ShowScheduleSnapshot::getId, s -> s));
                         var roomIds = schedules.stream().map(ShowScheduleSnapshot::getRoomId).distinct().toList();
 
-                        return cinemaClient.getRoomsBatch(roomIds).map(rooms -> {
+                        Mono<List<CinemaRoomExternalDTO>> roomsMono = roomIds.isEmpty()
+                                        ? Mono.just(List.of())
+                                        : cinemaClient.getRoomsBatch(roomIds);
+
+                        return roomsMono.map(rooms -> {
                                 var roomMap = rooms.stream()
                                                 .collect(Collectors.toMap(CinemaRoomExternalDTO::getRoomId, r -> r));
 
@@ -338,16 +347,26 @@ public class OrderService {
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
 
-                String scheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
-                List<String> seatIds = order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId)
+                String scheduleId = (order.getShowScheduleDetails() != null && !order.getShowScheduleDetails().isEmpty())
+                                ? order.getShowScheduleDetails().get(0).getShowScheduleId() : null;
+                List<String> seatIds = order.getShowScheduleDetails() == null ? List.of()
+                                : order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId)
                                 .distinct().toList();
-                List<String> productIds = order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct()
+                List<String> productIds = order.getOrderDetails() == null ? List.of()
+                                : order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct()
                                 .toList();
 
-                return Mono.zip(
-                                productClient.getSchedulesBatch(List.of(scheduleId)),
-                                cinemaClient.getSeatsByIds(seatIds),
-                                productClient.getProducts(productIds)).flatMap(tuple -> {
+                Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
+                                ? productClient.getSchedulesBatch(List.of(scheduleId))
+                                : Mono.just(List.of());
+                Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
+                                ? cinemaClient.getSeatsByIds(seatIds)
+                                : Mono.just(Map.of());
+                Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
+                                ? productClient.getProducts(productIds)
+                                : Mono.just(Map.of());
+
+                return Mono.zip(scheduleMono, seatMono, productMono).flatMap(tuple -> {
                                         ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null
                                                         : tuple.getT1().get(0);
                                         Map<String, SeatSnapshot> seatMap = tuple.getT2();
@@ -355,7 +374,11 @@ public class OrderService {
 
                                         String roomId = (schedule != null) ? schedule.getRoomId() : null;
 
-                                        return cinemaClient.getRoomsBatch(List.of(roomId)).map(rooms -> {
+                                        Mono<List<CinemaRoomExternalDTO>> roomMono = (roomId != null)
+                                                        ? cinemaClient.getRoomsBatch(List.of(roomId))
+                                                        : Mono.just(List.of());
+
+                                        return roomMono.map(rooms -> {
                                                 CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
 
                                                 return orderHistoryMapper.toDetailResponse(order, schedule, room,
@@ -372,23 +395,28 @@ public class OrderService {
         }
 
         private OrderHistoryResponse buildOrderHistoryDetail(Order order) {
-                if (order.getShowScheduleDetails() == null || order.getShowScheduleDetails().isEmpty()) {
-                        throw new BusinessException("Order does not have show schedule details");
-                }
+                List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails() == null
+                                ? List.of() : order.getShowScheduleDetails();
+                List<OrderDetail> orderDetails = order.getOrderDetails() == null
+                                ? List.of() : order.getOrderDetails();
 
-                List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
-                List<OrderDetail> orderDetails = order.getOrderDetails() == null ? List.of() : order.getOrderDetails();
-
-                String scheduleId = showScheduleDetails.get(0).getShowScheduleId();
+                String scheduleId = !showScheduleDetails.isEmpty() ? showScheduleDetails.get(0).getShowScheduleId() : null;
                 List<String> seatIds = showScheduleDetails.stream().map(ShowScheduleDetail::getSeatId)
                                 .distinct().toList();
                 List<String> productIds = orderDetails.stream().map(OrderDetail::getProductId).distinct()
                                 .toList();
 
-                return Mono.zip(
-                                productClient.getSchedulesBatch(List.of(scheduleId)),
-                                cinemaClient.getSeatsByIds(seatIds),
-                                productClient.getProducts(productIds)).flatMap(tuple -> {
+                Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
+                                ? productClient.getSchedulesBatch(List.of(scheduleId))
+                                : Mono.just(List.of());
+                Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
+                                ? cinemaClient.getSeatsByIds(seatIds)
+                                : Mono.just(Map.of());
+                Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
+                                ? productClient.getProducts(productIds)
+                                : Mono.just(Map.of());
+
+                return Mono.zip(scheduleMono, seatMono, productMono).flatMap(tuple -> {
                                         ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null
                                                         : tuple.getT1().get(0);
                                         Map<String, SeatSnapshot> seatMap = tuple.getT2();
@@ -398,7 +426,11 @@ public class OrderService {
                                         List<String> roomIds = roomId == null || roomId.isBlank() ? List.of()
                                                         : List.of(roomId);
 
-                                        return cinemaClient.getRoomsBatch(roomIds).map(rooms -> {
+                                        Mono<List<CinemaRoomExternalDTO>> roomMono = (!roomIds.isEmpty())
+                                                        ? cinemaClient.getRoomsBatch(roomIds)
+                                                        : Mono.just(List.of());
+
+                                        return roomMono.map(rooms -> {
                                                 CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
 
                                                 return orderHistoryMapper.toDetailResponse(order, schedule, room,

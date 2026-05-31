@@ -15,9 +15,11 @@ import {
 import { Trash2, X, ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 import type { AppDispatch } from "@/store";
+import { useNavigate } from "react-router-dom";
 
 const CartDrawer: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const items = useSelector(selectCartItems);
   const isOpen = useSelector(selectCartIsOpen);
   const loading = useSelector(selectCartLoading);
@@ -86,9 +88,8 @@ const CartDrawer: React.FC = () => {
       toast.info("Giỏ hàng của bạn đang trống");
       return;
     }
-    toast.success("Đặt hàng thành công! Cảm ơn bạn đã mua sắm!");
-    dispatch(clearCartThunk());
     dispatch(setCartOpen(false));
+    navigate("/cart/checkout");
   };
 
   return (

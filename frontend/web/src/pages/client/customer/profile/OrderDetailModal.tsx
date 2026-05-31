@@ -112,8 +112,12 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white shrink-0">
           <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-            <Ticket className="text-alpha-blue" size={22} />
-            Chi tiết vé phim
+            {scheduleSnapshot ? (
+              <Ticket className="text-alpha-blue" size={22} />
+            ) : (
+              <Coffee className="text-alpha-orange" size={22} />
+            )}
+            {scheduleSnapshot ? "Chi tiết vé phim" : "Chi tiết đơn hàng"}
           </h3>
 
           <Button
@@ -130,13 +134,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12 md:py-20 gap-4">
               <Loader2 className="animate-spin text-alpha-blue" size={40} />
               <p className="text-slate-500 font-medium text-sm">
-                Đang tải thông tin vé...
+                Đang tải thông tin đơn hàng...
               </p>
             </div>
           ) : isError || !order ? (
             <div className="flex flex-col items-center justify-center py-12 md:py-20 text-red-500 gap-3">
               <AlertCircle size={48} />
-              <p className="font-bold">Không thể tải thông tin vé</p>
+              <p className="font-bold">Không thể tải thông tin đơn hàng</p>
               <Button variant="outline" onClick={onClose} className="mt-2">
                 Đóng
               </Button>
@@ -147,7 +151,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               <div className="relative bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row shadow-sm">
                 {/* Movie Poster & Basic Info */}
                 <div className="w-full md:w-40 bg-slate-50 border-b md:border-b-0 md:border-r border-dashed border-slate-200 p-4 shrink-0 flex md:flex-col gap-4 md:gap-0 items-center md:items-stretch">
-                  <div className="w-20 md:w-full aspect-[2/3] rounded-sm overflow-hidden shadow-sm mb-0 md:mb-4 shrink-0">
+                  <div className="w-20 md:w-full aspect-[2/3] rounded-sm overflow-hidden shadow-sm mb-0 md:mb-4 shrink-0 flex items-center justify-center bg-white border">
                     {scheduleSnapshot?.movieThumbnailUrl ? (
                       <img
                         src={scheduleSnapshot.movieThumbnailUrl}
@@ -155,8 +159,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                        <Film size={28} className="text-slate-300" />
+                      <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                        <Coffee size={40} className="text-alpha-orange" />
                       </div>
                     )}
                   </div>
@@ -165,7 +169,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       <AgeBadge ageType={scheduleSnapshot.ageType} />
                     )}
                     <span className="text-[10px] md:text-xs font-bold text-slate-500 md:text-center">
-                      {scheduleFormatLabel}
+                      {scheduleSnapshot ? scheduleFormatLabel : "Sản phẩm & Quà tặng"}
                     </span>
                   </div>
                 </div>
@@ -190,38 +194,61 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   <div className="flex flex-col h-full">
                     <div>
                       <h4 className="text-xl font-black text-slate-800 leading-tight mb-3">
-                        {scheduleSnapshot?.movieTitle ?? "Phim không xác định"}
+                        {scheduleSnapshot?.movieTitle ?? "Đơn hàng Bắp Nước & Đồ Lưu Niệm"}
                       </h4>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 md:gap-y-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs font-medium text-slate-600">
-                            Ngày chiếu
-                          </span>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                            <Calendar size={14} className="text-alpha-blue" />
-                            {scheduleDateLabel}
+                      {scheduleSnapshot ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 md:gap-y-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium text-slate-600">
+                              Ngày chiếu
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                              <Calendar size={14} className="text-alpha-blue" />
+                              {scheduleDateLabel}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium text-slate-600">
+                              Suất chiếu
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                              <Clock size={14} className="text-alpha-blue" />
+                              {scheduleTimeRangeLabel}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1 md:col-span-2">
+                            <span className="text-xs font-medium text-slate-600">
+                              Rạp / Phòng
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                              <MapPin size={14} className="text-alpha-blue" />
+                              {order.cinemaName} - Phòng {order.roomNumber}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs font-medium text-slate-600">
-                            Suất chiếu
-                          </span>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                            <Clock size={14} className="text-alpha-blue" />
-                            {scheduleTimeRangeLabel}
+                      ) : (
+                        <div className="grid grid-cols-1 gap-y-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium text-slate-600">
+                              Địa điểm nhận bắp nước
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                              <MapPin size={14} className="text-alpha-orange" />
+                              <span>Nhận trực tiếp tại quầy bắp nước của rạp</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs font-medium text-slate-600">
+                              Thời gian mua
+                            </span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                              <Clock size={14} className="text-alpha-orange" />
+                              <span>{new Date(order.createdAt).toLocaleString("vi-VN")}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1 md:col-span-2">
-                          <span className="text-xs font-medium text-slate-600">
-                            Rạp / Phòng
-                          </span>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                            <MapPin size={14} className="text-alpha-blue" />
-                            {order.cinemaName} - Phòng {order.roomNumber}
-                          </div>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* QR Code Centered */}

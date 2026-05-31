@@ -18,18 +18,19 @@ public class OrderHistoryMapper {
                                                   Map<String, ShowScheduleSnapshot> scheduleMap,
                                                   Map<String, CinemaRoomExternalDTO> roomMap) {
 
-        // 1. Lấy thông tin suất chiếu từ Map
-        String scheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
-        ShowScheduleSnapshot schedule = scheduleMap.get(scheduleId);
+        // 1. Lấy thông tin suất chiếu từ Map (nếu có)
+        ShowScheduleSnapshot schedule = null;
+        if (order.getShowScheduleDetails() != null && !order.getShowScheduleDetails().isEmpty()) {
+            String scheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
+            schedule = scheduleMap.get(scheduleId);
+        }
 
         // 2. Tìm thông tin rạp/phòng dựa trên roomId có trong snapshot
-        // Đây chính là đoạn "đắp thịt" còn thiếu nè bro:
         String roomId = (schedule != null) ? schedule.getRoomId() : null;
         CinemaRoomExternalDTO room = (roomId != null) ? roomMap.get(roomId) : null;
 
         return baseBuilder(order)
                 .showScheduleSnapshot(schedule)
-                // Đưa thẳng dữ liệu ra ngoài root level của DTO
                 .cinemaName(room != null ? room.getCinemaName() : "N/A")
                 .roomNumber(room != null ? room.getRoomNumber() : "N/A")
                 .seats(null)      // Để null cho nhẹ khi load danh sách

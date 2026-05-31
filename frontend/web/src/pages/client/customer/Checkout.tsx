@@ -226,15 +226,15 @@ export const Checkout = () => {
         const product = productResponse?.find((item) => item.id === productId);
         return product
           ? {
-              ...product,
-              quantity,
-              subtotal: quantity * product.unitPrice,
-            }
+            ...product,
+            quantity,
+            subtotal: quantity * product.unitPrice,
+          }
           : null;
       })
       .filter(Boolean) as Array<
-      ProductItem & { quantity: number; subtotal: number }
-    >;
+        ProductItem & { quantity: number; subtotal: number }
+      >;
   }, [productResponse, quantities]);
 
   const productSubtotal = selectedProducts.reduce(
@@ -325,7 +325,7 @@ export const Checkout = () => {
       const message =
         typeof error === "object" && error !== null && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Không thể cập nhật phiên thanh toán."
+            ?.data?.message || "Không thể cập nhật phiên thanh toán."
           : "Không thể cập nhật phiên thanh toán.";
       toast.error(message);
     } finally {

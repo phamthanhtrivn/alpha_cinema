@@ -51,6 +51,7 @@ import VerifyOtp from "./pages/client/VerifyOtp";
 import ResetPassword from "./pages/client/ResetPassword";
 import { Checkout } from "./pages/client/customer/Checkout";
 import { CheckoutConfirm } from "./pages/client/customer/CheckoutConfirm";
+import { CartCheckout } from "./pages/client/customer/CartCheckout";
 import { PaymentFailed } from "./pages/client/customer/PaymentFailed";
 import { PaymentSuccess } from "./pages/client/customer/PaymentSuccess";
 import PrivacyPolicy from "./pages/client/PrivacyPolicy";
@@ -158,6 +159,7 @@ function App() {
               path="/booking/:id/checkout/:sessionId/confirm"
               element={<CheckoutConfirm />}
             />
+            <Route path="/cart/checkout" element={<CartCheckout />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/failed" element={<PaymentFailed />} />
           </Route>
