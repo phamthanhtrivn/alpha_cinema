@@ -39,14 +39,20 @@ public class CloudinaryUtil {
     }
 
     public void deleteByUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            return;
+        }
         try {
+            if (!imageUrl.contains("alpha-cinema")) {
+                // Link ảnh ngoài hoặc không nằm trong folder hệ thống, bỏ qua không xóa trên Cloudinary
+                return;
+            }
             String publicId = extractPublicId(imageUrl);
 
             cloudinary.uploader().destroy(
                     publicId,
                     ObjectUtils.emptyMap()
             );
-
         } catch (Exception e) {
             throw new BusinessException("Xóa ảnh từ Cloudinary thất bại: " + imageUrl);
         }

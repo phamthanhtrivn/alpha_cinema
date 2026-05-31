@@ -42,5 +42,13 @@ export const artistsService = {
     deleteArtist: async (id: string) => {
         const response = await apiClient.delete(`/artists/admin/${id}`);
         return response.data;
+    },
+    importArtistsExcel: async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await apiClient.post(`/artists/admin/import`, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+        return response.data;
     }
 };

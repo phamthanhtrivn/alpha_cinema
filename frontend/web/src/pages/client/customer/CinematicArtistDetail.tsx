@@ -105,7 +105,7 @@ const CinematicArtistDetail: React.FC = () => {
                   {/* Bio summary block quote */}
                   {artist.bio && (
                     <p className="text-slate-600 text-sm italic leading-relaxed text-justify border-slate-200 py-1">
-                      {artist.bio}
+                      {artist.bio.split('\n')[0]}
                     </p>
                   )}
 
@@ -174,7 +174,7 @@ const CinematicArtistDetail: React.FC = () => {
                 </div>
 
                 <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-pre-line">
-                  {artist.description || "Dữ liệu tiểu sử của nghệ sĩ này đang được cập nhật."}
+                  {artist.bio ? artist.bio.split('\n').filter((line: string) => line.trim() !== '').join('\n\n') : "Dữ liệu tiểu sử của nghệ sĩ này đang được cập nhật."}
                 </p>
               </div>
             </div>

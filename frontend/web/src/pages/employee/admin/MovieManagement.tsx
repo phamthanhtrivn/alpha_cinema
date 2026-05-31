@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Clock, Star, PlayCircle, Film } from "lucide-react";
+import { Calendar, Clock, Star, PlayCircle, Film, FileSpreadsheet } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import BaseManagementLayout from "@/components/employee/BaseManagementLayout";
 import ManagementFilterBar from "@/components/employee/ManagementFilterBar";
@@ -7,6 +7,7 @@ import ManagementTable from "@/components/employee/ManagementTable";
 import StatusBadge from "@/components/employee/StatusBadge";
 import TableActions from "@/components/employee/TableActions";
 import { movieService } from "@/services/movie.service";
+import ImportExcelModal from "@/components/employee/ImportExcelModal";
 import { ReleaseStatus, type MovieSummaryResponse, ALL_GENRES, ALL_PROJECTION, ALL_TRANSLATION, ALL_STATUS } from "@/types/movie";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ const MovieManagement: React.FC = () => {
   const [viewMovie, setViewMovie] = useState<any>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
     duration: 0,
@@ -49,6 +51,7 @@ const MovieManagement: React.FC = () => {
     supportedProjection: [] as string[],
     supportedTranslation: [] as string[],
     imageFile: null as any,
+    bannerFile: null as any,
   });
 
   const [updateForm, setUpdateForm] = useState({
@@ -68,6 +71,7 @@ const MovieManagement: React.FC = () => {
     supportedProjection: [] as string[],
     supportedTranslation: [] as string[],
     imageFile: null as any,
+    bannerFile: null as any,
   });
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -275,6 +279,7 @@ const MovieManagement: React.FC = () => {
         supportedProjection: fullMovie.supportedProjection || [],
         supportedTranslation: fullMovie.supportedTranslation || [],
         imageFile: fullMovie.thumbnailUrl || null,
+        bannerFile: fullMovie.bannerUrl || null,
       });
       setIsUpdateOpen(true);
     } catch (e) {
@@ -304,13 +309,15 @@ const MovieManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const { imageFile, ...payload } = updateForm;
+      const { imageFile, bannerFile, ...payload } = updateForm;
       const fileToUpload = imageFile instanceof File ? imageFile : undefined;
+      const bannerToUpload = bannerFile instanceof File ? bannerFile : undefined;
 
       const res = await movieService.updateMovie(
         selectedMovie.id,
         payload,
-        fileToUpload
+        fileToUpload,
+        bannerToUpload
       );
 
       if (res.success || res.id) { // Usually standard backend responds with the object or a success flag
@@ -353,8 +360,12 @@ const MovieManagement: React.FC = () => {
       setLoadingSubmit(true);
       setErrors({});
 
-      const { imageFile, ...movieData } = form;
-      const res = await movieService.createMovie(movieData, imageFile instanceof File ? imageFile : undefined);
+      const { imageFile, bannerFile, ...movieData } = form;
+      const res = await movieService.createMovie(
+        movieData,
+        imageFile instanceof File ? imageFile : undefined,
+        bannerFile instanceof File ? bannerFile : undefined
+      );
 
       if (res.success || res.id) {
         toast.success(res.message || "Thêm phim thành công");
@@ -378,6 +389,7 @@ const MovieManagement: React.FC = () => {
           supportedProjection: [],
           supportedTranslation: [],
           imageFile: null,
+          bannerFile: null,
         });
       } else {
         toast.error(res.message || "Thêm phim thất bại");
@@ -413,14 +425,22 @@ const MovieManagement: React.FC = () => {
       placeholder: "Chọn độ tuổi..."
     },
     {
-      name: "actorIds", label: "Diễn viên", type: "multi-select",
-      options: allArtists?.map((a: any) => ({ label: a.name || a.fullName || a.id, value: a.id })) || [],
-      placeholder: "Thêm diễn viên..."
+      name: "actorIds", label: "Diễn viên", type: "autocomplete-multi",
+      fetchOptions: async (query: string) => {
+        const res = await artistsService.getArtists({ name: query });
+        return (res.data?.content || []).map((a: any) => ({ label: a.fullName, value: a.id }));
+      },
+      initialLabels: selectedMovie?.actors?.map((a: any) => ({ label: a.fullName, value: a.id })) || [],
+      placeholder: "Tìm kiếm và thêm diễn viên..."
     },
     {
-      name: "directorIds", label: "Đạo diễn", type: "multi-select",
-      options: allArtists?.map((a: any) => ({ label: a.name || a.fullName || a.id, value: a.id })) || [],
-      placeholder: "Thêm đạo diễn..."
+      name: "directorIds", label: "Đạo diễn", type: "autocomplete-multi",
+      fetchOptions: async (query: string) => {
+        const res = await artistsService.getArtists({ name: query });
+        return (res.data?.content || []).map((a: any) => ({ label: a.fullName, value: a.id }));
+      },
+      initialLabels: selectedMovie?.directors?.map((a: any) => ({ label: a.fullName, value: a.id })) || [],
+      placeholder: "Tìm kiếm và thêm đạo diễn..."
     },
     {
       name: "releaseStatus", label: "Trạng thái", type: "select", options: ALL_STATUS, placeholder: "Chọn trạng thái..."
@@ -428,7 +448,8 @@ const MovieManagement: React.FC = () => {
     { name: "genre", label: "Thể loại", type: "multi-select", options: ALL_GENRES, placeholder: "Thêm thể loại..." },
     { name: "supportedProjection", label: "Loại hình chiếu", type: "multi-select", options: ALL_PROJECTION, placeholder: "Thêm loại hình chiếu..." },
     { name: "supportedTranslation", label: "Loại dịch thuật", type: "multi-select", options: ALL_TRANSLATION, placeholder: "Thêm loại dịch thuật..." },
-    { name: "imageFile", label: "Hình ảnh (Thumbnail)", type: "file", preview: true },
+    { name: "imageFile", label: "Hình ảnh (Thumbnail dọc)", type: "file", preview: true },
+    { name: "bannerFile", label: "Hình ảnh (Banner ngang)", type: "file", preview: true },
   ];
 
   return (
@@ -437,6 +458,15 @@ const MovieManagement: React.FC = () => {
       subtitle="Quản lý thư viện phim và lịch chiếu Alpha Cinema."
       onAdd={() => setIsAddOpen(true)}
       addLabel="THÊM PHIM MỚI"
+      extraActions={
+        <Button
+          onClick={() => setIsImportOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl px-6 py-7 shadow-[0_10px_20px_-5px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 group cursor-pointer flex items-center gap-2"
+        >
+          <FileSpreadsheet className="h-5 w-5" />
+          NHẬP EXCEL
+        </Button>
+      }
       totalItems={totalItems}
       currentPage={currentPage}
       pageSize={pageSize}
@@ -657,6 +687,16 @@ const MovieManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ImportExcelModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={() => refetch()}
+        title="Nhập danh sách Phim từ Excel"
+        templateUrl="/templates/mau_phim.xlsx"
+        templateName="mau_phim.xlsx"
+        onImport={(file) => movieService.importMoviesExcel(file)}
+      />
 
       <ManagementTable
         headers={[

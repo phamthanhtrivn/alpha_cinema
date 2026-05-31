@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface MovieRepository extends JpaRepository<Movie, String>, JpaSpecificationExecutor<Movie> {
+    boolean existsByTitle(String title);
+
     @Query("SELECT new com.movieticket.product.dto.admin.response.SelectionDTO(m.id, m.title) " +
             "FROM Movie m WHERE m.title LIKE %:query%")
     List<SelectionDTO> findMovieSuggestions(@Param("query") String query, Pageable pageable);
