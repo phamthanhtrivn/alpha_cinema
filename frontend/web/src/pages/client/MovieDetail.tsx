@@ -69,6 +69,14 @@ const MovieDetail = () => {
         setHeroImageIndex(0);
     }, [id, trailerVideoId, movie?.bannerUrl, movie?.thumbnailUrl]);
 
+    useEffect(() => {
+        if (availableDates?.length && window.location.hash === '#showtimes') {
+            window.requestAnimationFrame(() => {
+                document.getElementById('showtimes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }, [availableDates]);
+
     const heroImageSrc = heroImageSources[heroImageIndex] ?? movie?.thumbnailUrl ?? '';
 
     if (isLoading) {

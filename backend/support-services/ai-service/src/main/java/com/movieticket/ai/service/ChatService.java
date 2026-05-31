@@ -4,9 +4,11 @@ import com.movieticket.ai.dto.response.*;
 import com.movieticket.ai.enums.ChatRole;
 import com.movieticket.ai.repository.ChatMessageRepository;
 import com.movieticket.ai.tool.AiCustomerContext;
+import com.movieticket.ai.tool.AiChatActionContext;
 import com.movieticket.ai.tool.AlphaCinemaTool;
 import com.movieticket.ai.tool.AlphaCustomerTool;
 import com.movieticket.ai.tool.AlphaMovieTool;
+import com.movieticket.ai.tool.AlphaProductTool;
 import com.movieticket.ai.tool.AlphaTicketTool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -38,6 +40,7 @@ public class ChatService {
     private final KnowledgeService knowledgeService;
     private final ChatMemoryService chatMemoryService;
     private final AlphaMovieTool alphaMovieTool;
+    private final AlphaProductTool alphaProductTool;
     private final AlphaCinemaTool alphaCinemaTool;
     private final AlphaCustomerTool alphaCustomerTool;
     private final AlphaTicketTool alphaTicketTool;
@@ -55,7 +58,10 @@ public class ChatService {
                     .stream()
                     .content()
                     .filter(Objects::nonNull)
-                    .doOnSubscribe(subscription -> AiCustomerContext.setCustomerId(request.getCustomerId()))
+                    .doOnSubscribe(subscription -> {
+                        AiCustomerContext.setCustomerId(request.getCustomerId());
+                        AiChatActionContext.initialize();
+                    })
                     .doOnNext(answerBuilder::append)
                     .map(delta -> toServerSentEvent("delta", ChatStreamEvent.delta(delta)))
                     .concatWith(Mono.fromSupplier(() -> {
@@ -64,7 +70,11 @@ public class ChatService {
                         int nextMessageCount = chatMemoryService.countMessages(context.conversationId());
                         return toServerSentEvent(
                                 "done",
-                                ChatStreamEvent.done(shouldSuggestNewConversation(nextMessageCount), nextMessageCount)
+                                ChatStreamEvent.done(
+                                        shouldSuggestNewConversation(nextMessageCount),
+                                        nextMessageCount,
+                                        AiChatActionContext.getActions()
+                                )
                         );
                     }));
 
@@ -73,7 +83,10 @@ public class ChatService {
                             "error",
                             ChatStreamEvent.error("Minh dang khong ket noi duoc he thong. Ban thu lai sau it phut nhe.")
                     )))
-                    .doFinally(signalType -> AiCustomerContext.clear());
+                    .doFinally(signalType -> {
+                        AiCustomerContext.clear();
+                        AiChatActionContext.clear();
+                    });
         });
     }
 
@@ -106,7 +119,7 @@ public class ChatService {
                         .advisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                         .param(ChatMemory.CONVERSATION_ID, context.conversationId())
                 )
-                .tools(alphaMovieTool, alphaCinemaTool, alphaCustomerTool, alphaTicketTool)
+                .tools(alphaMovieTool, alphaCinemaTool, alphaCustomerTool, alphaTicketTool, alphaProductTool)
                 .user(request.getQuestion());
     }
 
@@ -197,6 +210,10 @@ public class ChatService {
             - Với recent orders, mặc định limit = 5.
             - Với câu hỏi giá vé/bảng giá chung, gọi getTicketPrices. Nếu người dùng hỏi một suất chiếu/ngày giờ cụ thể có những giá nào cho những loại ghế nào, gọi getShowtimeTicketPrices với showTime và projectionType của suất đó. Nếu người dùng đưa ngày/giờ suất chiếu cụ thể và nói tên loại ghế như VIP/ghế thường/ghế đôi, gọi determineTicketPrices để ticket-service tự xác định dayType. Nếu đã biết seatTypeId/projectionType/showTime, có thể gọi determineTicketPrice.
             - Không tự đoán HOLIDAY. HOLIDAY chỉ dùng khi ticket-service xác định ngày đó có trong bảng Holiday đang active. Quy tắc dayType: thứ 2-6 là WEEKDAY; thứ 7/chủ nhật trước 17:00 là WEEKEND_BEFORE_17; thứ 7/chủ nhật từ 17:00 trở đi là WEEKEND_AFTER_17.
+
+            - Voi cau hoi ve san pham, bap nuoc hoac combo dang ban, goi getProducts va chi dung du lieu tool tra ve.
+            - Voi cau hoi chi tiet mot phim, goi getMovieDetail. Giao dien se tu them nut xem lich chieu va chon ghe neu co suat phu hop; khong tu tao URL trong cau tra loi.
+            - Khi tool tra ve phim hoac suat chieu, giao dien se tu them nut xem lich chieu hoac chon ghe tu du lieu tool; khong tu tao URL trong cau tra loi.
 
             CONTEXT:
             %s
