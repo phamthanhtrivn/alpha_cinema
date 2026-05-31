@@ -61,16 +61,18 @@ public class MovieController {
 
     @PostMapping(path = "/admin",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MovieSummaryDTO>> createMovie(@Valid @RequestPart("movie") MovieCreateDTO dto,
-                                                                    @RequestPart("imageFile") MultipartFile imageFile) {
-        MovieSummaryDTO savedMovie = movieService.createMovie(dto, imageFile);
+                                                                    @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+                                                                    @RequestPart(value = "bannerFile", required = false) MultipartFile bannerFile) {
+        MovieSummaryDTO savedMovie = movieService.createMovie(dto, imageFile, bannerFile);
         return ResponseEntity.ok(ApiResponse.success(savedMovie, "Thêm phim mới thành công"));
     }
 
     @PutMapping(value = "/admin/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MovieSummaryDTO>> updateMovie(@PathVariable String id,
                                                                     @Valid @RequestPart("movie") MovieCreateDTO dto,
-                                                                    @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
-        MovieSummaryDTO savedMovie = movieService.updateMovie(id, dto, imageFile);
+                                                                    @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+                                                                    @RequestPart(value = "bannerFile", required = false) MultipartFile bannerFile) {
+        MovieSummaryDTO savedMovie = movieService.updateMovie(id, dto, imageFile, bannerFile);
         return ResponseEntity.ok(ApiResponse.success(savedMovie, "Cập nhật phim thành công"));
     }
 
@@ -83,6 +85,12 @@ public class MovieController {
 
         ApiResponse<Void> response = ApiResponse.success(null, "Cập nhật trạng thái phim thành công");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/admin/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> importMovies(@RequestPart("file") MultipartFile file) {
+        movieService.importMoviesFromExcel(file);
+        return ResponseEntity.ok(ApiResponse.success(null, "Nhập danh sách phim từ Excel thành công"));
     }
 
     @DeleteMapping("/admin/{id}")

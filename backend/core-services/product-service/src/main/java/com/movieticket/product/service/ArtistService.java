@@ -17,6 +17,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.movieticket.product.util.ExcelHelper;
+import java.io.IOException;
+import java.util.List;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,8 +42,7 @@ public class ArtistService {
 
     public Page<ArtistResDTO> searchArtists(ArtistSearchDTO dto, int page, int size) {
         Specification<Artist> spec = Specification.where(ArtistSpecification.hasName(dto.getName())
-                        .and(ArtistSpecification.hasCountry(dto.getNationality())))
-                .and(ArtistSpecification.hasType(dto.getType()));
+                        .and(ArtistSpecification.hasCountry(dto.getNationality())));
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -84,5 +86,26 @@ public class ArtistService {
         Artist artist = getById(id);
         cloudinaryUtil.deleteByUrl(artist.getAvatarUrl());
         artistRepository.delete(artist);
+    }
+
+    @Transactional
+    public void importArtistsFromExcel(MultipartFile file) {
+        if (!ExcelHelper.hasExcelFormat(file)) {
+            throw new BusinessException("Vui lòng tải lên tệp Excel đúng định dạng (.xlsx)");
+        }
+        try {
+            List<Artist> artists = ExcelHelper.parseArtistExcel(file.getInputStream());
+
+            // Kiểm tra trùng lặp nghệ sĩ đã tồn tại theo tên đầy đủ
+            for (Artist artist : artists) {
+                if (artistRepository.existsByFullName(artist.getFullName())) {
+                    throw new BusinessException("Nghệ sĩ '" + artist.getFullName() + "' đã tồn tại trong hệ thống.");
+                }
+            }
+
+            artistRepository.saveAll(artists);
+        } catch (IOException e) {
+            throw new BusinessException("Không thể đọc tệp Excel: " + e.getMessage());
+        }
     }
 }

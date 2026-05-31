@@ -1,6 +1,5 @@
 package com.movieticket.product.entity;
 
-import com.movieticket.product.enums.ArtistType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,15 +21,10 @@ public class Artist {
 
   @Column(columnDefinition = "TEXT")
   private String bio;
-  @Column(columnDefinition = "TEXT")
-  private String description;
 
   private LocalDate dateOfBirth;
   private String nationality;
   private String avatarUrl;
-
-  @Enumerated(EnumType.STRING)
-  private ArtistType type;
 
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;

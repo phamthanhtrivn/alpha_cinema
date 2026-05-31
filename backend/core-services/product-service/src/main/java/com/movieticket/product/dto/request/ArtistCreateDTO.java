@@ -1,12 +1,10 @@
 package com.movieticket.product.dto.request;
 
-import com.movieticket.product.enums.ArtistType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 
@@ -23,7 +21,4 @@ public class ArtistCreateDTO {
 
     @NotBlank(message = "Quốc gia không được để trống")
     private String nationality;
-
-    @NotBlank(message = "Hãy chọn vai trò chính của nghệ sĩ")
-    private ArtistType type;
 }

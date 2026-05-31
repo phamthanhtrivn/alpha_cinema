@@ -8,4 +8,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public interface ArtistRepository extends JpaRepository<Artist, String>, JpaSpecificationExecutor<Artist> {
+    java.util.Optional<Artist> findByFullName(String fullName);
+    boolean existsByFullName(String fullName);
 }
