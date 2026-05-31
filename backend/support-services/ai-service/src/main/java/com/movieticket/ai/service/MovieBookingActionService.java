@@ -30,7 +30,7 @@ public class MovieBookingActionService {
 
         return List.of(new ChatActionResponse(
                 "VIEW_MOVIE_SHOWTIMES",
-                "Xem lịch chiếu",
+                StringUtils.hasText(movieName) ? "Xem lịch chiếu - " + movieName : "Xem lịch chiếu",
                 "/movie/" + encodePath(movieId) + "#showtimes",
                 movieId,
                 null,

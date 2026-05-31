@@ -7,6 +7,7 @@ import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.ReleaseStatus;
 import com.movieticket.product.enums.TranslationType;
 import com.movieticket.product.util.MovieGenreResolver;
+import com.movieticket.product.util.MovieNationalityResolver;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -15,7 +16,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class MovieSpecification {
@@ -36,7 +36,8 @@ public class MovieSpecification {
 
     public static Specification<Movie> hasNationality(String nationality) {
         return (root, query, cb) -> (nationality == null || nationality.isEmpty())
-                ? null : cb.equal(root.get("nationality"), nationality);
+                ? null : cb.lower(root.get("nationality"))
+                .in(MovieNationalityResolver.resolveAliases(nationality));
     }
 
     public static Specification<Movie> hasAgeType(String ageTypeId) {
