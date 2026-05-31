@@ -14,6 +14,7 @@ import com.movieticket.product.repository.AgeTypeRepository;
 import com.movieticket.product.repository.MovieRepository;
 import com.movieticket.product.specification.MovieSpecification;
 import com.movieticket.product.util.CloudinaryUtil;
+import com.movieticket.product.util.MovieGenreResolver;
 import com.movieticket.product.util.mapper.MovieMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +57,10 @@ public class MovieService {
                 .and(MovieSpecification.hasNationality(dto.getNationality()))
                 .and(MovieSpecification.hasAgeType(dto.getAgeTypeId()))
                 .and(MovieSpecification.hasReleaseYear(dto.getReleaseYear()))
-                .and(MovieSpecification.hasGenre(dto.getGenre()))
+                .and(MovieSpecification.hasGenres(
+                        MovieGenreResolver.mergeGenres(dto.getGenre(), dto.getGenres()),
+                        dto.getGenreMatchMode()
+                ))
                 .and(MovieSpecification.hasArtist(dto.getArtistId()))
                 .and(MovieSpecification.hasProjectionType(dto.getProjectionType()))
                 .and(MovieSpecification.hasTranslationType(dto.getTranslationType()));
@@ -72,7 +76,10 @@ public class MovieService {
                 .and(MovieSpecification.hasNationality(dto.getNationality()))
                 .and(MovieSpecification.hasAgeType(dto.getAgeTypeId()))
                 .and(MovieSpecification.hasReleaseYear(dto.getReleaseYear()))
-                .and(MovieSpecification.hasGenre(dto.getGenre()))
+                .and(MovieSpecification.hasGenres(
+                        MovieGenreResolver.mergeGenres(dto.getGenre(), dto.getGenres()),
+                        dto.getGenreMatchMode()
+                ))
                 .and(MovieSpecification.hasArtist(dto.getArtistId()))
                 .and(MovieSpecification.hasProjectionType(dto.getProjectionType()))
                 .and(MovieSpecification.hasTranslationType(dto.getTranslationType()));

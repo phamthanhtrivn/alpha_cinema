@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public record ShowtimeToolResponse(
         String showScheduleId,
+        String movieId,
         String movieName,
         String cinemaName,
         String cinemaId,

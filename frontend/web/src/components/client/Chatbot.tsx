@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
+import { Armchair, Bot, CalendarDays, Loader2, MessageCircle, Send, Trash2, X } from "lucide-react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   aiChatService,
+  type AiChatAction,
   type AiChatStreamDone,
   type AiCitation,
 } from "../../services/ai-chat.service";
@@ -14,6 +16,7 @@ type ChatMessage = {
   role: "assistant" | "user";
   content: string;
   citations?: AiCitation[];
+  actions?: AiChatAction[];
   isTyping?: boolean;
 };
 
@@ -59,7 +62,8 @@ const loadStoredConversationId = (storageKey: string) => {
 };
 
 export default function Chatbot() {
-  const { user } = useSelector(selectAuth);
+  const { user, isAuthenticated } = useSelector(selectAuth);
+  const navigate = useNavigate();
   const storageScope = user?.id ? `customer:${String(user.id)}` : "guest";
   const storageKeys = useMemo(
     () => getChatStorageKeys(storageScope),
@@ -216,6 +220,7 @@ export default function Chatbot() {
           ? {
               ...message,
               isTyping: false,
+              actions: doneEvent?.actions ?? message.actions,
             }
           : message,
       ),
@@ -561,6 +566,26 @@ export default function Chatbot() {
     );
   };
 
+  const handleChatAction = (action: AiChatAction) => {
+    setIsOpen(false);
+
+    if (action.type === "SELECT_SHOWTIME_SEATS" && !isAuthenticated) {
+      const target = new URL(action.url, window.location.origin);
+      navigate("/login", {
+        state: {
+          from: {
+            pathname: target.pathname,
+            search: target.search,
+            hash: target.hash,
+          },
+        },
+      });
+      return;
+    }
+
+    navigate(action.url);
+  };
+
   return (
     <div className="fixed bottom-5 right-5 z-100 flex flex-col items-end">
       {isOpen && (
@@ -621,6 +646,29 @@ export default function Chatbot() {
                     message.role === "assistant",
                     message.isTyping,
                   )}
+                  {message.role === "assistant" &&
+                    !message.isTyping &&
+                    message.actions &&
+                    message.actions.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                        {message.actions.map((action) => (
+                          <button
+                            key={`${message.id}-${action.url}`}
+                            type="button"
+                            title={action.description}
+                            onClick={() => handleChatAction(action)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-alpha-blue/20 bg-alpha-blue/5 px-2.5 py-2 text-xs font-semibold text-alpha-blue transition hover:border-alpha-blue hover:bg-alpha-blue hover:text-white cursor-pointer"
+                          >
+                            {action.type === "SELECT_SHOWTIME_SEATS" ? (
+                              <Armchair size={14} />
+                            ) : (
+                              <CalendarDays size={14} />
+                            )}
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
               </div>
             ))}

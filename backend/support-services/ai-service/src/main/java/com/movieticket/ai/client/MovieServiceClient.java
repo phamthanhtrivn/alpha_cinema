@@ -5,6 +5,7 @@ import com.movieticket.ai.config.AiToolProperties;
 import com.movieticket.ai.dto.tool.AvailableSeatToolResponse;
 import com.movieticket.ai.dto.tool.CinemaToolResponse;
 import com.movieticket.ai.dto.tool.MovieDetailToolResponse;
+import com.movieticket.ai.dto.tool.MovieRecommendationResultToolResponse;
 import com.movieticket.ai.dto.tool.MovieRecommendationToolResponse;
 import com.movieticket.ai.dto.tool.MovieScheduleDateToolResponse;
 import com.movieticket.ai.dto.tool.MovieSearchToolResponse;
@@ -147,10 +148,12 @@ public class MovieServiceClient {
         );
     }
 
-    public List<MovieRecommendationToolResponse> recommendMovies(
+    public MovieRecommendationResultToolResponse recommendMovies(
             String movieName,
-            String genre,
+            List<String> genres,
+            String genreMatchMode,
             String ageRating,
+            String nationality,
             String projectionType,
             String translationType,
             LocalDate date,
@@ -160,26 +163,124 @@ public class MovieServiceClient {
             Integer limit
     ) {
         int effectiveLimit = safeLimit(limit, 5);
+        List<String> normalizedGenres = MoviePreferenceNormalizer.normalizeGenres(genres);
+        String normalizedMatchMode = MoviePreferenceNormalizer.normalizeGenreMatchMode(genreMatchMode, genres);
+        String normalizedNationality = MoviePreferenceNormalizer.normalizeNationality(nationality);
         LocalTime from = parseTime(timeFrom);
         LocalTime to = parseTime(timeTo);
 
+        if ((StringUtils.hasText(cinemaName) || StringUtils.hasText(timeFrom) || StringUtils.hasText(timeTo))
+                && date == null) {
+            return recommendationResult(
+                    List.of(),
+                    normalizedGenres,
+                    normalizedMatchMode,
+                    null,
+                    false,
+                    false,
+                    true,
+                    "Vui lòng cung cấp ngày muốn xem để lọc chính xác theo rạp hoặc khung giờ."
+            );
+        }
+
+        if ((StringUtils.hasText(timeFrom) && from == null) || (StringUtils.hasText(timeTo) && to == null)) {
+            return recommendationResult(
+                    List.of(),
+                    normalizedGenres,
+                    normalizedMatchMode,
+                    null,
+                    false,
+                    false,
+                    true,
+                    "Khung giờ chưa hợp lệ. Vui lòng dùng định dạng HH:mm."
+            );
+        }
+
+        List<MovieRecommendationToolResponse> recommendations = recommendMovies(
+                movieName, normalizedGenres, normalizedMatchMode, ageRating, normalizedNationality,
+                projectionType, translationType, date, cinemaName, from, to, effectiveLimit, "NOW_SHOWING"
+        );
+        if (!recommendations.isEmpty()) {
+            return recommendationResult(
+                    recommendations, normalizedGenres, normalizedMatchMode, "NOW_SHOWING",
+                    false, false, false, "Đã tìm thấy phim đang chiếu phù hợp."
+            );
+        }
+
+        recommendations = recommendMovies(
+                movieName, normalizedGenres, normalizedMatchMode, ageRating, normalizedNationality,
+                projectionType, translationType, date, cinemaName, from, to, effectiveLimit, "UPCOMING"
+        );
+        if (!recommendations.isEmpty()) {
+            return recommendationResult(
+                    recommendations, normalizedGenres, normalizedMatchMode, "UPCOMING",
+                    true, false, false, "Hiện chưa có phim đang chiếu phù hợp; đây là các phim sắp chiếu khớp sở thích."
+            );
+        }
+
+        if ("ALL".equals(normalizedMatchMode) && normalizedGenres.size() > 1) {
+            recommendations = recommendMovies(
+                    movieName, normalizedGenres, "ANY", ageRating, normalizedNationality,
+                    projectionType, translationType, date, cinemaName, from, to, effectiveLimit, "NOW_SHOWING"
+            );
+            if (!recommendations.isEmpty()) {
+                return recommendationResult(
+                        recommendations, normalizedGenres, "ANY", "NOW_SHOWING",
+                        false, true, false, "Chưa có phim khớp toàn bộ thể loại; đây là các phim đang chiếu gần nhất với sở thích."
+                );
+            }
+
+            recommendations = recommendMovies(
+                    movieName, normalizedGenres, "ANY", ageRating, normalizedNationality,
+                    projectionType, translationType, date, cinemaName, from, to, effectiveLimit, "UPCOMING"
+            );
+            if (!recommendations.isEmpty()) {
+                return recommendationResult(
+                        recommendations, normalizedGenres, "ANY", "UPCOMING",
+                        true, true, false, "Chưa có phim khớp toàn bộ thể loại; đây là các phim sắp chiếu gần nhất với sở thích."
+                );
+            }
+        }
+
+        return recommendationResult(
+                List.of(), normalizedGenres, normalizedMatchMode, null,
+                false, false, false, "Hiện chưa tìm thấy phim phù hợp với sở thích."
+        );
+    }
+
+    private List<MovieRecommendationToolResponse> recommendMovies(
+            String movieName,
+            List<String> genres,
+            String genreMatchMode,
+            String ageRating,
+            String nationality,
+            String projectionType,
+            String translationType,
+            LocalDate date,
+            String cinemaName,
+            LocalTime from,
+            LocalTime to,
+            int limit,
+            String releaseStatus
+    ) {
         return fetchMovies(
                 movieName,
-                "NOW_SHOWING",
-                genre,
+                releaseStatus,
+                genres,
+                genreMatchMode,
                 null,
-                null,
+                nationality,
                 null,
                 projectionType,
                 translationType,
-                Math.max(effectiveLimit * 2, MAX_MOVIES)
+                Math.max(limit * 2, MAX_MOVIES)
         ).stream()
                 .filter(movie -> matchesText(ageRating, movie.ageType()))
-                .map(movie -> toRecommendation(movie, date, cinemaName, from, to))
+                .map(movie -> toRecommendation(movie, releaseStatus, date, cinemaName, from, to))
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(MovieRecommendationToolResponse::avgRating,
                         Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(effectiveLimit)
+                .limit(limit)
                 .toList();
     }
 
@@ -280,6 +381,49 @@ public class MovieServiceClient {
                 .toList();
     }
 
+    public ShowtimeToolResponse getShowtime(String showScheduleId) {
+        if (!StringUtils.hasText(showScheduleId)) {
+            return null;
+        }
+
+        ApiEnvelope<ShowScheduleLookupApiResponse> response = call(
+                "getShowtime",
+                "movie-service",
+                "showScheduleId=" + showScheduleId,
+                movieWebClient.get()
+                        .uri("/api/show-schedules/{showScheduleId}", showScheduleId)
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<ApiEnvelope<ShowScheduleLookupApiResponse>>() {
+                        })
+        );
+
+        if (response == null || response.data() == null) {
+            return null;
+        }
+
+        ShowScheduleLookupApiResponse schedule = response.data();
+        String cinemaName = cinemaServiceClient.getCinemas().stream()
+                .filter(cinema -> Objects.equals(cinema.cinemaId(), schedule.cinemaId()))
+                .map(CinemaToolResponse::cinemaName)
+                .findFirst()
+                .orElse(schedule.cinemaId());
+
+        return new ShowtimeToolResponse(
+                schedule.id(),
+                schedule.movieId(),
+                schedule.movieTitle(),
+                cinemaName,
+                schedule.cinemaId(),
+                null,
+                schedule.projectionType(),
+                schedule.translationType(),
+                schedule.startTime(),
+                schedule.endTime(),
+                null,
+                null
+        );
+    }
+
     private List<MoviePublicApiResponse> searchMovies(String movieName) {
         return fetchMovies(movieName, "NOW_SHOWING", null, null, null, null, null, null,
                 StringUtils.hasText(movieName) ? 5 : MAX_MOVIES);
@@ -289,6 +433,32 @@ public class MovieServiceClient {
             String movieName,
             String releaseStatus,
             String genre,
+            String ageTypeId,
+            String nationality,
+            Integer releaseYear,
+            String projectionType,
+            String translationType,
+            int limit
+    ) {
+        return fetchMovies(
+                movieName,
+                releaseStatus,
+                StringUtils.hasText(genre) ? List.of(genre) : List.of(),
+                "ANY",
+                ageTypeId,
+                nationality,
+                releaseYear,
+                projectionType,
+                translationType,
+                limit
+        );
+    }
+
+    private List<MoviePublicApiResponse> fetchMovies(
+            String movieName,
+            String releaseStatus,
+            List<String> genres,
+            String genreMatchMode,
             String ageTypeId,
             String nationality,
             Integer releaseYear,
@@ -312,8 +482,9 @@ public class MovieServiceClient {
                             if (StringUtils.hasText(movieName)) {
                                 builder.queryParam("title", movieName);
                             }
-                            if (StringUtils.hasText(genre)) {
-                                builder.queryParam("genre", genre);
+                            if (genres != null && !genres.isEmpty()) {
+                                builder.queryParam("genres", genres.toArray());
+                                builder.queryParam("genreMatchMode", genreMatchMode);
                             }
                             if (StringUtils.hasText(ageTypeId)) {
                                 builder.queryParam("ageTypeId", ageTypeId);
@@ -391,6 +562,7 @@ public class MovieServiceClient {
 
     private MovieRecommendationToolResponse toRecommendation(
             MoviePublicApiResponse movie,
+            String releaseStatus,
             LocalDate date,
             String cinemaName,
             LocalTime from,
@@ -417,6 +589,7 @@ public class MovieServiceClient {
                 movie.premiereDate(),
                 movie.thumbnailUrl(),
                 movie.bannerUrl(),
+                releaseStatus,
                 date == null ? null : showtimes.size(),
                 showtimes.stream().limit(3).toList()
         );
@@ -498,6 +671,7 @@ public class MovieServiceClient {
         CinemaToolResponse cinema = cinemaById.get(schedule.cinemaId());
         return new ShowtimeToolResponse(
                 schedule.id(),
+                schedule.movieId(),
                 schedule.movieTitle(),
                 cinema == null ? schedule.cinemaId() : cinema.cinemaName(),
                 schedule.cinemaId(),
@@ -539,6 +713,7 @@ public class MovieServiceClient {
 
         return new ShowtimeToolResponse(
                 showtime.id(),
+                movie.id(),
                 movie.title(),
                 firstNonBlank(cinema.cinemaName(), cinema.cinemaId()),
                 cinema.cinemaId(),
@@ -560,8 +735,8 @@ public class MovieServiceClient {
         if (cinema == null || !StringUtils.hasText(cinema.cinemaName())) {
             return false;
         }
-        String normalizedName = cinemaName.trim().toLowerCase();
-        return cinema.cinemaName().toLowerCase().contains(normalizedName);
+        String normalizedName = MoviePreferenceNormalizer.normalizeSearchText(cinemaName);
+        return MoviePreferenceNormalizer.normalizeSearchText(cinema.cinemaName()).contains(normalizedName);
     }
 
     private List<String> resolveCinemaIds(String cinemaName, List<CinemaToolResponse> cinemas) {
@@ -569,10 +744,10 @@ public class MovieServiceClient {
             return List.of();
         }
 
-        String normalizedName = cinemaName.trim().toLowerCase();
+        String normalizedName = MoviePreferenceNormalizer.normalizeSearchText(cinemaName);
         return cinemas.stream()
                 .filter(cinema -> cinema.cinemaName() != null
-                        && cinema.cinemaName().toLowerCase().contains(normalizedName))
+                        && MoviePreferenceNormalizer.normalizeSearchText(cinema.cinemaName()).contains(normalizedName))
                 .map(CinemaToolResponse::cinemaId)
                 .toList();
     }
@@ -720,6 +895,7 @@ public class MovieServiceClient {
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record ShowScheduleRangeApiResponse(
             String id,
+            String movieId,
             String movieTitle,
             String cinemaId,
             String projectionType,
@@ -727,6 +903,41 @@ public class MovieServiceClient {
             LocalDateTime startTime,
             LocalDateTime endTime,
             Integer availableSeat
+    ) {
+    }
+
+    private MovieRecommendationResultToolResponse recommendationResult(
+            List<MovieRecommendationToolResponse> recommendations,
+            List<String> requestedGenres,
+            String appliedGenreMatchMode,
+            String resultReleaseStatus,
+            boolean upcomingFallback,
+            boolean genreMatchRelaxed,
+            boolean needsClarification,
+            String message
+    ) {
+        return new MovieRecommendationResultToolResponse(
+                recommendations,
+                requestedGenres,
+                appliedGenreMatchMode,
+                resultReleaseStatus,
+                upcomingFallback,
+                genreMatchRelaxed,
+                needsClarification,
+                message
+        );
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record ShowScheduleLookupApiResponse(
+            String id,
+            String movieId,
+            String movieTitle,
+            String cinemaId,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            String projectionType,
+            String translationType
     ) {
     }
 

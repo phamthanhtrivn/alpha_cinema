@@ -3,11 +3,13 @@ package com.movieticket.ai.tool;
 import com.movieticket.ai.client.MovieServiceClient;
 import com.movieticket.ai.dto.tool.AvailableSeatToolResponse;
 import com.movieticket.ai.dto.tool.MovieDetailToolResponse;
+import com.movieticket.ai.dto.tool.MovieRecommendationResultToolResponse;
 import com.movieticket.ai.dto.tool.MovieRecommendationToolResponse;
 import com.movieticket.ai.dto.tool.MovieScheduleDateToolResponse;
 import com.movieticket.ai.dto.tool.MovieSearchToolResponse;
 import com.movieticket.ai.dto.tool.MovieToolResponse;
 import com.movieticket.ai.dto.tool.ShowtimeToolResponse;
+import com.movieticket.ai.service.MovieBookingActionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -22,10 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AlphaMovieTool {
     private final MovieServiceClient movieServiceClient;
+    private final MovieBookingActionService movieBookingActionService;
 
     @Tool(description = "Lấy danh sách phim đang chiếu tại Alpha Cinema. Dùng khi người dùng hỏi hiện tại đang có phim gì hoặc Alpha Cinema có phim nào đang chiếu.")
     public List<MovieToolResponse> getNowShowingMovies() {
-        return movieServiceClient.getNowShowingMovies();
+        List<MovieToolResponse> movies = movieServiceClient.getNowShowingMovies();
+        movies.forEach(movie -> addMovieShowtimeActions(movie.movieId(), movie.movieName()));
+        return movies;
     }
 
     @Tool(description = "Tìm phim theo tên, trạng thái NOW_SHOWING/UPCOMING, thể loại, phân loại tuổi, quốc gia, năm phát hành, định dạng chiếu hoặc loại dịch thuật.")
@@ -57,7 +62,7 @@ public class AlphaMovieTool {
             @ToolParam(description = "Số phim tối đa cần lấy. Nếu người dùng không nói rõ thì dùng 12.")
             Integer limit
     ) {
-        return movieServiceClient.searchMovies(
+        List<MovieSearchToolResponse> movies = movieServiceClient.searchMovies(
                 movieName,
                 releaseStatus,
                 genre,
@@ -68,6 +73,8 @@ public class AlphaMovieTool {
                 translationType,
                 limit
         );
+        movies.forEach(movie -> addMovieShowtimeActions(movie.movieId(), movie.movieName()));
+        return movies;
     }
 
     @Tool(description = "Lấy chi tiết một phim, gồm mô tả, thời lượng, diễn viên, đạo diễn, thể loại, trailer, poster, banner, phân loại tuổi, quốc gia, năm phát hành và điểm đánh giá.")
@@ -78,7 +85,9 @@ public class AlphaMovieTool {
             @ToolParam(description = "Tên phim hoặc một phần tên phim nếu chưa biết movieId.")
             String movieName
     ) {
-        return movieServiceClient.getMovieDetail(movieId, movieName);
+        MovieDetailToolResponse movie = movieServiceClient.getMovieDetail(movieId, movieName);
+        AiChatActionContext.addAll(movieBookingActionService.buildMovieDetailActions(movie));
+        return movie;
     }
 
     @Tool(description = "Lấy các ngày có suất chiếu của một phim. Dùng khi người dùng hỏi phim này còn chiếu ngày nào hoặc có chiếu hôm nay/ngày mai/cuối tuần không.")
@@ -89,19 +98,29 @@ public class AlphaMovieTool {
             @ToolParam(description = "Tên phim hoặc một phần tên phim nếu chưa biết movieId.")
             String movieName
     ) {
-        return movieServiceClient.getAvailableShowDates(movieId, movieName);
+        MovieScheduleDateToolResponse movie = movieServiceClient.getAvailableShowDates(movieId, movieName);
+        if (movie != null) {
+            addMovieShowtimeActions(movie.movieId(), movie.movieName());
+        }
+        return movie;
     }
 
     @Tool(description = "Gợi ý phim đang chiếu theo sở thích và bối cảnh đặt vé, gồm thể loại, độ tuổi, định dạng chiếu, rạp, ngày và khoảng giờ.")
-    public List<MovieRecommendationToolResponse> recommendMovies(
+    public MovieRecommendationResultToolResponse recommendMovies(
             @ToolParam(description = "Tên phim hoặc từ khóa. Có thể để trống.")
             String movieName,
 
-            @ToolParam(description = "Thể loại mong muốn. Có thể để trống.")
-            String genre,
+            @ToolParam(description = "Danh sách thể loại mong muốn, ví dụ: Hành động, Viễn tưởng. Có thể để trống.")
+            List<String> genres,
+
+            @ToolParam(description = "Cách khớp nhiều thể loại: ANY nếu khách nói 'hoặc'; ALL nếu khách nói 'và' hoặc 'pha'. Mặc định ANY.")
+            String genreMatchMode,
 
             @ToolParam(description = "Phân loại tuổi mong muốn. Có thể để trống.")
             String ageRating,
+
+            @ToolParam(description = "Quốc gia sản xuất mong muốn, ví dụ: Việt Nam, Hàn Quốc, USA. Có thể để trống.")
+            String nationality,
 
             @ToolParam(description = "Định dạng chiếu mong muốn: 2D, 3D hoặc IMAX. Có thể để trống.")
             String projectionType,
@@ -124,18 +143,51 @@ public class AlphaMovieTool {
             @ToolParam(description = "Số phim tối đa cần gợi ý. Nếu người dùng không nói rõ thì dùng 5.")
             Integer limit
     ) {
-        return movieServiceClient.recommendMovies(
+        LocalDate parsedDate = parseOptionalDate(date);
+        if (StringUtils.hasText(date) && parsedDate == null) {
+            return new MovieRecommendationResultToolResponse(
+                    List.of(),
+                    genres == null ? List.of() : genres,
+                    genreMatchMode,
+                    null,
+                    false,
+                    false,
+                    true,
+                    "Ngày muốn xem chưa hợp lệ. Vui lòng dùng định dạng yyyy-MM-dd hoặc dd/MM/yyyy."
+            );
+        }
+
+        MovieRecommendationResultToolResponse result = movieServiceClient.recommendMovies(
                 movieName,
-                genre,
+                genres,
+                genreMatchMode,
                 ageRating,
+                nationality,
                 projectionType,
                 translationType,
-                parseOptionalDate(date),
+                parsedDate,
                 cinemaName,
                 normalizeTime(timeFrom),
                 normalizeTime(timeTo),
                 limit
         );
+        List<MovieRecommendationToolResponse> movies = result.recommendations();
+        movies.forEach(movie -> {
+            if ("UPCOMING".equals(movie.releaseStatus())) {
+                AiChatActionContext.addAll(movieBookingActionService.buildMovieDetailViewActions(
+                        movie.movieId(),
+                        movie.movieName()
+                ));
+            } else {
+                addMovieShowtimeActions(movie.movieId(), movie.movieName());
+            }
+        });
+        AiChatActionContext.replaceBookingActions(movieBookingActionService.buildShowtimeActions(
+                movies.stream()
+                        .flatMap(movie -> movie.sampleShowtimes().stream())
+                        .toList()
+        ));
+        return result;
     }
 
     @Tool(description = "Tìm suất chiếu theo một ngày cụ thể, tên phim, tên rạp và khoảng giờ.")
@@ -155,13 +207,15 @@ public class AlphaMovieTool {
             @ToolParam(description = "Giờ kết thúc tối đa, định dạng HH:mm. Có thể để trống.")
             String timeTo
     ) {
-        return movieServiceClient.searchShowtimes(
+        List<ShowtimeToolResponse> showtimes = movieServiceClient.searchShowtimes(
                 movieName,
                 cinemaName,
                 parseDate(date),
                 normalizeTime(timeFrom),
                 normalizeTime(timeTo)
         );
+        AiChatActionContext.replaceBookingActions(movieBookingActionService.buildShowtimeActions(showtimes));
+        return showtimes;
     }
 
     @Tool(description = "Tìm suất chiếu theo khoảng ngày hoặc cả tháng. Dùng khi người dùng hỏi tháng này/tháng 5/tuần này/cuối tuần/từ ngày A đến ngày B có suất chiếu gì.")
@@ -187,15 +241,17 @@ public class AlphaMovieTool {
             @ToolParam(description = "Số suất chiếu tối đa cần lấy. Nếu người dùng không nói rõ thì dùng 20.")
             Integer limit
     ) {
-        return movieServiceClient.searchShowtimesByDateRange(
+        List<ShowtimeToolResponse> showtimes = movieServiceClient.searchShowtimesByDateRange(
                 movieName,
                 cinemaName,
                 parseDate(startDate),
-                parseOptionalDate(endDate),
+                parseOptionalDateOrThrow(endDate),
                 normalizeTime(timeFrom),
                 normalizeTime(timeTo),
                 limit
         );
+        AiChatActionContext.replaceBookingActions(movieBookingActionService.buildShowtimeActions(showtimes));
+        return showtimes;
     }
 
     @Tool(description = "Lấy danh sách ghế còn trống của một suất chiếu theo showScheduleId.")
@@ -203,7 +259,15 @@ public class AlphaMovieTool {
             @ToolParam(description = "Mã suất chiếu showScheduleId lấy từ kết quả searchShowtimes hoặc searchShowtimesByDateRange.")
             String showScheduleId
     ) {
-        return movieServiceClient.getAvailableSeats(showScheduleId);
+        List<AvailableSeatToolResponse> seats = movieServiceClient.getAvailableSeats(showScheduleId);
+        AiChatActionContext.replaceBookingActions(movieBookingActionService.buildShowtimeActions(
+                movieServiceClient.getShowtime(showScheduleId)
+        ));
+        return seats;
+    }
+
+    private void addMovieShowtimeActions(String movieId, String movieName) {
+        AiChatActionContext.addAll(movieBookingActionService.buildMovieShowtimeActions(movieId, movieName));
     }
 
     private LocalDate parseDate(String date) {
@@ -211,8 +275,21 @@ public class AlphaMovieTool {
             return LocalDate.now();
         }
 
+        return parseOptionalDateOrThrow(date);
+    }
+
+    private LocalDate parseOptionalDateOrThrow(String date) {
+        if (!StringUtils.hasText(date)) {
+            return null;
+        }
+
         LocalDate parsedDate = parseOptionalDate(date);
-        return parsedDate == null ? LocalDate.now() : parsedDate;
+        if (parsedDate == null) {
+            throw new IllegalArgumentException(
+                    "Ngày chiếu chưa hợp lệ. Vui lòng dùng định dạng yyyy-MM-dd hoặc dd/MM/yyyy."
+            );
+        }
+        return parsedDate;
     }
 
     private LocalDate parseOptionalDate(String date) {

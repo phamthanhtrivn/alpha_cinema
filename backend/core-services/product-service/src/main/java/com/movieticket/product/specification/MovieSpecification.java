@@ -6,7 +6,17 @@ import com.movieticket.product.entity.Movie;
 import com.movieticket.product.enums.ProjectionType;
 import com.movieticket.product.enums.ReleaseStatus;
 import com.movieticket.product.enums.TranslationType;
+import com.movieticket.product.util.MovieGenreResolver;
+import com.movieticket.product.util.MovieNationalityResolver;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class MovieSpecification {
 
@@ -26,7 +36,8 @@ public class MovieSpecification {
 
     public static Specification<Movie> hasNationality(String nationality) {
         return (root, query, cb) -> (nationality == null || nationality.isEmpty())
-                ? null : cb.equal(root.get("nationality"), nationality);
+                ? null : cb.lower(root.get("nationality"))
+                .in(MovieNationalityResolver.resolveAliases(nationality));
     }
 
     public static Specification<Movie> hasAgeType(String ageTypeId) {
@@ -40,8 +51,50 @@ public class MovieSpecification {
 
     // Lọc theo ElementCollection (Set<String> genre)
     public static Specification<Movie> hasGenre(String genre) {
-        return (root, query, cb) -> (genre == null || genre.isEmpty())
-                ? null : cb.isMember(genre, root.get("genre"));
+        return hasGenres(genre == null ? List.of() : List.of(genre), "ANY");
+    }
+
+    public static Specification<Movie> hasGenres(List<String> genres, String matchMode) {
+        List<Set<String>> aliasGroups = genres == null
+                ? List.of()
+                : genres.stream()
+                        .map(MovieGenreResolver::resolveAliases)
+                        .filter(aliases -> !aliases.isEmpty())
+                        .toList();
+
+        return (root, query, cb) -> {
+            if (aliasGroups.isEmpty()) {
+                return null;
+            }
+
+            query.distinct(true);
+            if (!"ALL".equalsIgnoreCase(matchMode)) {
+                Set<String> aliases = aliasGroups.stream()
+                        .flatMap(Set::stream)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+                Join<Movie, String> genreJoin = root.join("genre");
+                return cb.lower(genreJoin).in(aliases);
+            }
+
+            List<Predicate> predicates = aliasGroups.stream()
+                    .map(aliases -> hasGenreAlias(root, query, cb, aliases))
+                    .toList();
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    private static Predicate hasGenreAlias(
+            Root<Movie> root,
+            jakarta.persistence.criteria.CriteriaQuery<?> query,
+            jakarta.persistence.criteria.CriteriaBuilder cb,
+            Set<String> aliases
+    ) {
+        Subquery<Integer> subquery = query.subquery(Integer.class);
+        Root<Movie> correlatedMovie = subquery.correlate(root);
+        Join<Movie, String> genreJoin = correlatedMovie.join("genre");
+        subquery.select(cb.literal(1))
+                .where(cb.lower(genreJoin).in(aliases));
+        return cb.exists(subquery);
     }
 
     // Lọc theo ElementCollection Enum (Set<ProjectionType>)
