@@ -11,6 +11,7 @@ public class ChatResponse {
     private String conversationId;
     private String answer;
     private List<CitationResponse> citations;
+    private List<ChatActionResponse> actions;
     private boolean shouldStartNewConversation;
     private Integer conversationMessageCount;
 }

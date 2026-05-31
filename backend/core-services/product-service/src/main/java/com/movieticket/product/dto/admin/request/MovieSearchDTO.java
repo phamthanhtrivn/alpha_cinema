@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -21,6 +23,8 @@ public class MovieSearchDTO {
     private Integer releaseYear;
 
     private String genre;
+    private List<String> genres;
+    private String genreMatchMode;
     private String artistId;
     private ProjectionType projectionType;
     private TranslationType translationType;

@@ -96,7 +96,7 @@ const MovieShowtimes = ({ movieId, availableDates }: MovieShowtimesProps) => {
     };
 
     return (
-        <div className="mt-12">
+        <div id="showtimes" className="mt-12 scroll-mt-20">
             <div className="border-l-4 border-alpha-blue pl-4 mb-6">
                 <h2 className="text-slate-800 font-medium text-lg">Lịch chiếu</h2>
             </div>
