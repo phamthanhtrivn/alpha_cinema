@@ -200,8 +200,20 @@ const SellProduct: React.FC = () => {
   };
 
   const updateQuantity = (id: string, delta: number) => {
+    const product = products.find((p) => p.id === id);
     setQuantities((prev) => {
-      const next = Math.max(0, (prev[id] ?? 0) + delta);
+      const currentQty = prev[id] ?? 0;
+      let next = currentQty + delta;
+
+      if (product && product.type === "SOUVENIR") {
+        const stock = product.stockQty ?? 0;
+        if (next > stock) {
+          toast.warning(`Sản phẩm ${product.name} chỉ còn ${stock} sản phẩm trong kho`);
+          next = stock;
+        }
+      }
+
+      next = Math.max(0, next);
       return { ...prev, [id]: next };
     });
   };
