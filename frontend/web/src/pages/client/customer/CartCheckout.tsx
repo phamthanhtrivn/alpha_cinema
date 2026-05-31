@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cinemaService } from "@/services/cinema.service";
 import { customerService } from "@/services/customer.service";
 import { checkoutService } from "@/services/checkout.service";
+import { promotionService } from "@/services/promotion.service";
 import {
   selectCartItems,
   selectCartTotalPrice,
@@ -51,6 +52,7 @@ export const CartCheckout: React.FC = () => {
   const [appliedVoucher, setAppliedVoucher] = useState<{ code: string; discountPercent: number } | null>(null);
   const [pointsToRedeem, setPointsToRedeem] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
 
   // Fetch User profile to get Star points
   const { data: profileResponse, isLoading: isLoadingProfile } = useQuery({
@@ -159,23 +161,66 @@ export const CartCheckout: React.FC = () => {
     return Math.min(availablePoints, Math.floor(payableBeforePoints / 1000));
   }, [availablePoints, cartTotalPrice, voucherDiscount]);
 
-  // Trigger Voucher Code application
-  const handleApplyVoucher = () => {
+  // Tự động clamp pointsToRedeem khi maxRedeemPoints thay đổi
+  // (ví dụ: sau khi áp dụng / hủy voucher) để tổng thanh toán luôn >= 0
+  useEffect(() => {
+    if (pointsToRedeem === "") return;
+    const current = Number(pointsToRedeem);
+    if (current > maxRedeemPoints) {
+      setPointsToRedeem(maxRedeemPoints > 0 ? String(maxRedeemPoints) : "");
+    }
+  }, [maxRedeemPoints]);
+
+  // Trigger Voucher Code application — gọi API thật
+  const handleApplyVoucher = async () => {
     const code = voucherCode.trim().toUpperCase();
     if (!code) {
       toast.info("Vui lòng nhập mã giảm giá");
       return;
     }
 
-    // Mock validation for premium touch
-    if (code === "ALPHACINEMA" || code === "DISCOUNT10") {
-      setAppliedVoucher({ code, discountPercent: 10 });
-      toast.success("Áp dụng mã giảm giá 10% thành công!");
-    } else if (code === "DISCOUNT20") {
-      setAppliedVoucher({ code, discountPercent: 20 });
-      toast.success("Áp dụng mã giảm giá 20% thành công!");
-    } else {
-      toast.error("Mã giảm giá không hợp lệ hoặc đã hết hạn");
+    try {
+      setIsApplyingVoucher(true);
+      const res = await promotionService.getActivePromotions();
+
+      if (!res.success || !Array.isArray(res.data)) {
+        toast.error("Không thể kiểm tra mã giảm giá. Vui lòng thử lại.");
+        return;
+      }
+
+      const now = new Date();
+      const matched = res.data.find(
+        (p: any) => p.code?.toUpperCase() === code
+      );
+
+      if (!matched) {
+        toast.error("Mã giảm giá không hợp lệ hoặc đã hết hạn");
+        return;
+      }
+
+      // Kiểm tra còn số lượng
+      if (matched.remainingQuantity !== null && matched.remainingQuantity <= 0) {
+        toast.error("Mã giảm giá đã hết lượt sử dụng");
+        return;
+      }
+
+      // Kiểm tra thời hạn
+      if (matched.endDate && new Date(matched.endDate) < now) {
+        toast.error("Mã giảm giá đã hết hạn sử dụng");
+        return;
+      }
+      if (matched.startDate && new Date(matched.startDate) > now) {
+        toast.error("Mã giảm giá chưa đến ngày áp dụng");
+        return;
+      }
+
+      setAppliedVoucher({ code: matched.code, discountPercent: matched.discountPercent });
+      toast.success(`Áp dụng mã giảm giá ${matched.discountPercent}% thành công!`);
+    } catch (error: any) {
+      console.error("Apply voucher error:", error);
+      toast.error("Đã xảy ra lỗi khi kiểm tra mã giảm giá");
+    } finally {
+      setIsApplyingVoucher(false);
     }
   };
 
@@ -407,14 +452,19 @@ export const CartCheckout: React.FC = () => {
                       <Input
                         value={voucherCode}
                         onChange={(e) => setVoucherCode(e.target.value)}
-                        placeholder="Nhập mã voucher (Ví dụ: ALPHACINEMA, DISCOUNT20)"
+                        placeholder="Nhập mã voucher của bạn..."
                         className="rounded-xl border-slate-200 bg-white h-11 focus:ring-alpha-blue focus:border-alpha-blue transition-all"
                       />
                       <Button
                         onClick={handleApplyVoucher}
-                        className="bg-alpha-orange text-white font-bold h-11 px-5 rounded-xl cursor-pointer hover:bg-orange-600 active:scale-95 transition-all shadow-sm"
+                        disabled={isApplyingVoucher}
+                        className="bg-alpha-orange text-white font-bold h-11 px-5 rounded-xl cursor-pointer hover:bg-orange-600 active:scale-95 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        Áp dụng
+                        {isApplyingVoucher ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          "Áp dụng"
+                        )}
                       </Button>
                     </div>
                   )}
