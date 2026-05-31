@@ -143,6 +143,20 @@ public class AlphaMovieTool {
             @ToolParam(description = "Số phim tối đa cần gợi ý. Nếu người dùng không nói rõ thì dùng 5.")
             Integer limit
     ) {
+        LocalDate parsedDate = parseOptionalDate(date);
+        if (StringUtils.hasText(date) && parsedDate == null) {
+            return new MovieRecommendationResultToolResponse(
+                    List.of(),
+                    genres == null ? List.of() : genres,
+                    genreMatchMode,
+                    null,
+                    false,
+                    false,
+                    true,
+                    "Ngày muốn xem chưa hợp lệ. Vui lòng dùng định dạng yyyy-MM-dd hoặc dd/MM/yyyy."
+            );
+        }
+
         MovieRecommendationResultToolResponse result = movieServiceClient.recommendMovies(
                 movieName,
                 genres,
@@ -151,7 +165,7 @@ public class AlphaMovieTool {
                 nationality,
                 projectionType,
                 translationType,
-                parseOptionalDate(date),
+                parsedDate,
                 cinemaName,
                 normalizeTime(timeFrom),
                 normalizeTime(timeTo),
@@ -231,7 +245,7 @@ public class AlphaMovieTool {
                 movieName,
                 cinemaName,
                 parseDate(startDate),
-                parseOptionalDate(endDate),
+                parseOptionalDateOrThrow(endDate),
                 normalizeTime(timeFrom),
                 normalizeTime(timeTo),
                 limit
@@ -261,8 +275,21 @@ public class AlphaMovieTool {
             return LocalDate.now();
         }
 
+        return parseOptionalDateOrThrow(date);
+    }
+
+    private LocalDate parseOptionalDateOrThrow(String date) {
+        if (!StringUtils.hasText(date)) {
+            return null;
+        }
+
         LocalDate parsedDate = parseOptionalDate(date);
-        return parsedDate == null ? LocalDate.now() : parsedDate;
+        if (parsedDate == null) {
+            throw new IllegalArgumentException(
+                    "Ngày chiếu chưa hợp lệ. Vui lòng dùng định dạng yyyy-MM-dd hoặc dd/MM/yyyy."
+            );
+        }
+        return parsedDate;
     }
 
     private LocalDate parseOptionalDate(String date) {

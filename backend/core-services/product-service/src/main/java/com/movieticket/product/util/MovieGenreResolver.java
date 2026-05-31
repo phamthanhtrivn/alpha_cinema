@@ -3,7 +3,6 @@ package com.movieticket.product.util;
 import org.springframework.util.StringUtils;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;

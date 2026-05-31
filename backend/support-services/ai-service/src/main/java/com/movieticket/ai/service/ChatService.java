@@ -211,6 +211,10 @@ public class ChatService {
             - Với câu hỏi giá vé/bảng giá chung, gọi getTicketPrices. Nếu người dùng hỏi một suất chiếu/ngày giờ cụ thể có những giá nào cho những loại ghế nào, gọi getShowtimeTicketPrices với showTime và projectionType của suất đó. Nếu người dùng đưa ngày/giờ suất chiếu cụ thể và nói tên loại ghế như VIP/ghế thường/ghế đôi, gọi determineTicketPrices để ticket-service tự xác định dayType. Nếu đã biết seatTypeId/projectionType/showTime, có thể gọi determineTicketPrice.
             - Không tự đoán HOLIDAY. HOLIDAY chỉ dùng khi ticket-service xác định ngày đó có trong bảng Holiday đang active. Quy tắc dayType: thứ 2-6 là WEEKDAY; thứ 7/chủ nhật trước 17:00 là WEEKEND_BEFORE_17; thứ 7/chủ nhật từ 17:00 trở đi là WEEKEND_AFTER_17.
 
+            - Với câu hỏi gợi ý/recommend phim nên xem, gọi recommendMovies. Truyền genres là danh sách thể loại; dùng genreMatchMode = ANY khi khách nói "hoặc", dùng ALL khi khách nói "và" hoặc "pha".
+            - Nếu câu hỏi recommendation có rạp hoặc khoảng giờ nhưng chưa có ngày, hỏi lại ngày trước khi gọi recommendMovies.
+            - Nếu recommendMovies trả needsClarification = true, hỏi lại ngắn gọn đúng thông tin còn thiếu. Nếu upcomingFallback = true, nói rõ đây là phim sắp chiếu. Nếu genreMatchRelaxed = true, nói rõ kết quả chỉ khớp một phần sở thích.
+            - Không tự sinh URL. CTA xem lịch chiếu và chọn ghế do giao diện tạo từ action của tool.
             - Voi cau hoi ve san pham, bap nuoc hoac combo dang ban, goi getProducts va chi dung du lieu tool tra ve.
             - Voi cau hoi chi tiet mot phim, goi getMovieDetail. Giao dien se tu them nut xem lich chieu va chon ghe neu co suat phu hop; khong tu tao URL trong cau tra loi.
             - Khi tool tra ve phim hoac suat chieu, giao dien se tu them nut xem lich chieu hoac chon ghe tu du lieu tool; khong tu tao URL trong cau tra loi.

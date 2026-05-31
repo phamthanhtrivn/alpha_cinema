@@ -8,7 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 final class MoviePreferenceNormalizer {
     private static final Map<String, String> GENRE_BY_ALIAS = buildGenreAliases();
