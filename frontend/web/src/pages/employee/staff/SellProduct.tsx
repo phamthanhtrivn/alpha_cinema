@@ -251,22 +251,20 @@ const SellProduct: React.FC = () => {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-all sm:rounded-2xl sm:px-4 sm:py-3 ${
-                      isActive
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-all sm:rounded-2xl sm:px-4 sm:py-3 ${isActive
                         ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm ring-1 ring-orange-100"
                         : isDone
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                           : "border-slate-200 bg-white text-slate-400"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs ${
-                        isActive
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs ${isActive
                           ? "bg-orange-500 text-white"
                           : isDone
                             ? "bg-emerald-500 text-white"
                             : "bg-slate-100 text-slate-500"
-                      }`}
+                        }`}
                     >
                       {index + 1}
                     </div>

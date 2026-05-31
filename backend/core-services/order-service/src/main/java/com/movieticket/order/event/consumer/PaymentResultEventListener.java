@@ -13,6 +13,9 @@ import com.movieticket.order.model.cache.CheckoutSessionCache;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.service.OrderDetailService;
 import com.movieticket.order.service.ShowScheduleDetailService;
+import com.movieticket.order.service.CheckoutPartnerGateway;
+import com.movieticket.order.dto.client.CustomerInformation;
+import com.movieticket.order.entity.OrderDetail;
 import com.movieticket.order.util.LoyalPointUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -40,6 +43,7 @@ public class PaymentResultEventListener {
     private final ShowScheduleDetailService showScheduleDetailService;
     private final OrderDetailService orderDetailService;
     private final SeatLockEventProducer seatLockEventProducer;
+    private final CheckoutPartnerGateway checkoutPartnerGateway;
 
     @Transactional
     @KafkaListener(
@@ -66,7 +70,12 @@ public class PaymentResultEventListener {
             orderRepository.save(order);
             publishSeatEvent(showScheduleDetails, "SOLD", "PAYMENT", cache == null ? null : cache.getSessionId());
 
-            UserLoyaltyUpdateEvent loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
+            UserLoyaltyUpdateEvent loyaltyEvent;
+            if (cache != null) {
+                loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(cache);
+            } else {
+                loyaltyEvent = LoyalPointUtil.buildUserLoyaltyEventProducer(order);
+            }
             if (loyaltyEvent != null) {
                 userLoyaltyEventProducer.publish(loyaltyEvent);
             }
@@ -152,28 +161,92 @@ public class PaymentResultEventListener {
                         : seat.getSeatNumber())
                 .toList();
 
-        List<OrderProductItem> productItems = cache == null || cache.getItems() == null
-                ? Collections.emptyList()
-                : cache.getItems().stream()
-                .map(item -> OrderProductItem.builder()
-                        .productId(item.getProductId())
-                        .productName(item.getProductName())
-                        .quantity(item.getQuantity())
-                        .price(item.getUnitPrice())
-                        .subTotal(item.getSubtotal())
-                        .build())
-                .toList();
+        List<OrderProductItem> productItems;
+        String customerName = null;
+        String customerEmail = null;
+        String cinemaName = null;
+        String cinemaAddress = null;
+
+        if (cache != null) {
+            customerName = cache.getCustomerName();
+            customerEmail = cache.getCustomerEmail();
+            cinemaName = cache.getCinemaName();
+            cinemaAddress = cache.getCinemaAddress();
+            productItems = cache.getItems() == null
+                    ? Collections.emptyList()
+                    : cache.getItems().stream()
+                    .map(item -> OrderProductItem.builder()
+                            .productId(item.getProductId())
+                            .productName(item.getProductName())
+                            .quantity(item.getQuantity())
+                            .price(item.getUnitPrice())
+                            .subTotal(item.getSubtotal())
+                            .build())
+                    .toList();
+        } else {
+            // For product-only orders, dynamically lookup customer email/name, cinema and products details
+            try {
+                CustomerInformation customer = checkoutPartnerGateway.getCustomerInformation(order.getCustomerId());
+                if (customer != null) {
+                    customerName = customer.getFullName();
+                    customerEmail = customer.getEmail();
+                }
+            } catch (Exception ex) {
+                customerName = "Khách hàng";
+            }
+
+            if (order.getCinemaId() != null && !order.getCinemaId().isBlank()) {
+                try {
+                    com.movieticket.order.dto.client.CinemaSnapshot cinema = checkoutPartnerGateway.getCinemaSnapshot(order.getCinemaId());
+                    if (cinema != null) {
+                        cinemaName = cinema.getName();
+                        cinemaAddress = cinema.getAddress();
+                    }
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+
+            List<OrderDetail> details = order.getOrderDetails();
+            if (details != null && !details.isEmpty()) {
+                List<String> productIds = details.stream().map(OrderDetail::getProductId).toList();
+                try {
+                    Map<String, com.movieticket.order.model.cache.ProductCache> productsById = checkoutPartnerGateway.getProducts(productIds);
+                    productItems = details.stream().map(detail -> {
+                        com.movieticket.order.model.cache.ProductCache prod = productsById != null ? productsById.get(detail.getProductId()) : null;
+                        String name = prod != null ? prod.getName() : "Sản phẩm";
+                        return OrderProductItem.builder()
+                                .productId(detail.getProductId())
+                                .productName(name)
+                                .quantity(detail.getQuantity())
+                                .price(detail.getPrice())
+                                .subTotal(detail.getSubTotal())
+                                .build();
+                    }).toList();
+                } catch (Exception ex) {
+                    productItems = details.stream().map(detail -> OrderProductItem.builder()
+                            .productId(detail.getProductId())
+                            .productName("Sản phẩm")
+                            .quantity(detail.getQuantity())
+                            .price(detail.getPrice())
+                            .subTotal(detail.getSubTotal())
+                            .build()).toList();
+                }
+            } else {
+                productItems = Collections.emptyList();
+            }
+        }
 
         return OrderSuccessfulEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .sessionId(cache == null ? null : cache.getSessionId())
                 .orderId(order.getId())
                 .customerId(order.getCustomerId())
-                .customerName(cache == null ? null : cache.getCustomerName())
-                .customerEmail(cache == null ? null : cache.getCustomerEmail())
+                .customerName(customerName)
+                .customerEmail(customerEmail)
                 .cinemaId(order.getCinemaId())
-                .cinemaName(cache == null ? null : cache.getCinemaName())
-                .cinemaAddress(cache == null ? null : cache.getCinemaAddress())
+                .cinemaName(cinemaName)
+                .cinemaAddress(cinemaAddress)
                 .roomId(cache == null ? null : cache.getRoomId())
                 .roomNumber(cache == null ? null : cache.getRoomNumber())
                 .showScheduleId(cache == null ? null : cache.getShowScheduleId())

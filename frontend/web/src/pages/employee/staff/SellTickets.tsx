@@ -97,7 +97,7 @@ const SellTickets: React.FC = () => {
   const [posOpen, setPosOpen] = useState(false);
   const [cinema, setCianema] = useState<{ address?: string; phone?: string } | undefined>(undefined);
 
-  const cinemaId  = useSelector((state : any) => state?.auth.cinemaId);
+  const cinemaId = useSelector((state: any) => state?.auth.cinemaId);
 
   const fetchMovies = async () => {
     try {
@@ -506,9 +506,9 @@ const SellTickets: React.FC = () => {
 
   const selectedScheduleTime = selectedSchedule
     ? new Date(selectedSchedule.startTime).toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "";
 
   const selectedScheduleDate = selectedSchedule
@@ -564,22 +564,20 @@ const SellTickets: React.FC = () => {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-all sm:rounded-2xl sm:px-4 sm:py-3 ${
-                      isActive
-                        ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm ring-1 ring-orange-100"
-                        : isDone
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-slate-200 bg-white text-slate-400"
-                    }`}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-all sm:rounded-2xl sm:px-4 sm:py-3 ${isActive
+                      ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm ring-1 ring-orange-100"
+                      : isDone
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-white text-slate-400"
+                      }`}
                   >
                     <div
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs ${
-                        isActive
-                          ? "bg-orange-500 text-white"
-                          : isDone
-                            ? "bg-emerald-500 text-white"
-                            : "bg-slate-100 text-slate-500"
-                      }`}
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs ${isActive
+                        ? "bg-orange-500 text-white"
+                        : isDone
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-100 text-slate-500"
+                        }`}
                     >
                       {index + 1}
                     </div>
@@ -661,11 +659,10 @@ const SellTickets: React.FC = () => {
                               setSelectedScheduleId(schedule.id);
                               setSelectedSeats([]);
                             }}
-                            className={`rounded-lg border px-4 py-2 text-sm font-bold transition ${
-                              selectedScheduleId === schedule.id
-                                ? "border-blue-600 bg-blue-600 text-white"
-                                : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"
-                            }`}
+                            className={`rounded-lg border px-4 py-2 text-sm font-bold transition ${selectedScheduleId === schedule.id
+                              ? "border-blue-600 bg-blue-600 text-white"
+                              : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"
+                              }`}
                           >
                             {timeString}
                           </button>

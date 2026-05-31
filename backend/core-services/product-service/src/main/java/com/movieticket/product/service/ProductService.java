@@ -3,7 +3,9 @@ package com.movieticket.product.service;
 import com.movieticket.product.dto.CreateProductDto;
 import com.movieticket.product.dto.admin.request.SearchProductDto;
 import com.movieticket.product.dto.admin.request.UpdateProductDto;
+import com.movieticket.product.dto.response.ProductListDTO;
 import com.movieticket.product.entity.Product;
+import com.movieticket.product.enums.ProductType;
 import com.movieticket.product.exception.BusinessException;
 import com.movieticket.product.repository.ProductRepository;
 import com.movieticket.product.util.CloudinaryUtil;
@@ -14,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
     private final CloudinaryUtil cloudinaryUtil;
     private final ProductRepository productRepository;
@@ -29,6 +35,18 @@ public class ProductService {
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    public List<ProductListDTO> getSouvenirProducts() {
+        return productRepository.findByTypeAndStatus(ProductType.SOUVENIR, true).stream()
+                .map(product -> ProductListDTO.builder()
+                        .id(product.getId())
+                        .name(product.getName())
+                        .unitPrice(product.getUnitPrice())
+                        .pictureUrl(product.getPictureUrl())
+                        .stockQty(product.getStockQty())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public Page<Product> searchProducts(Pageable pageable, SearchProductDto searchProductDto) {
@@ -88,6 +106,7 @@ public class ProductService {
         product.setUnitPrice(createProductDto.getUnitPrice());
         product.setDescription(createProductDto.getDescription());
         product.setType(createProductDto.getType());
+        product.setStockQty(createProductDto.getStockQty());
         product.setPictureUrl(pictureUrl);
         product.setStatus(true);
 
@@ -117,8 +136,25 @@ public class ProductService {
         product.setUnitPrice(updateProductDto.getUnitPrice());
         product.setDescription(updateProductDto.getDescription());
         product.setType(updateProductDto.getType() );
+        product.setStockQty(updateProductDto.getStockQty());
         product.setStatus(updateProductDto.isStatus());
 
         return productRepository.save(product);
+    }
+
+    @Transactional
+    public void deductProductStock(List<com.movieticket.product.event.model.OrderProductItem> items) {
+        for (com.movieticket.product.event.model.OrderProductItem item : items) {
+            Product product = productRepository.findById(item.getProductId()).orElse(null);
+            if (product != null && product.getStockQty() != null) {
+                int currentStock = product.getStockQty();
+                int deductQty = item.getQuantity();
+                int newStock = Math.max(0, currentStock - deductQty);
+                product.setStockQty(newStock);
+                productRepository.save(product);
+                log.info("Đã trừ tồn kho sản phẩm ID: {}, Tên: {}. Tồn cũ: {}, Số lượng trừ: {}, Tồn mới: {}", 
+                        product.getId(), product.getName(), currentStock, deductQty, newStock);
+            }
+        }
     }
 }

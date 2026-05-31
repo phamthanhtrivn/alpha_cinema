@@ -1,6 +1,7 @@
 export const ProductType = {
   SINGLE: "SINGLE",
   COMBO: "COMBO",
+  SOUVENIR: "SOUVENIR",
 } as const;
 
 export type ProductType = (typeof ProductType)[keyof typeof ProductType];
@@ -12,6 +13,7 @@ export interface Product {
   pictureUrl: string;
   description: string;
   type: ProductType;
+  stockQty?: number | null;
   createdAt: string;
   updatedAt: string;
   status: boolean;

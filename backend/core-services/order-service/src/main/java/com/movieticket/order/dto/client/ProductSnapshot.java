@@ -18,4 +18,5 @@ public class ProductSnapshot {
     private String pictureUrl;
     private double unitPrice;
     private boolean status;
+    private Integer stockQty;
 }

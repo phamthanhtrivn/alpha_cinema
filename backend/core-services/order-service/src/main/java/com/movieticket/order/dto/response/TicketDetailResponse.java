@@ -23,6 +23,7 @@ public class TicketDetailResponse {
     private double totalPayment;
     private String customerName;
     private String showScheduleId;
+    private String status;
     private Movie movie;
     private List<Seat> seats;
     private List<Product> products;

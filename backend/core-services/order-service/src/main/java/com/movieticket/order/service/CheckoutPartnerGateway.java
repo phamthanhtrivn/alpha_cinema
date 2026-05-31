@@ -277,6 +277,7 @@ public class CheckoutPartnerGateway {
                         .imageUrl(product.getPictureUrl())
                         .unitPrice(product.getUnitPrice())
                         .status(product.isStatus())
+                        .stockQty(product.getStockQty())
                         .build());
             }
             return productCacheById;
