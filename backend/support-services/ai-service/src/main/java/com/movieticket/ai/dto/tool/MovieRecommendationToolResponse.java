@@ -11,6 +11,7 @@ public record MovieRecommendationToolResponse(
         LocalDate premiereDate,
         String thumbnailUrl,
         String bannerUrl,
+        String releaseStatus,
         Integer matchedShowtimeCount,
         List<ShowtimeToolResponse> sampleShowtimes
 ) {

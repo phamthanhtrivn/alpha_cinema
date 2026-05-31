@@ -13,6 +13,7 @@ public class ChatStreamEvent {
     private String delta;
     private String message;
     private List<CitationResponse> citations;
+    private List<ChatActionResponse> actions;
     private Boolean shouldStartNewConversation;
     private Integer conversationMessageCount;
 
@@ -31,11 +32,16 @@ public class ChatStreamEvent {
                 .build();
     }
 
-    public static ChatStreamEvent done(boolean shouldStartNewConversation, int conversationMessageCount) {
+    public static ChatStreamEvent done(
+            boolean shouldStartNewConversation,
+            int conversationMessageCount,
+            List<ChatActionResponse> actions
+    ) {
         return ChatStreamEvent.builder()
                 .type("done")
                 .shouldStartNewConversation(shouldStartNewConversation)
                 .conversationMessageCount(conversationMessageCount)
+                .actions(actions)
                 .build();
     }
 

@@ -14,6 +14,16 @@ export type AiChatResponse = {
   citations: AiCitation[];
   shouldStartNewConversation: boolean;
   conversationMessageCount: number;
+  actions: AiChatAction[];
+};
+
+export type AiChatAction = {
+  type: "VIEW_MOVIE_SHOWTIMES" | "VIEW_MOVIE_DETAIL" | "SELECT_SHOWTIME_SEATS";
+  label: string;
+  url: string;
+  movieId?: string;
+  showScheduleId?: string;
+  description?: string;
 };
 
 export type AiChatHistoryMessage = {
@@ -39,6 +49,7 @@ export type AiChatStreamMeta = {
 export type AiChatStreamDone = {
   shouldStartNewConversation: boolean;
   conversationMessageCount: number;
+  actions: AiChatAction[];
 };
 
 export type AiChatStreamCallbacks = {
@@ -100,6 +111,7 @@ const dispatchStreamEvent = (
     callbacks.onDone?.({
       shouldStartNewConversation: Boolean(payload.shouldStartNewConversation),
       conversationMessageCount: payload.conversationMessageCount ?? 0,
+      actions: payload.actions ?? [],
     });
     return;
   }
