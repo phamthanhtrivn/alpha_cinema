@@ -30,433 +30,496 @@ import java.time.LocalDateTime;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+
 import com.movieticket.order.client.CinemaClient;
 import com.movieticket.order.client.ProductClient;
 import com.movieticket.order.dto.CinemaRoomExternalDTO;
 import com.movieticket.order.dto.client.*;
 import com.movieticket.order.util.mapper.OrderHistoryMapper;
+
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 
-        private final OrderRepository orderRepository;
-        private final ShowScheduleDetailRepository showScheduleDetailRepository;
-        private final OrderDetailRepository orderDataiReposioty;
-        private final PaymentByCashRequestedEventProducer paymentByCashRequestedEventProducer;
-        private final CheckoutPartnerGateway checkoutPartnerGateway;
-        private final ShowScheduleDetailService showScheduleDetailService;
-        private final WebClient.Builder webClientBuilder;
-        private final ProductClient productClient;
-        private final CinemaClient cinemaClient;
-        private final OrderHistoryMapper orderHistoryMapper;
+    private final OrderRepository orderRepository;
+    private final ShowScheduleDetailRepository showScheduleDetailRepository;
+    private final OrderDetailRepository orderDataiReposioty;
+    private final PaymentByCashRequestedEventProducer paymentByCashRequestedEventProducer;
+    private final CheckoutPartnerGateway checkoutPartnerGateway;
+    private final ShowScheduleDetailService showScheduleDetailService;
+    private final WebClient.Builder webClientBuilder;
+    private final ProductClient productClient;
+    private final CinemaClient cinemaClient;
+    private final OrderHistoryMapper orderHistoryMapper;
 
-        public String paymentByCash(String userID, String cinemaID, CheckoutEmployeeRequest request) {
-                Order newOrder = createAndSaveFullOrder(userID, cinemaID, request,
-                                com.movieticket.order.entity.ShowSeatType.CHECKED_IN);
-                System.out.println("Order created with ID: " + newOrder.getId());
+    public String paymentByCash(String userID, String cinemaID, CheckoutEmployeeRequest request) {
+        Order newOrder = createAndSaveFullOrder(userID, cinemaID, request,
+                com.movieticket.order.entity.ShowSeatType.CHECKED_IN);
+        System.out.println("Order created with ID: " + newOrder.getId());
 
-                paymentByCashRequestedEventProducer.publish(PaymentByCashRequestEvent.builder()
-                                .eventId(java.util.UUID.randomUUID().toString())
-                                .orderId(newOrder.getId())
-                                .totalPayment(request.getTotalPayment())
-                                .occurredAt(LocalDateTime.now())
-                                .build());
+        paymentByCashRequestedEventProducer.publish(PaymentByCashRequestEvent.builder()
+                .eventId(java.util.UUID.randomUUID().toString())
+                .orderId(newOrder.getId())
+                .totalPayment(request.getTotalPayment())
+                .occurredAt(LocalDateTime.now())
+                .build());
 
-                return newOrder.getId();
+        return newOrder.getId();
+    }
+
+    public PaymentInitiateSnapshot paymentByMomo(String userID, String cinemaID, CheckoutEmployeeRequest request,
+                                                 String userIp) {
+        Order newOrder = createAndSaveFullOrder(userID, cinemaID, request,
+                com.movieticket.order.entity.ShowSeatType.LOCKED);
+
+        try {
+            return checkoutPartnerGateway.initiatePayment(
+                    newOrder.getId(),
+                    "MOMO",
+                    request.getTotalPayment(),
+                    null,
+                    userIp);
+        } catch (Exception ex) {
+            deleteOrder(newOrder.getId());
+            showScheduleDetailService.unlockSeats(
+                    request.getShowScheduleId(),
+                    request.getSeats() == null ? List.of()
+                            : request.getSeats().stream()
+                            .map(SeatDTO::getSeatId)
+                            .toList());
+            throw ex;
+        }
+    }
+
+    @Transactional
+    public Order createAndSaveFullOrder(String userID, String cinemaID, CheckoutEmployeeRequest request,
+                                        com.movieticket.order.entity.ShowSeatType showSeatType) {
+        Order order = Order.builder()
+                .cinemaId(cinemaID)
+                .employeeId(userID)
+                .totalPayment(request.getTotalPayment())
+                .totalPrice(request.getTotalPayment())
+                .status(OrderStatus.PENDING_PAYMENT)
+                .build();
+        Order savedOrder = orderRepository.save(order);
+        savedOrder.setQrCode(savedOrder.getId());
+        final Order newOrder = orderRepository.save(savedOrder);
+
+        List<OrderDetail> orderDetailList = request.getProducts().stream().map(product -> OrderDetail.builder()
+                .order(newOrder)
+                .quantity(product.getQuantity())
+                .price(product.getPrice())
+                .productId(product.getProductId())
+                .build()).toList();
+        orderDataiReposioty.saveAll(orderDetailList);
+
+        List<ShowScheduleDetail> showScheduleDetails = request.getSeats().stream()
+                .map(seat -> ShowScheduleDetail.builder()
+                        .order(newOrder)
+                        .seatId(seat.getSeatId())
+                        .finalPrice(seat.getFinalPrice())
+                        .ticketPriceId(seat.getTicketPriceId())
+                        .showSeatType(showSeatType)
+                        .showScheduleId(request.getShowScheduleId())
+                        .build())
+                .toList();
+        showScheduleDetailRepository.saveAll(showScheduleDetails);
+
+        return newOrder;
+    }
+
+    @Transactional
+    public void updateOrderStatus(String orderId, OrderStatus status) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        order.setStatus(status);
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void deleteOrder(String orderId) {
+        orderDataiReposioty.deleteByOrderId(orderId);
+        showScheduleDetailRepository.deleteByOrderId(orderId);
+        orderRepository.deleteById(orderId);
+    }
+
+    public TicketDetailResponse getTicketDetailByOrderId(String orderId, String cinemaId) {
+
+        Order order = orderRepository
+                .findByIdAndCinemaIdAndStatusIn(orderId, cinemaId,
+                        List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
+                .orElseThrow(() -> new BusinessException(
+                        "Không tìm thấy đơn hàng với ID này hoặc đơn hàng không hợp lệ!"));
+
+        TicketDetailResponse ticketDetailResponse = new TicketDetailResponse();
+        ticketDetailResponse.setOrderId(order.getId());
+        ticketDetailResponse.setTotalPayment(order.getTotalPayment());
+        ticketDetailResponse.setPointDiscount(order.getPointDiscount());
+        ticketDetailResponse.setPromotionDiscount(order.getPromotionDiscount());
+        ticketDetailResponse.setTotalPrice(order.getTotalPrice());
+        ticketDetailResponse.setStatus(order.getStatus().name());
+
+        ticketDetailResponse.setCustomerName("Khách hàng");
+
+        if (order.getShowScheduleDetails() == null || order.getShowScheduleDetails().isEmpty()) {
+            List<String> productIds = order.getOrderDetails() == null ? List.of()
+                    : order.getOrderDetails().stream()
+                    .map(OrderDetail::getProductId)
+                    .toList();
+
+            Map<String, ProductSnapshot> productMap = productIds.isEmpty() ? Map.of()
+                    : productClient.getProducts(productIds).block();
+
+            List<TicketDetailResponse.Product> products = order.getOrderDetails() == null ? List.of()
+                    : order.getOrderDetails().stream().map(item -> {
+                ProductSnapshot prod = productMap != null ? productMap.get(item.getProductId()) : null;
+                String name = prod != null ? prod.getName() : "Sản phẩm";
+                String url = prod != null ? prod.getPictureUrl() : "";
+                return TicketDetailResponse.Product.builder()
+                        .urlProduct(url)
+                        .nameProduct(name)
+                        .price(item.getPrice())
+                        .quantity(item.getQuantity())
+                        .totalPrice(item.getSubTotal())
+                        .build();
+            }).toList();
+
+            ticketDetailResponse.setMovie(null);
+            ticketDetailResponse.setSeats(List.of());
+            ticketDetailResponse.setProducts(products);
+
+            return ticketDetailResponse;
+        }
+        String showScheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
+        ticketDetailResponse.setShowScheduleId(showScheduleId);
+
+        List<String> productIds = order.getOrderDetails() == null ? List.of()
+                : order.getOrderDetails().stream()
+                .map(OrderDetail::getProductId)
+                .toList();
+
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            productIds = List.of();
+        }
+        List<String> seatIds = order.getShowScheduleDetails().stream()
+                .map(ShowScheduleDetail::getSeatId)
+                .toList();
+
+        URI requestUrlSchedule = UriComponentsBuilder
+                .fromUriString("http://product-service/api/show-schedules/get-info-for-booking")
+                .queryParam("showScheduleId", showScheduleId)
+                .queryParam("productIds", productIds)
+                .build()
+                .toUri();
+        ResponseEntity<ApiResponse<InfoBookingScheduleResponse>> responseSchedule = webClientBuilder.build()
+                .get()
+                .uri(requestUrlSchedule)
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingScheduleResponse>>() {
+                })
+                .block();
+
+        URI requestUrlSeat = UriComponentsBuilder
+                .fromUriString("http://cinema-management-service/api/seats/get-info-for-booking")
+                .queryParam("seatIds", seatIds)
+                .build()
+                .toUri();
+        ResponseEntity<ApiResponse<InfoBookingSeatResponse>> responseSeat = webClientBuilder.build()
+                .get()
+                .uri(requestUrlSeat)
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingSeatResponse>>() {
+                })
+                .block();
+
+        if (responseSchedule == null || responseSchedule.getBody() == null
+                || responseSchedule.getBody().getData() == null) {
+            throw new BusinessException("Không thể lấy thông tin lịch chiếu.");
+        }
+        if (responseSeat == null || responseSeat.getBody() == null
+                || responseSeat.getBody().getData() == null) {
+            throw new BusinessException("Không thể lấy thông tin ghế ngồi.");
         }
 
-        public PaymentInitiateSnapshot paymentByMomo(String userID, String cinemaID, CheckoutEmployeeRequest request,
-                        String userIp) {
-                Order newOrder = createAndSaveFullOrder(userID, cinemaID, request,
-                                com.movieticket.order.entity.ShowSeatType.LOCKED);
+        InfoBookingScheduleResponse apiResponseSchedule = responseSchedule.getBody().getData();
+        InfoBookingSeatResponse apiResponseSeat = responseSeat.getBody().getData();
 
-                try {
-                        return checkoutPartnerGateway.initiatePayment(
-                                        newOrder.getId(),
-                                        "MOMO",
-                                        request.getTotalPayment(),
-                                        null,
-                                        userIp);
-                } catch (Exception ex) {
-                        deleteOrder(newOrder.getId());
-                        showScheduleDetailService.unlockSeats(
-                                        request.getShowScheduleId(),
-                                        request.getSeats() == null ? List.of()
-                                                        : request.getSeats().stream()
-                                                                        .map(SeatDTO::getSeatId)
-                                                                        .toList());
-                        throw ex;
-                }
+        TicketDetailResponse.Movie movie = TicketDetailResponse.Movie.builder()
+                .nameMovie(apiResponseSchedule.getNameMovie())
+                .urlMovie(apiResponseSchedule.getUrlMovie())
+                .roomNumber(apiResponseSeat.getRoomNumber())
+                .startTime(apiResponseSchedule.getStartTime())
+                .projectionType(apiResponseSchedule.getProjectionType())
+                .build();
+
+        Map<String, ShowScheduleDetail> seatDetailMap = order.getShowScheduleDetails().stream()
+                .collect(Collectors.toMap(
+                        ShowScheduleDetail::getSeatId,
+                        detail -> detail,
+                        (existing, replacement) -> existing));
+
+        List<TicketDetailResponse.Seat> seats = apiResponseSeat.getSeats() == null ? List.of()
+                : apiResponseSeat.getSeats().stream().map(item -> {
+            ShowScheduleDetail detail = seatDetailMap.get(item.getSeatId());
+            double price = detail != null ? detail.getFinalPrice() : 0.0;
+
+            ShowSeatType showSeatType = (detail != null && detail.getShowSeatType() != null)
+                    ? com.movieticket.order.enums.ShowSeatType
+                    .valueOf(detail.getShowSeatType().name())
+                    : com.movieticket.order.enums.ShowSeatType.CHECKED_IN;
+
+            return TicketDetailResponse.Seat.builder()
+                    .seatId(item.getSeatId())
+                    .seatNumber(item.getSeatNumber())
+                    .showSeatType(showSeatType)
+                    .seatType(item.getSeatType())
+                    .price(price)
+                    .build();
+        }).toList();
+
+        Map<String, OrderDetail> productMap = order.getOrderDetails() == null ? Map.of()
+                : order.getOrderDetails().stream()
+                .collect(Collectors.toMap(
+                        OrderDetail::getProductId,
+                        detail -> detail,
+                        (existing, replacement) -> existing));
+
+        List<TicketDetailResponse.Product> products = apiResponseSchedule.getProducts() == null ? List.of()
+                : apiResponseSchedule.getProducts().stream().map(item -> {
+            OrderDetail detail = productMap.get(item.getProductId());
+            double price = detail != null ? detail.getPrice() : 0.0;
+            int quantity = detail != null ? detail.getQuantity() : 0;
+
+            return TicketDetailResponse.Product.builder()
+                    .urlProduct(item.getUrlProduct())
+                    .nameProduct(item.getNameProduct())
+                    .price(price)
+                    .quantity(quantity)
+                    .totalPrice(price * quantity)
+                    .build();
+        }).toList();
+
+        ticketDetailResponse.setMovie(movie);
+        ticketDetailResponse.setSeats(seats);
+        ticketDetailResponse.setProducts(products);
+
+        return ticketDetailResponse;
+    }
+
+    @Transactional
+    public boolean checkIn(CheckInRequest request, String cinemaId) {
+        Order order = orderRepository
+                .findByIdAndCinemaIdAndStatusIn(request.getOrderId(), cinemaId,
+                        List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
+                .orElseThrow(() -> new BusinessException(
+                        "Không tìm thấy đơn hàng hoặc đơn hàng chưa thanh toán / đã check-in!"));
+
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
+        if (showScheduleDetails == null || showScheduleDetails.isEmpty()) {
+            orderRepository.save(order);
+            return true;
+        }
+        int checkInCount = 0;
+
+        for (ShowScheduleDetail detail : showScheduleDetails) {
+
+            if (detail.getShowScheduleId().equals(request.getShowScheduleId())
+                    && request.getSeatIds().contains(detail.getSeatId())) {
+
+                detail.setShowSeatType(com.movieticket.order.entity.ShowSeatType.CHECKED_IN);
+                checkInCount++;
+            }
+        }
+        if (checkInCount == 0) {
+            throw new BusinessException("Không có ghế nào hợp lệ hoặc khớp với lịch chiếu để check-in!");
+        }
+        orderRepository.save(order);
+
+        return true;
+    }
+
+    public List<OrderHistoryResponse> customerTicketBookHistory(String customerId) {
+        List<Order> orders = orderRepository.findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
+                customerId, List.of(OrderStatus.PAID, OrderStatus.CONFIRMED));
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+        // Gom id suất chiếu
+        List<String> scheduleIds = orders.stream()
+                .filter(o -> o.getShowScheduleDetails() != null && !o.getShowScheduleDetails().isEmpty())
+                .map(o -> o.getShowScheduleDetails().get(0).getShowScheduleId()).distinct().toList();
+
+        Mono<List<ShowScheduleSnapshot>> schedulesMono = scheduleIds.isEmpty()
+                ? Mono.just(List.of())
+                : productClient.getSchedulesBatch(scheduleIds);
+
+        return schedulesMono.flatMap(schedules -> {
+            var scheduleMap = schedules.stream()
+                    .collect(Collectors.toMap(ShowScheduleSnapshot::getId, s -> s));
+            var roomIds = schedules.stream().map(ShowScheduleSnapshot::getRoomId).distinct().toList();
+            var cinemaIds = orders.stream()
+                    .map(Order::getCinemaId)
+                    .filter(id -> id != null && !id.isBlank())
+                    .distinct()
+                    .toList();
+            Mono<List<CinemaRoomExternalDTO>> roomsMono = roomIds.isEmpty()
+                    ? Mono.just(List.of())
+                    : cinemaClient.getRoomsBatch(roomIds);
+
+            Mono<Map<String, String>> cinemaNamesMono = cinemaIds.isEmpty()
+                    ? Mono.just(Map.of())
+                    : cinemaClient.getCinemaNamesByIds(cinemaIds);
+
+            return Mono.zip(roomsMono, cinemaNamesMono).map(tuple -> {
+                List<CinemaRoomExternalDTO> rooms = tuple.getT1();
+                Map<String, String> cinemaNameMap = tuple.getT2();
+                var roomMap = rooms.stream()
+                        .collect(Collectors.toMap(CinemaRoomExternalDTO::getRoomId, r -> r));
+            // MAP DỮ LIỆU: seats và products sẽ là null/empty
+                return orders.stream().map(order -> orderHistoryMapper.toSummaryResponse(order,
+                        scheduleMap, roomMap, cinemaNameMap)).toList();
+            });
+        }).block();
+    }
+
+    public OrderHistoryResponse getOrderDetail(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
+
+        String scheduleId = (order.getShowScheduleDetails() != null && !order.getShowScheduleDetails().isEmpty())
+                ? order.getShowScheduleDetails().get(0).getShowScheduleId() : null;
+        List<String> seatIds = order.getShowScheduleDetails() == null ? List.of()
+                : order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId)
+                .distinct().toList();
+        List<String> productIds = order.getOrderDetails() == null ? List.of()
+                : order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct()
+                .toList();
+
+        // 1. Lấy sẵn list chứa duy nhất 1 cinemaId từ Order để gọi API Batch
+        List<String> cinemaIds = (order.getCinemaId() != null && !order.getCinemaId().isBlank())
+                ? List.of(order.getCinemaId()) : List.of();
+
+        // 2. KÍCH HOẠT SONG SƠNG 4 LUỒNG TỔNG LỰC (Thêm luồng lấy tên rạp)
+        Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
+                ? productClient.getSchedulesBatch(List.of(scheduleId))
+                : Mono.just(List.of());
+        Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
+                ? cinemaClient.getSeatsByIds(seatIds)
+                : Mono.just(Map.of());
+        Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
+                ? productClient.getProducts(productIds)
+                : Mono.just(Map.of());
+        // Luồng cứu cánh lấy tên rạp trực tiếp bằng ID:
+        Mono<Map<String, String>> cinemaNamesMono = (!cinemaIds.isEmpty())
+                ? cinemaClient.getCinemaNamesByIds(cinemaIds)
+                : Mono.just(Map.of());
+
+        // 3. GỘP CẢ 4 LUỒNG LẠI CHẠY ĐỒNG THỜI
+        return Mono.zip(scheduleMono, seatMono, productMono, cinemaNamesMono).flatMap(tuple -> {
+            ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null : tuple.getT1().get(0);
+            Map<String, SeatSnapshot> seatMap = tuple.getT2();
+            Map<String, ProductSnapshot> productMap = tuple.getT3();
+            Map<String, String> cinemaNameMap = tuple.getT4(); // Bốc map tên rạp ra đây
+
+            String roomId = (schedule != null) ? schedule.getRoomId() : null;
+
+            Mono<List<CinemaRoomExternalDTO>> roomMono = (roomId != null)
+                    ? cinemaClient.getRoomsBatch(List.of(roomId))
+                    : Mono.just(List.of());
+
+            return roomMono.map(rooms -> {
+                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
+
+                // 4. Truyền thêm cinemaNameMap vào Mapper toDetailResponse
+                return orderHistoryMapper.toDetailResponse(order, schedule, room,
+                        seatMap, productMap, cinemaNameMap);
+            });
+        }).block();
+    }
+
+    public OrderHistoryResponse getCustomerOrderDetail(String orderId, String customerId) {
+        Order order = orderRepository.findDetailedByIdAndCustomerId(orderId, customerId)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng cho khách hàng này"));
+
+        return buildOrderHistoryDetail(order);
+    }
+
+    private OrderHistoryResponse buildOrderHistoryDetail(Order order) {
+        List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails() == null
+                ? List.of() : order.getShowScheduleDetails();
+        List<OrderDetail> orderDetails = order.getOrderDetails() == null
+                ? List.of() : order.getOrderDetails();
+
+        String scheduleId = !showScheduleDetails.isEmpty() ? showScheduleDetails.get(0).getShowScheduleId() : null;
+        List<String> seatIds = showScheduleDetails.stream().map(ShowScheduleDetail::getSeatId)
+                .distinct().toList();
+        List<String> productIds = orderDetails.stream().map(OrderDetail::getProductId).distinct()
+                .toList();
+
+        // 1. Lấy sẵn list chứa duy nhất 1 cinemaId từ Order để gọi API Batch
+        List<String> cinemaIds = (order.getCinemaId() != null && !order.getCinemaId().isBlank())
+                ? List.of(order.getCinemaId()) : List.of();
+
+        // 2. KÍCH HOẠT SONG SONG 4 LUỒNG TỔNG LỰC NGAY TỪ ĐẦU
+        Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
+                ? productClient.getSchedulesBatch(List.of(scheduleId))
+                : Mono.just(List.of());
+        Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
+                ? cinemaClient.getSeatsByIds(seatIds)
+                : Mono.just(Map.of());
+        Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
+                ? productClient.getProducts(productIds)
+                : Mono.just(Map.of());
+        // Luồng cứu cánh lấy tên rạp trực tiếp bằng ID:
+        Mono<Map<String, String>> cinemaNamesMono = (!cinemaIds.isEmpty())
+                ? cinemaClient.getCinemaNamesByIds(cinemaIds)
+                : Mono.just(Map.of());
+
+        // 3. GỘP CẢ 4 LUỒNG LẠI
+        return Mono.zip(scheduleMono, seatMono, productMono, cinemaNamesMono).flatMap(tuple -> {
+            ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null : tuple.getT1().get(0);
+            Map<String, SeatSnapshot> seatMap = tuple.getT2();
+            Map<String, ProductSnapshot> productMap = tuple.getT3();
+            Map<String, String> cinemaNameMap = tuple.getT4(); // Bốc map tên rạp ra đây
+
+            String roomId = (schedule != null) ? schedule.getRoomId() : null;
+            List<String> roomIds = roomId == null || roomId.isBlank() ? List.of() : List.of(roomId);
+
+            Mono<List<CinemaRoomExternalDTO>> roomMono = (!roomIds.isEmpty())
+                    ? cinemaClient.getRoomsBatch(roomIds)
+                    : Mono.just(List.of());
+
+            return roomMono.map(rooms -> {
+                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
+
+                // 4. Truyền thêm cinemaNameMap vào Mapper toDetailResponse giống như hàm getOrderDetail công khai
+                return orderHistoryMapper.toDetailResponse(order, schedule, room,
+                        seatMap, productMap, cinemaNameMap);
+            });
+        }).block();
+    }
+
+    public ReviewType getReviewTypeForCustomer(String customerId, String movieId) {
+        List<OrderStatus> statuses = orderRepository.findOrderStatusesByCustomerAndMovie(customerId, movieId);
+
+        if (statuses.isEmpty()) {
+            return ReviewType.NOT_PURCHASED;
         }
 
-        @Transactional
-        public Order createAndSaveFullOrder(String userID, String cinemaID, CheckoutEmployeeRequest request,
-                        com.movieticket.order.entity.ShowSeatType showSeatType) {
-                Order order = Order.builder()
-                                .cinemaId(cinemaID)
-                                .employeeId(userID)
-                                .totalPayment(request.getTotalPayment())
-                                .totalPrice(request.getTotalPayment())
-                                .status(OrderStatus.PENDING_PAYMENT)
-                                .build();
-                Order newOrder = orderRepository.save(order);
-
-                List<OrderDetail> orderDetailList = request.getProducts().stream().map(product -> OrderDetail.builder()
-                                .order(newOrder)
-                                .quantity(product.getQuantity())
-                                .price(product.getPrice())
-                                .productId(product.getProductId())
-                                .build()).toList();
-                orderDataiReposioty.saveAll(orderDetailList);
-
-                List<ShowScheduleDetail> showScheduleDetails = request.getSeats().stream()
-                                .map(seat -> ShowScheduleDetail.builder()
-                                                .order(newOrder)
-                                                .seatId(seat.getSeatId())
-                                                .finalPrice(seat.getFinalPrice())
-                                                .ticketPriceId(seat.getTicketPriceId())
-                                                .showSeatType(showSeatType)
-                                                .showScheduleId(request.getShowScheduleId())
-                                                .build())
-                                .toList();
-                showScheduleDetailRepository.saveAll(showScheduleDetails);
-
-                return newOrder;
+        // Chỉ cần có 1 order CONFIRMED là VIEWED
+        if (statuses.contains(OrderStatus.CONFIRMED)) {
+            return ReviewType.VIEWED;
         }
 
-        @Transactional
-        public void updateOrderStatus(String orderId, OrderStatus status) {
-                Order order = orderRepository.findById(orderId).orElseThrow();
-                order.setStatus(status);
-                orderRepository.save(order);
+        // Không có CONFIRMED nhưng có PAID thì là PURCHASED
+        if (statuses.contains(OrderStatus.PAID)) {
+            return ReviewType.PURCHASED;
         }
 
-        @Transactional
-        public void deleteOrder(String orderId) {
-                orderDataiReposioty.deleteByOrderId(orderId);
-                showScheduleDetailRepository.deleteByOrderId(orderId);
-                orderRepository.deleteById(orderId);
-        }
-
-        public TicketDetailResponse getTicketDetailByOrderId(String orderId, String cinemaId) {
-
-                Order order = orderRepository
-                                .findByIdAndCinemaIdAndStatusIn(orderId, cinemaId,
-                                                List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
-                                .orElseThrow(() -> new BusinessException(
-                                                "Không tìm thấy đơn hàng với ID này hoặc đơn hàng không hợp lệ!"));
-
-                TicketDetailResponse ticketDetailResponse = new TicketDetailResponse();
-                ticketDetailResponse.setOrderId(order.getId());
-                ticketDetailResponse.setTotalPayment(order.getTotalPayment());
-                ticketDetailResponse.setPointDiscount(order.getPointDiscount());
-                ticketDetailResponse.setPromotionDiscount(order.getPromotionDiscount());
-                ticketDetailResponse.setTotalPrice(order.getTotalPrice());
-
-                ticketDetailResponse.setCustomerName("Khách hàng");
-
-                if (order.getShowScheduleDetails() == null || order.getShowScheduleDetails().isEmpty()) {
-                        throw new BusinessException("Đơn hàng không có thông tin lịch chiếu hợp lệ.");
-                }
-                String showScheduleId = order.getShowScheduleDetails().get(0).getShowScheduleId();
-                ticketDetailResponse.setShowScheduleId(showScheduleId);
-
-                List<String> productIds = order.getOrderDetails() == null ? List.of()
-                                : order.getOrderDetails().stream()
-                                                .map(OrderDetail::getProductId)
-                                                .toList();
-
-                if (order.getStatus() == OrderStatus.CONFIRMED) {
-                        productIds = List.of();
-                }
-                List<String> seatIds = order.getShowScheduleDetails().stream()
-                                .map(ShowScheduleDetail::getSeatId)
-                                .toList();
-
-                URI requestUrlSchedule = UriComponentsBuilder
-                                .fromUriString("http://product-service/api/show-schedules/get-info-for-booking")
-                                .queryParam("showScheduleId", showScheduleId)
-                                .queryParam("productIds", productIds)
-                                .build()
-                                .toUri();
-                ResponseEntity<ApiResponse<InfoBookingScheduleResponse>> responseSchedule = webClientBuilder.build()
-                                .get()
-                                .uri(requestUrlSchedule)
-                                .retrieve()
-                                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingScheduleResponse>>() {
-                                })
-                                .block();
-
-                URI requestUrlSeat = UriComponentsBuilder
-                                .fromUriString("http://cinema-management-service/api/seats/get-info-for-booking")
-                                .queryParam("seatIds", seatIds)
-                                .build()
-                                .toUri();
-                ResponseEntity<ApiResponse<InfoBookingSeatResponse>> responseSeat = webClientBuilder.build()
-                                .get()
-                                .uri(requestUrlSeat)
-                                .retrieve()
-                                .toEntity(new ParameterizedTypeReference<ApiResponse<InfoBookingSeatResponse>>() {
-                                })
-                                .block();
-
-                if (responseSchedule == null || responseSchedule.getBody() == null
-                                || responseSchedule.getBody().getData() == null) {
-                        throw new BusinessException("Không thể lấy thông tin lịch chiếu.");
-                }
-                if (responseSeat == null || responseSeat.getBody() == null
-                                || responseSeat.getBody().getData() == null) {
-                        throw new BusinessException("Không thể lấy thông tin ghế ngồi.");
-                }
-
-                InfoBookingScheduleResponse apiResponseSchedule = responseSchedule.getBody().getData();
-                InfoBookingSeatResponse apiResponseSeat = responseSeat.getBody().getData();
-
-                TicketDetailResponse.Movie movie = TicketDetailResponse.Movie.builder()
-                                .nameMovie(apiResponseSchedule.getNameMovie())
-                                .urlMovie(apiResponseSchedule.getUrlMovie())
-                                .roomNumber(apiResponseSeat.getRoomNumber())
-                                .startTime(apiResponseSchedule.getStartTime())
-                                .projectionType(apiResponseSchedule.getProjectionType())
-                                .build();
-
-                Map<String, ShowScheduleDetail> seatDetailMap = order.getShowScheduleDetails().stream()
-                                .collect(Collectors.toMap(
-                                                ShowScheduleDetail::getSeatId,
-                                                detail -> detail,
-                                                (existing, replacement) -> existing));
-
-                List<TicketDetailResponse.Seat> seats = apiResponseSeat.getSeats() == null ? List.of()
-                                : apiResponseSeat.getSeats().stream().map(item -> {
-                                        ShowScheduleDetail detail = seatDetailMap.get(item.getSeatId());
-                                        double price = detail != null ? detail.getFinalPrice() : 0.0;
-
-                                        ShowSeatType showSeatType = (detail != null && detail.getShowSeatType() != null)
-                                                        ? com.movieticket.order.enums.ShowSeatType
-                                                                        .valueOf(detail.getShowSeatType().name())
-                                                        : com.movieticket.order.enums.ShowSeatType.CHECKED_IN;
-
-                                        return TicketDetailResponse.Seat.builder()
-                                                        .seatId(item.getSeatId())
-                                                        .seatNumber(item.getSeatNumber())
-                                                        .showSeatType(showSeatType)
-                                                        .seatType(item.getSeatType())
-                                                        .price(price)
-                                                        .build();
-                                }).toList();
-
-                Map<String, OrderDetail> productMap = order.getOrderDetails() == null ? Map.of()
-                                : order.getOrderDetails().stream()
-                                                .collect(Collectors.toMap(
-                                                                OrderDetail::getProductId,
-                                                                detail -> detail,
-                                                                (existing, replacement) -> existing));
-
-                List<TicketDetailResponse.Product> products = apiResponseSchedule.getProducts() == null ? List.of()
-                                : apiResponseSchedule.getProducts().stream().map(item -> {
-                                        OrderDetail detail = productMap.get(item.getProductId());
-                                        double price = detail != null ? detail.getPrice() : 0.0;
-                                        int quantity = detail != null ? detail.getQuantity() : 0;
-
-                                        return TicketDetailResponse.Product.builder()
-                                                        .urlProduct(item.getUrlProduct())
-                                                        .nameProduct(item.getNameProduct())
-                                                        .price(price)
-                                                        .quantity(quantity)
-                                                        .totalPrice(price * quantity)
-                                                        .build();
-                                }).toList();
-
-                ticketDetailResponse.setMovie(movie);
-                ticketDetailResponse.setSeats(seats);
-                ticketDetailResponse.setProducts(products);
-
-                return ticketDetailResponse;
-        }
-
-        @Transactional
-        public boolean checkIn(CheckInRequest request, String cinemaId) {
-                Order order = orderRepository
-                                .findByIdAndCinemaIdAndStatusIn(request.getOrderId(), cinemaId,
-                                                List.of(OrderStatus.PAID, OrderStatus.CONFIRMED))
-                                .orElseThrow(() -> new BusinessException(
-                                                "Không tìm thấy đơn hàng hoặc đơn hàng chưa thanh toán / đã check-in!"));
-
-                order.setStatus(OrderStatus.CONFIRMED);
-
-                List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails();
-                int checkInCount = 0;
-
-                for (ShowScheduleDetail detail : showScheduleDetails) {
-
-                        if (detail.getShowScheduleId().equals(request.getShowScheduleId())
-                                        && request.getSeatIds().contains(detail.getSeatId())) {
-
-                                detail.setShowSeatType(com.movieticket.order.entity.ShowSeatType.CHECKED_IN);
-                                checkInCount++;
-                        }
-                }
-                if (checkInCount == 0) {
-                        throw new BusinessException("Không có ghế nào hợp lệ hoặc khớp với lịch chiếu để check-in!");
-                }
-                orderRepository.save(order);
-
-                return true;
-        }
-
-        public List<OrderHistoryResponse> customerTicketBookHistory(String customerId) {
-                List<Order> orders = orderRepository.findTop20ByCustomerIdAndStatusInOrderByCreatedAtDesc(
-                                customerId, List.of(OrderStatus.PAID, OrderStatus.CONFIRMED));
-
-                if (orders.isEmpty()) {
-                        return List.of();
-                }
-
-                // Gom id suất chiếu
-                List<String> scheduleIds = orders.stream()
-                                .filter(o -> o.getShowScheduleDetails() != null && !o.getShowScheduleDetails().isEmpty())
-                                .map(o -> o.getShowScheduleDetails().get(0).getShowScheduleId()).distinct().toList();
-
-                Mono<List<ShowScheduleSnapshot>> schedulesMono = scheduleIds.isEmpty()
-                                ? Mono.just(List.of())
-                                : productClient.getSchedulesBatch(scheduleIds);
-
-                return schedulesMono.flatMap(schedules -> {
-                        var scheduleMap = schedules.stream()
-                                        .collect(Collectors.toMap(ShowScheduleSnapshot::getId, s -> s));
-                        var roomIds = schedules.stream().map(ShowScheduleSnapshot::getRoomId).distinct().toList();
-
-                        Mono<List<CinemaRoomExternalDTO>> roomsMono = roomIds.isEmpty()
-                                        ? Mono.just(List.of())
-                                        : cinemaClient.getRoomsBatch(roomIds);
-
-                        return roomsMono.map(rooms -> {
-                                var roomMap = rooms.stream()
-                                                .collect(Collectors.toMap(CinemaRoomExternalDTO::getRoomId, r -> r));
-
-                                // MAP DỮ LIỆU: seats và products sẽ là null/empty
-                                return orders.stream().map(order -> orderHistoryMapper.toSummaryResponse(order,
-                                                scheduleMap, roomMap)).toList();
-                        });
-                }).block();
-        }
-
-        public OrderHistoryResponse getOrderDetail(String orderId) {
-                Order order = orderRepository.findById(orderId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng!"));
-
-                String scheduleId = (order.getShowScheduleDetails() != null && !order.getShowScheduleDetails().isEmpty())
-                                ? order.getShowScheduleDetails().get(0).getShowScheduleId() : null;
-                List<String> seatIds = order.getShowScheduleDetails() == null ? List.of()
-                                : order.getShowScheduleDetails().stream().map(ShowScheduleDetail::getSeatId)
-                                .distinct().toList();
-                List<String> productIds = order.getOrderDetails() == null ? List.of()
-                                : order.getOrderDetails().stream().map(OrderDetail::getProductId).distinct()
-                                .toList();
-
-                Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
-                                ? productClient.getSchedulesBatch(List.of(scheduleId))
-                                : Mono.just(List.of());
-                Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
-                                ? cinemaClient.getSeatsByIds(seatIds)
-                                : Mono.just(Map.of());
-                Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
-                                ? productClient.getProducts(productIds)
-                                : Mono.just(Map.of());
-
-                return Mono.zip(scheduleMono, seatMono, productMono).flatMap(tuple -> {
-                                        ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null
-                                                        : tuple.getT1().get(0);
-                                        Map<String, SeatSnapshot> seatMap = tuple.getT2();
-                                        Map<String, ProductSnapshot> productMap = tuple.getT3();
-
-                                        String roomId = (schedule != null) ? schedule.getRoomId() : null;
-
-                                        Mono<List<CinemaRoomExternalDTO>> roomMono = (roomId != null)
-                                                        ? cinemaClient.getRoomsBatch(List.of(roomId))
-                                                        : Mono.just(List.of());
-
-                                        return roomMono.map(rooms -> {
-                                                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
-
-                                                return orderHistoryMapper.toDetailResponse(order, schedule, room,
-                                                                seatMap, productMap);
-                                        });
-                                }).block();
-        }
-
-        public OrderHistoryResponse getCustomerOrderDetail(String orderId, String customerId) {
-                Order order = orderRepository.findDetailedByIdAndCustomerId(orderId, customerId)
-                                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng cho khách hàng này"));
-
-                return buildOrderHistoryDetail(order);
-        }
-
-        private OrderHistoryResponse buildOrderHistoryDetail(Order order) {
-                List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails() == null
-                                ? List.of() : order.getShowScheduleDetails();
-                List<OrderDetail> orderDetails = order.getOrderDetails() == null
-                                ? List.of() : order.getOrderDetails();
-
-                String scheduleId = !showScheduleDetails.isEmpty() ? showScheduleDetails.get(0).getShowScheduleId() : null;
-                List<String> seatIds = showScheduleDetails.stream().map(ShowScheduleDetail::getSeatId)
-                                .distinct().toList();
-                List<String> productIds = orderDetails.stream().map(OrderDetail::getProductId).distinct()
-                                .toList();
-
-                Mono<List<ShowScheduleSnapshot>> scheduleMono = (scheduleId != null)
-                                ? productClient.getSchedulesBatch(List.of(scheduleId))
-                                : Mono.just(List.of());
-                Mono<Map<String, SeatSnapshot>> seatMono = (!seatIds.isEmpty())
-                                ? cinemaClient.getSeatsByIds(seatIds)
-                                : Mono.just(Map.of());
-                Mono<Map<String, ProductSnapshot>> productMono = (!productIds.isEmpty())
-                                ? productClient.getProducts(productIds)
-                                : Mono.just(Map.of());
-
-                return Mono.zip(scheduleMono, seatMono, productMono).flatMap(tuple -> {
-                                        ShowScheduleSnapshot schedule = tuple.getT1().isEmpty() ? null
-                                                        : tuple.getT1().get(0);
-                                        Map<String, SeatSnapshot> seatMap = tuple.getT2();
-                                        Map<String, ProductSnapshot> productMap = tuple.getT3();
-
-                                        String roomId = (schedule != null) ? schedule.getRoomId() : null;
-                                        List<String> roomIds = roomId == null || roomId.isBlank() ? List.of()
-                                                        : List.of(roomId);
-
-                                        Mono<List<CinemaRoomExternalDTO>> roomMono = (!roomIds.isEmpty())
-                                                        ? cinemaClient.getRoomsBatch(roomIds)
-                                                        : Mono.just(List.of());
-
-                                        return roomMono.map(rooms -> {
-                                                CinemaRoomExternalDTO room = rooms.isEmpty() ? null : rooms.get(0);
-
-                                                return orderHistoryMapper.toDetailResponse(order, schedule, room,
-                                                                seatMap, productMap);
-                                        });
-                                }).block();
-        }
-
-        public ReviewType getReviewTypeForCustomer(String customerId, String movieId) {
-                List<OrderStatus> statuses = orderRepository.findOrderStatusesByCustomerAndMovie(customerId, movieId);
-
-                if (statuses.isEmpty()) {
-                        return ReviewType.NOT_PURCHASED;
-                }
-
-                // Chỉ cần có 1 order CONFIRMED là VIEWED
-                if (statuses.contains(OrderStatus.CONFIRMED)) {
-                        return ReviewType.VIEWED;
-                }
-
-                // Không có CONFIRMED nhưng có PAID thì là PURCHASED
-                if (statuses.contains(OrderStatus.PAID)) {
-                        return ReviewType.PURCHASED;
-                }
-
-                // Các trạng thái khác (CANCELLED, FAILED, PENDING_PAYMENT...)
-                return ReviewType.NOT_PURCHASED;
-        }
+        // Các trạng thái khác (CANCELLED, FAILED, PENDING_PAYMENT...)
+        return ReviewType.NOT_PURCHASED;
+    }
 }

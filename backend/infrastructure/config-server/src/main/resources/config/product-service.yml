@@ -38,7 +38,9 @@ spring:
         spring.json.use.type.headers: true
         spring.json.trusted.packages: "com.movieticket.*"
         spring.json.type.mapping: > 
-          movie_rating_update_event:com.movieticket.product.event.model.MovieRatingUpdateEvent
+          movie_rating_update_event:com.movieticket.product.event.model.MovieRatingUpdateEvent,
+          order_event:com.movieticket.product.event.model.OrderSuccessfulEvent
+
 eureka:
   client:
     service-url:

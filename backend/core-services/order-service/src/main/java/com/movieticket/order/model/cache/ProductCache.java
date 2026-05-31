@@ -15,4 +15,5 @@ public class ProductCache {
     private String imageUrl;
     private double unitPrice;
     private boolean status;
+    private Integer stockQty;
 }

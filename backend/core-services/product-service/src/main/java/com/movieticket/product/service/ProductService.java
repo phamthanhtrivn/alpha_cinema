@@ -16,6 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
     private final CloudinaryUtil cloudinaryUtil;
     private final ProductRepository productRepository;
@@ -136,5 +140,21 @@ public class ProductService {
         product.setStatus(updateProductDto.isStatus());
 
         return productRepository.save(product);
+    }
+
+    @Transactional
+    public void deductProductStock(List<com.movieticket.product.event.model.OrderProductItem> items) {
+        for (com.movieticket.product.event.model.OrderProductItem item : items) {
+            Product product = productRepository.findById(item.getProductId()).orElse(null);
+            if (product != null && product.getStockQty() != null) {
+                int currentStock = product.getStockQty();
+                int deductQty = item.getQuantity();
+                int newStock = Math.max(0, currentStock - deductQty);
+                product.setStockQty(newStock);
+                productRepository.save(product);
+                log.info("Đã trừ tồn kho sản phẩm ID: {}, Tên: {}. Tồn cũ: {}, Số lượng trừ: {}, Tồn mới: {}", 
+                        product.getId(), product.getName(), currentStock, deductQty, newStock);
+            }
+        }
     }
 }

@@ -14,7 +14,6 @@ import {
   CreditCard,
   Calendar,
   AlertCircle,
-  Film,
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { AgeBadge } from "./ProfileUIComponents";
@@ -111,7 +110,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       <div className="relative w-full max-w-3xl max-h-[calc(100vh-120px)] bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col mt-18">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white shrink-0">
-          <h3 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-slate-800 flex items-center gap-2">
             {scheduleSnapshot ? (
               <Ticket className="text-alpha-blue" size={22} />
             ) : (
@@ -148,7 +147,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           ) : (
             <div className="p-5 md:p-7 flex flex-col gap-6">
               {/* Ticket Body (Ticket visual) */}
-              <div className="relative bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row shadow-sm">
+              <div className={scheduleSnapshot ? "relative bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col md:flex-row shadow-sm" : "hidden"}>
                 {/* Movie Poster & Basic Info */}
                 <div className="w-full md:w-40 bg-slate-50 border-b md:border-b-0 md:border-r border-dashed border-slate-200 p-4 shrink-0 flex md:flex-col gap-4 md:gap-0 items-center md:items-stretch">
                   <div className="w-20 md:w-full aspect-[2/3] rounded-sm overflow-hidden shadow-sm mb-0 md:mb-4 shrink-0 flex items-center justify-center bg-white border">
@@ -235,7 +234,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                             </span>
                             <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
                               <MapPin size={14} className="text-alpha-orange" />
-                              <span>Nhận trực tiếp tại quầy bắp nước của rạp</span>
+                              <span>{order.cinemaName}</span>
                             </div>
                           </div>
                           <div className="flex flex-col gap-1">
@@ -261,133 +260,278 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Product & Payment details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left: Seats & Products */}
-                <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 flex flex-col gap-6">
-                  {/* Seats Section */}
-                  <div>
-                    <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                      <Ticket size={16} className="text-alpha-blue" />
-                      Ghế đã đặt
-                    </h5>
-                    <div className="space-y-3">
-                      {order.seats && order.seats.length > 0 ? (
-                        order.seats.map((seat) => (
-                          <div
-                            key={seat.id}
-                            className="flex justify-between items-center text-sm"
-                          >
-                            <span className="font-medium">
-                              Ghế {seat.rowName}
-                              {seat.columnName}
-                            </span>
-                            <span className="font-medium">
-                              {formatCurrency(seat.unitPrice)}
-                            </span>
+              {!scheduleSnapshot && (
+                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-5 md:p-6 flex flex-col gap-5">
+                    <div>
+                      <h4 className="text-xl font-medium text-slate-800 leading-tight mb-4">
+                        Đơn hàng Đồ Lưu Niệm
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-medium text-slate-600">
+                            Địa điểm nhận bắp nước
+                          </span>
+                          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <MapPin size={14} className="text-alpha-orange" />
+                            <span>{order.cinemaName}</span>
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">
-                          Không có thông tin ghế
-                        </p>
-                      )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-medium text-slate-600">
+                            Thời gian mua
+                          </span>
+                          <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <Clock size={14} className="text-alpha-orange" />
+                            <span>{new Date(order.createdAt).toLocaleString("vi-VN")}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Products Section */}
-                  <div>
-                    <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                      <Coffee size={16} className="text-alpha-orange" />
-                      Bắp nước & Combo
-                    </h5>
-                    <div className="space-y-3">
-                      {order.products && order.products.length > 0 ? (
-                        order.products.map((p, idx) => {
-                          const productName =
-                            p.name ?? p.productName ?? "Sản phẩm đi kèm";
-                          const quantity = p.quantity ?? 0;
-                          const unitPrice = p.unitPrice ?? 0;
-                          const lineTotal = p.subTotal ?? unitPrice * quantity;
+                    <div className="border-t border-slate-100 pt-5">
+                      <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        <Coffee size={16} className="text-alpha-orange" />
+                        Sản phẩm đã mua
+                      </h5>
+                      <div className="flex flex-col gap-3">
+                        {order.products && order.products.length > 0 ? (
+                          order.products.map((p, idx) => {
+                            const productName =
+                              p.name ?? p.productName ?? "Sản phẩm đi kèm";
+                            const quantity = p.quantity ?? 0;
+                            const unitPrice = p.unitPrice ?? 0;
+                            const lineTotal = p.subTotal ?? unitPrice * quantity;
 
-                          return (
-                            <div
-                              key={p.id ?? p.productId ?? idx}
-                              className="flex justify-between items-center gap-3 text-sm"
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-slate-700">
-                                  {productName}
-                                </span>
-                                <span className="text-xs text-slate-400">
-                                  Số lượng: {quantity}
+                            return (
+                              <div
+                                key={p.id ?? p.productId ?? idx}
+                                className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3"
+                              >
+                                <div className="h-30 w-35 shrink-0 rounded-md border border-slate-100 bg-white overflow-hidden flex items-center justify-center">
+                                  {p.pictureUrl ? (
+                                    <img
+                                      src={p.pictureUrl}
+                                      alt={productName}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <Coffee size={24} className="text-alpha-orange" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-bold text-slate-700">
+                                    {productName}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    SL: {quantity} x {formatCurrency(unitPrice)}
+                                  </p>
+                                </div>
+                                <span className="shrink-0 text-sm font-black text-slate-800">
+                                  {formatCurrency(lineTotal)}
                                 </span>
                               </div>
-                              <span className="font-bold text-slate-700 shrink-0">
-                                {formatCurrency(lineTotal)}
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">
+                            Không có sản phẩm trong đơn hàng
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-5 flex flex-col md:flex-row gap-5 items-start">
+                      {/* QR Code - Left */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <div className="bg-white p-2 rounded-xl border-2 border-slate-50 shadow-inner flex items-center justify-center w-32 h-32">
+                          {orderId && <QRCodeSVG value={orderId} size={112} />}
+                        </div>
+                      </div>
+
+                      {/* Payment Details - Right */}
+                      <div className="flex-1">
+                        <h5 className="text-sm font-bold mb-3 flex items-center gap-2 text-slate-800">
+                          <CreditCard size={16} className="text-alpha-orange" />
+                          Chi tiết thanh toán
+                        </h5>
+                        <div className="space-y-2.5">
+                          <div className="flex justify-between text-xs text-slate-500">
+                            <span>Tạm tính</span>
+                            <span className="font-semibold text-slate-700">
+                              {formatCurrency(order.totalPrice)}
+                            </span>
+                          </div>
+                          {order.pointDiscount > 0 && (
+                            <div className="flex justify-between text-xs text-green-600">
+                              <span>Giảm giá điểm</span>
+                              <span className="font-semibold">
+                                -{formatCurrency(order.pointDiscount)}
                               </span>
                             </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">
-                          Không có bắp nước đính kèm
-                        </p>
-                      )}
+                          )}
+                          {order.promotionDiscount > 0 && (
+                            <div className="flex justify-between text-xs text-green-600">
+                              <span>Khuyến mãi</span>
+                              <span className="font-semibold">
+                                -{formatCurrency(order.promotionDiscount)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="pt-2 border-t border-slate-200 flex justify-between items-center mt-2">
+                            <span className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                              Tổng cộng
+                            </span>
+                            <span className="text-lg font-black text-alpha-orange">
+                              {formatCurrency(order.totalPayment)}
+                            </span>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                            <span className="text-xs font-medium text-slate-400">
+                              Trạng thái
+                            </span>
+                            <div
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${orderStatusClass}`}
+                            >
+                              {orderStatusLabel}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
+              )}
 
-                {/* Right: Payment */}
-                <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
-                  <h5 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-800">
-                    <CreditCard size={16} className="text-alpha-blue" />
-                    Chi tiết thanh toán
-                  </h5>
-                  <div className="space-y-2.5">
-                    <div className="flex justify-between text-xs text-slate-500">
-                      <span>Tạm tính</span>
-                      <span className="font-semibold text-slate-700">
-                        {formatCurrency(order.totalPrice)}
-                      </span>
+              {/* Product & Payment details */}
+              {scheduleSnapshot && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left: Seats & Products */}
+                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 flex flex-col gap-6">
+                    {/* Seats Section */}
+                    <div>
+                      <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Ticket size={16} className="text-alpha-blue" />
+                        Ghế đã đặt
+                      </h5>
+                      <div className="space-y-3">
+                        {order.seats && order.seats.length > 0 ? (
+                          order.seats.map((seat) => (
+                            <div
+                              key={seat.id}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <span className="font-medium">
+                                Ghế {seat.rowName}
+                                {seat.columnName}
+                              </span>
+                              <span className="font-medium">
+                                {formatCurrency(seat.unitPrice)}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">
+                            Không có thông tin ghế
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    {order.pointDiscount > 0 && (
-                      <div className="flex justify-between text-xs text-green-600">
-                        <span>Giảm giá điểm</span>
-                        <span className="font-semibold">
-                          -{formatCurrency(order.pointDiscount)}
+
+                    {/* Products Section */}
+                    <div>
+                      <h5 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Coffee size={16} className="text-alpha-orange" />
+                        Bắp nước & Combo
+                      </h5>
+                      <div className="space-y-3">
+                        {order.products && order.products.length > 0 ? (
+                          order.products.map((p, idx) => {
+                            const productName =
+                              p.name ?? p.productName ?? "Sản phẩm đi kèm";
+                            const quantity = p.quantity ?? 0;
+                            const unitPrice = p.unitPrice ?? 0;
+                            const lineTotal = p.subTotal ?? unitPrice * quantity;
+
+                            return (
+                              <div
+                                key={p.id ?? p.productId ?? idx}
+                                className="flex justify-between items-center gap-3 text-sm"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-semibold text-slate-700">
+                                    {productName}
+                                  </span>
+                                  <span className="text-xs text-slate-400">
+                                    Số lượng: {quantity}
+                                  </span>
+                                </div>
+                                <span className="font-bold text-slate-700 shrink-0">
+                                  {formatCurrency(lineTotal)}
+                                </span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">
+                            Không có bắp nước đính kèm
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Payment */}
+                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
+                    <h5 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-800">
+                      <CreditCard size={16} className="text-alpha-blue" />
+                      Chi tiết thanh toán
+                    </h5>
+                    <div className="space-y-2.5">
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Tạm tính</span>
+                        <span className="font-semibold text-slate-700">
+                          {formatCurrency(order.totalPrice)}
                         </span>
                       </div>
-                    )}
-                    {order.promotionDiscount > 0 && (
-                      <div className="flex justify-between text-xs text-green-600">
-                        <span>Khuyến mãi</span>
-                        <span className="font-semibold">
-                          -{formatCurrency(order.promotionDiscount)}
+                      {order.pointDiscount > 0 && (
+                        <div className="flex justify-between text-xs text-green-600">
+                          <span>Giảm giá điểm</span>
+                          <span className="font-semibold">
+                            -{formatCurrency(order.pointDiscount)}
+                          </span>
+                        </div>
+                      )}
+                      {order.promotionDiscount > 0 && (
+                        <div className="flex justify-between text-xs text-green-600">
+                          <span>Khuyến mãi</span>
+                          <span className="font-semibold">
+                            -{formatCurrency(order.promotionDiscount)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="pt-2 border-t border-slate-200 flex justify-between items-center mt-2">
+                        <span className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                          Tổng cộng
+                        </span>
+                        <span className="text-lg font-black text-alpha-orange">
+                          {formatCurrency(order.totalPayment)}
                         </span>
                       </div>
-                    )}
-                    <div className="pt-2 border-t border-slate-200 flex justify-between items-center mt-2">
-                      <span className="text-sm font-bold uppercase tracking-wider text-slate-700">
-                        Tổng cộng
-                      </span>
-                      <span className="text-lg font-black text-alpha-orange">
-                        {formatCurrency(order.totalPayment)}
-                      </span>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
-                      <span className="text-xs font-medium text-slate-400">
-                        Trạng thái
-                      </span>
-                      <div
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${orderStatusClass}`}
-                      >
-                        {orderStatusLabel}
+                      <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                        <span className="text-xs font-medium text-slate-400">
+                          Trạng thái
+                        </span>
+                        <div
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${orderStatusClass}`}
+                        >
+                          {orderStatusLabel}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

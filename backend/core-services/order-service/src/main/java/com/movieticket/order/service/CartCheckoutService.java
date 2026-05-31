@@ -15,13 +15,20 @@ import com.movieticket.order.model.cache.ProductCache;
 import com.movieticket.order.repository.OrderRepository;
 import com.movieticket.order.repository.OrderDetailRepository;
 import com.movieticket.order.repository.PromotionRepository;
+import com.movieticket.order.event.model.OrderSuccessfulEvent;
+import com.movieticket.order.event.model.OrderProductItem;
+import com.movieticket.order.event.model.UserLoyaltyUpdateEvent;
+import com.movieticket.order.event.producer.OrderSuccessfulEventProducer;
+import com.movieticket.order.event.producer.UserLoyaltyEventProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +40,8 @@ public class CartCheckoutService {
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final PromotionRepository promotionRepository;
+    private final UserLoyaltyEventProducer userLoyaltyEventProducer;
+    private final OrderSuccessfulEventProducer orderSuccessfulEventProducer;
 
     @Transactional
     public CheckoutConfirmResponse checkoutCart(String customerId, CartCheckoutRequest request, String userIp) {
@@ -55,6 +64,10 @@ public class CartCheckoutService {
             ProductCache product = productsById.get(item.getProductId());
             if (product == null || !product.isStatus()) {
                 throw new BusinessException("Sản phẩm không khả dụng: " + item.getProductId());
+            }
+
+            if (product.getStockQty() != null && product.getStockQty() < item.getQuantity()) {
+                throw new BusinessException("Sản phẩm " + product.getName() + " không đủ tồn kho (còn lại: " + product.getStockQty() + ").");
             }
 
             double subtotal = product.getUnitPrice() * item.getQuantity();
@@ -111,6 +124,8 @@ public class CartCheckoutService {
                 .build();
 
         Order savedOrder = orderRepository.save(order);
+        savedOrder.setQrCode(savedOrder.getId());
+        savedOrder = orderRepository.save(savedOrder);
 
         // 7. Save OrderDetails
         for (OrderDetail detail : pendingDetails) {
@@ -123,8 +138,71 @@ public class CartCheckoutService {
         String paymentMethod = request.getPaymentMethod();
         if (totalPayment <= 0.0001) {
             savedOrder.setStatus(OrderStatus.PAID);
-            orderRepository.save(savedOrder);
+            savedOrder = orderRepository.save(savedOrder);
             paymentMethod = "POINTS";
+
+            // Build and publish OrderSuccessfulEvent
+            List<OrderProductItem> productItems = new ArrayList<>();
+            for (OrderDetail detail : pendingDetails) {
+                ProductCache prod = productsById.get(detail.getProductId());
+                String name = prod != null ? prod.getName() : "Sản phẩm";
+                productItems.add(OrderProductItem.builder()
+                        .productId(detail.getProductId())
+                        .productName(name)
+                        .quantity(detail.getQuantity())
+                        .price(detail.getPrice())
+                        .subTotal(detail.getSubTotal())
+                        .build());
+            }
+
+            OrderSuccessfulEvent orderEvent = OrderSuccessfulEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .sessionId(null)
+                    .orderId(savedOrder.getId())
+                    .customerId(customerId)
+                    .customerName(customer != null ? customer.getFullName() : "Khách hàng")
+                    .customerEmail(customer != null ? customer.getEmail() : "")
+                    .cinemaId(savedOrder.getCinemaId())
+                    .cinemaName(cinema != null ? cinema.getName() : "")
+                    .cinemaAddress(cinema != null ? cinema.getAddress() : "")
+                    .roomId(null)
+                    .roomNumber(null)
+                    .showScheduleId(null)
+                    .movieId(null)
+                    .movieTitle(null)
+                    .showStartTime(null)
+                    .showEndTime(null)
+                    .projectionType(null)
+                    .translationType(null)
+                    .seatIds(List.of())
+                    .seatLabels(List.of())
+                    .productItems(productItems)
+                    .qrCode(savedOrder.getQrCode())
+                    .totalPrice(savedOrder.getTotalPrice())
+                    .pointDiscount(savedOrder.getPointDiscount())
+                    .promotionDiscount(savedOrder.getPromotionDiscount())
+                    .totalPayment(savedOrder.getTotalPayment())
+                    .pointsRedeemed(pointsRedeemed)
+                    .paymentMethod(paymentMethod)
+                    .status("SUCCESS")
+                    .paidAt(LocalDateTime.now())
+                    .occurredAt(LocalDateTime.now())
+                    .build();
+
+            if (orderEvent.getCustomerEmail() != null && !orderEvent.getCustomerEmail().isBlank()) {
+                orderSuccessfulEventProducer.publish(orderEvent);
+            }
+
+            // Build and publish UserLoyaltyUpdateEvent
+            UserLoyaltyUpdateEvent loyaltyEvent = UserLoyaltyUpdateEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .customerId(customerId)
+                    .orderSpending(savedOrder.getTotalPayment())
+                    .pointsUsed(pointsRedeemed)
+                    .orderId(savedOrder.getId())
+                    .occurredAt(LocalDateTime.now())
+                    .build();
+            userLoyaltyEventProducer.publish(loyaltyEvent);
         } else {
             PaymentInitiateSnapshot paymentSnapshot = checkoutPartnerGateway.initiatePayment(
                     savedOrder.getId(),

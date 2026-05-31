@@ -16,7 +16,8 @@ public class OrderHistoryMapper {
 
     public OrderHistoryResponse toSummaryResponse(Order order,
                                                   Map<String, ShowScheduleSnapshot> scheduleMap,
-                                                  Map<String, CinemaRoomExternalDTO> roomMap) {
+                                                  Map<String, CinemaRoomExternalDTO> roomMap,
+                                                  Map<String, String> cinemaNameMap) { // 1. Thêm parameter này vào
 
         // 1. Lấy thông tin suất chiếu từ Map (nếu có)
         ShowScheduleSnapshot schedule = null;
@@ -29,9 +30,19 @@ public class OrderHistoryMapper {
         String roomId = (schedule != null) ? schedule.getRoomId() : null;
         CinemaRoomExternalDTO room = (roomId != null) ? roomMap.get(roomId) : null;
 
+        // 3. Logic "bất tử" cứu cánh cho Tên Rạp (Cinema Name)
+        String finalCinemaName = "N/A";
+        if (room != null) {
+            // Ưu tiên 1: Lấy tên rạp đi kèm từ thông tin phòng chiếu
+            finalCinemaName = room.getCinemaName();
+        } else if (order.getCinemaId() != null && cinemaNameMap.containsKey(order.getCinemaId())) {
+            // Ưu tiên 2: Suất chiếu/Phòng bị null? Lấy thẳng tên rạp từ Map cứu cánh thông qua cinemaId trong Order
+            finalCinemaName = cinemaNameMap.get(order.getCinemaId());
+        }
+
         return baseBuilder(order)
                 .showScheduleSnapshot(schedule)
-                .cinemaName(room != null ? room.getCinemaName() : "N/A")
+                .cinemaName(finalCinemaName) // Ăn theo biến chuẩn đã check bọc lót ở trên
                 .roomNumber(room != null ? room.getRoomNumber() : "N/A")
                 .seats(null)      // Để null cho nhẹ khi load danh sách
                 .products(null)   // Để null cho nhẹ khi load danh sách
@@ -56,7 +67,8 @@ public class OrderHistoryMapper {
             ShowScheduleSnapshot schedule,
             CinemaRoomExternalDTO room,
             Map<String, SeatSnapshot> seatMap,
-            Map<String, ProductSnapshot> productMap) {
+            Map<String, ProductSnapshot> productMap,
+            Map<String, String> cinemaNameMap) { // 1. Thêm param này vào khớp với Service
 
         // 1. Xử lý danh sách GHẾ (Lấy thông tin rạp + Giá từ đơn hàng)
         List<ShowScheduleDetail> showScheduleDetails = order.getShowScheduleDetails() == null
@@ -99,9 +111,17 @@ public class OrderHistoryMapper {
                 .filter(Objects::nonNull)
                 .toList();
 
-        // 3. Trả về Response hoàn chỉnh
+        // 3. Logic "bất tử" cho Tên Rạp (Cinema Name)
+        String finalCinemaName = "N/A";
+        if (room != null) {
+            finalCinemaName = room.getCinemaName(); // Ưu tiên lấy từ Room
+        } else if (order.getCinemaId() != null && cinemaNameMap.containsKey(order.getCinemaId())) {
+            finalCinemaName = cinemaNameMap.get(order.getCinemaId()); // Cứu cánh bằng cinemaId trực tiếp từ Order
+        }
+
+        // 4. Trả về Response hoàn chỉnh
         return baseBuilder(order)
-                .cinemaName(room != null ? room.getCinemaName() : "N/A")
+                .cinemaName(finalCinemaName) // <--- Ăn theo biến an toàn mới nặn ở trên
                 .roomNumber(room != null ? room.getRoomNumber() : "N/A")
                 .showScheduleSnapshot(schedule)
                 .seats(seatSnapshots)

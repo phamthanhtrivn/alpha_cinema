@@ -1,40 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { customerService } from '@/services/customer.service';
-import { orderService } from '@/services/order.service';
-import { notificationService } from '@/services/notification.service';
-import { movieService } from '@/services/movie.service';
-import type { CustomerProfile, Gender } from '@/types/customer';
-import type { OrderHistoryItem } from '@/types/order';
-import { OrderStatus } from '@/types/order';
-import { ALL_TRANSLATION } from '@/types/movie';
-import { Loader2, User, Star, Wallet, Phone, Mail, Calendar, Lock, MapPin, Clock, Film, AlertCircle, Bell, Check, ShoppingBag } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { formatCurrency } from '@/utils/formatCurrency';
-import { Container, Section } from '@/components/common/Layout';
-import { Button } from '@/components/ui/button';
-import { Card, FormField, SidebarAction, AgeBadge } from './profile/ProfileUIComponents';
-import ChangePasswordModal from './profile/ChangePasswordModal';
-import ChangeEmailModal from './profile/ChangeEmailModal';
-import OrderDetailModal from './profile/OrderDetailModal';
-import NotificationItem from './profile/NotificationItem';
-import WriteReviewModal from '@/components/client/WriteReviewModal';
-import { reviewService } from '@/services/review.service';
-import ReviewItem from './profile/ReviewItem';
-import Policy from '@/components/client/Policy';
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
+import { customerService } from "@/services/customer.service";
+import { orderService } from "@/services/order.service";
+import { notificationService } from "@/services/notification.service";
+import { movieService } from "@/services/movie.service";
+import type { CustomerProfile, Gender } from "@/types/customer";
+import type { OrderHistoryItem } from "@/types/order";
+import { OrderStatus } from "@/types/order";
+import { ALL_TRANSLATION } from "@/types/movie";
+import {
+  Loader2,
+  User,
+  Star,
+  Wallet,
+  Phone,
+  Mail,
+  Calendar,
+  Lock,
+  MapPin,
+  Clock,
+  Film,
+  AlertCircle,
+  Bell,
+  Check,
+  ShoppingBag,
+} from "lucide-react";
+import { toast } from "react-toastify";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { Container, Section } from "@/components/common/Layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  FormField,
+  SidebarAction,
+  AgeBadge,
+} from "./profile/ProfileUIComponents";
+import ChangePasswordModal from "./profile/ChangePasswordModal";
+import ChangeEmailModal from "./profile/ChangeEmailModal";
+import OrderDetailModal from "./profile/OrderDetailModal";
+import NotificationItem from "./profile/NotificationItem";
+import WriteReviewModal from "@/components/client/WriteReviewModal";
+import { reviewService } from "@/services/review.service";
+import ReviewItem from "./profile/ReviewItem";
+import Policy from "@/components/client/Policy";
 
 // ==============================
 // Types & Constants
 // ==============================
-type Tab = 'profile' | 'history' | 'notifications' | 'reviews' | 'policy';
+type Tab = "profile" | "history" | "notifications" | "reviews" | "policy";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'history', label: 'Lịch Sử Giao Dịch' },
-  { key: 'profile', label: 'Thông Tin Cá Nhân' },
-  { key: 'notifications', label: 'Thông Báo' },
-  { key: 'reviews', label: 'Lịch Sử Đánh Giá' },
-  { key: 'policy', label: 'Chính Sách' },
+  { key: "history", label: "Lịch Sử Giao Dịch" },
+  { key: "profile", label: "Thông Tin Cá Nhân" },
+  { key: "notifications", label: "Thông Báo" },
+  { key: "reviews", label: "Lịch Sử Đánh Giá" },
+  { key: "policy", label: "Chính Sách" },
 ];
 
 const tierLabel = (type: string) => {
@@ -61,8 +87,15 @@ const ProfilePage: React.FC = () => {
   );
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && (tab === 'profile' || tab === 'history' || tab === 'notifications' || tab === 'reviews' || tab === 'policy')) {
+    const tab = searchParams.get("tab");
+    if (
+      tab &&
+      (tab === "profile" ||
+        tab === "history" ||
+        tab === "notifications" ||
+        tab === "reviews" ||
+        tab === "policy")
+    ) {
       setActiveTab(tab as Tab);
     }
   }, [searchParams]);
@@ -72,7 +105,10 @@ const ProfilePage: React.FC = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [reviewMovie, setReviewMovie] = useState<{ id: string, name: string } | null>(null);
+  const [reviewMovie, setReviewMovie] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const handleShowOrderDetail = (orderId: string) => {
     setSelectedOrderId(orderId);
@@ -95,8 +131,7 @@ const ProfilePage: React.FC = () => {
       orderService.getOrderHistory().then((res: any) => res.data ?? res),
     enabled: activeTab === "history",
   });
-  console.log(orderHistory)
-
+  console.log(orderHistory);
   // ---- Notifications Fetching ----
   const {
     data: notificationsData,
@@ -105,8 +140,9 @@ const ProfilePage: React.FC = () => {
     isFetchingNextPage: isFetchingMoreNotifications,
     isLoading: isNotificationsLoading,
   } = useInfiniteQuery({
-    queryKey: ['notifications'],
-    queryFn: ({ pageParam = 0 }) => notificationService.getNotifications(pageParam),
+    queryKey: ["notifications"],
+    queryFn: ({ pageParam = 0 }) =>
+      notificationService.getNotifications(pageParam),
     getNextPageParam: (lastPage: any) => {
       if (lastPage.number < lastPage.totalPages - 1) {
         return lastPage.number + 1;
@@ -114,10 +150,11 @@ const ProfilePage: React.FC = () => {
       return undefined;
     },
     initialPageParam: 0,
-    enabled: activeTab === 'notifications',
+    enabled: activeTab === "notifications",
   });
 
-  const notifications = notificationsData?.pages.flatMap((page) => page.content) || [];
+  const notifications =
+    notificationsData?.pages.flatMap((page) => page.content) || [];
 
   // ---- Reviews Fetching ----
   const {
@@ -127,7 +164,7 @@ const ProfilePage: React.FC = () => {
     isFetchingNextPage: isFetchingMoreReviews,
     isLoading: isReviewsLoading,
   } = useInfiniteQuery({
-    queryKey: ['customer-reviews'],
+    queryKey: ["customer-reviews"],
     queryFn: ({ pageParam = 0 }) => reviewService.getCustomerReviews(pageParam),
     getNextPageParam: (lastPage: any) => {
       if (lastPage.number < lastPage.totalPages - 1) {
@@ -136,17 +173,20 @@ const ProfilePage: React.FC = () => {
       return undefined;
     },
     initialPageParam: 0,
-    enabled: activeTab === 'reviews',
-  })
+    enabled: activeTab === "reviews",
+  });
 
   const reviews = reviewsData?.pages.flatMap((page) => page.data.content) || [];
 
   // ---- Fetch Movie Details for Reviews ----
-  const movieIds = Array.from(new Set(reviews.map((r: any) => r.movieId))).filter(Boolean);
+  const movieIds = Array.from(
+    new Set(reviews.map((r: any) => r.movieId)),
+  ).filter(Boolean);
   const { data: moviesData } = useQuery({
-    queryKey: ['movies-by-ids', movieIds],
-    queryFn: () => movieService.getMoviesByIds(movieIds as string[]).then(res => res.data),
-    enabled: movieIds.length > 0 && activeTab === 'reviews',
+    queryKey: ["movies-by-ids", movieIds],
+    queryFn: () =>
+      movieService.getMoviesByIds(movieIds as string[]).then((res) => res.data),
+    enabled: movieIds.length > 0 && activeTab === "reviews",
   });
 
   const moviesMap = (moviesData || []).reduce((acc: any, movie: any) => {
@@ -240,7 +280,6 @@ const ProfilePage: React.FC = () => {
       });
       return [...map.entries()].map(([label, orders]) => ({ label, orders }));
     }, [orderHistory]);
-
   // ==============================
   // Render
   // ==============================
@@ -331,23 +370,23 @@ const ProfilePage: React.FC = () => {
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
                           <div
                             className={`text-[10px] font-bold px-2.5 py-1 rounded-md border shadow-sm relative transition-colors ${progressPct >= m.pos
-                              ? "bg-alpha-blue text-white border-alpha-blue"
-                              : "bg-white text-slate-500 border-slate-200"
+                                ? "bg-alpha-blue text-white border-alpha-blue"
+                                : "bg-white text-slate-500 border-slate-200"
                               }`}
                           >
                             {m.label}
                             <div
                               className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 border-r border-b rotate-45 ${progressPct >= m.pos
-                                ? "bg-alpha-blue border-alpha-blue"
-                                : "bg-white border-slate-200"
+                                  ? "bg-alpha-blue border-alpha-blue"
+                                  : "bg-white border-slate-200"
                                 }`}
                             />
                           </div>
                         </div>
                         <div
                           className={`w-3 h-3 rounded-full border-2 transition-all duration-300 -translate-x-1/2 ${progressPct >= m.pos
-                            ? "bg-white border-alpha-blue scale-110"
-                            : "bg-white border-slate-300"
+                              ? "bg-white border-alpha-blue scale-110"
+                              : "bg-white border-slate-300"
                             }`}
                         />
                       </div>
@@ -589,46 +628,86 @@ const ProfilePage: React.FC = () => {
                             const snap = order.showScheduleSnapshot;
                             if (!snap) {
                               const orderDate = new Date(order.createdAt);
-                              const dateStr = orderDate.toLocaleDateString('vi-VN', {
-                                weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
-                              });
-                              const timeStr = orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+                              const dateStr = orderDate.toLocaleDateString(
+                                "vi-VN",
+                                {
+                                  weekday: "short",
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                },
+                              );
+                              const timeStr = orderDate.toLocaleTimeString(
+                                "vi-VN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                },
+                              );
                               return (
                                 <div
                                   key={order.id}
-                                  onClick={() => handleShowOrderDetail(order.id)}
+                                  onClick={() =>
+                                    handleShowOrderDetail(order.id)
+                                  }
                                   className="relative flex gap-3 border border-slate-100 rounded-sm p-3 hover:border-alpha-blue/30 hover:shadow-sm transition-all bg-white cursor-pointer"
                                 >
-                                  {order.status === OrderStatus.PAID && (
+                                  {order.status === OrderStatus.CONFIRMED && (
                                     <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-full text-[10px] font-bold flex items-center gap-1">
                                       <Check size={10} strokeWidth={3} />
-                                      Đã thanh toán
+                                      Đã nhận hàng
                                     </div>
                                   )}
                                   {/* Thumbnail */}
                                   <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-50 border border-slate-100 shrink-0 flex items-center justify-center">
-                                    <ShoppingBag size={28} className="text-alpha-orange" />
+                                    <ShoppingBag
+                                      size={28}
+                                      className="text-alpha-orange"
+                                    />
                                   </div>
 
                                   {/* Info */}
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">Đơn hàng Bắp Nước & Đồ Lưu Niệm</p>
+                                    <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
+                                      Đơn hàng Đồ Lưu Niệm
+                                    </p>
 
                                     {/* Tags */}
                                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                                      <span className="text-[11px] font-medium text-white bg-alpha-orange px-1.5 py-0.5 rounded">Bắp nước & Quà tặng</span>
+                                      <span className="text-[11px] font-medium text-white bg-alpha-orange px-1.5 py-0.5 rounded">
+                                        Bắp nước & Quà tặng
+                                      </span>
+                                    </div>
+
+                                    {/* Cinema */}
+                                    <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-1">
+                                      <MapPin
+                                        size={11}
+                                        className="text-slate-400 shrink-0"
+                                      />
+                                      <span className="truncate">
+                                        {order.cinemaName}
+                                      </span>
                                     </div>
 
                                     {/* Time */}
                                     <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-2">
-                                      <Clock size={11} className="text-slate-400 shrink-0" />
-                                      <span>{timeStr} - {dateStr}</span>
+                                      <Clock
+                                        size={11}
+                                        className="text-slate-400 shrink-0"
+                                      />
+                                      <span>
+                                        {timeStr} - {dateStr}
+                                      </span>
                                     </div>
 
                                     {/* Price */}
                                     <div className="flex justify-between items-center mt-2">
                                       <div className="flex-1 text-right">
-                                        <span className="font-bold text-alpha-orange text-sm">{formatCurrency(order.totalPayment)}</span>
+                                        <span className="font-bold text-alpha-orange text-sm">
+                                          {formatCurrency(order.totalPayment)}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
@@ -637,11 +716,24 @@ const ProfilePage: React.FC = () => {
                             }
 
                             const startDate = new Date(snap.startTime);
-                            const dateStr = startDate.toLocaleDateString('vi-VN', {
-                              weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
-                            });
-                            const timeStr = startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-                            const projLabel = `${snap.projectionType} - ${ALL_TRANSLATION.find(t => t.value === snap.translationType)?.label ?? snap.translationType}`;
+                            const dateStr = startDate.toLocaleDateString(
+                              "vi-VN",
+                              {
+                                weekday: "short",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              },
+                            );
+                            const timeStr = startDate.toLocaleTimeString(
+                              "vi-VN",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              },
+                            );
+                            const projLabel = `${snap.projectionType} - ${ALL_TRANSLATION.find((t) => t.value === snap.translationType)?.label ?? snap.translationType}`;
 
                             return (
                               <div
@@ -658,40 +750,64 @@ const ProfilePage: React.FC = () => {
                                 {/* Thumbnail */}
                                 <div className="w-16 h-24 rounded-sm overflow-hidden bg-slate-100 shrink-0">
                                   {snap.movieThumbnailUrl ? (
-                                    <img src={snap.movieThumbnailUrl} alt={snap.movieTitle} className="w-full h-full object-cover" />
+                                    <img
+                                      src={snap.movieThumbnailUrl}
+                                      alt={snap.movieTitle}
+                                      className="w-full h-full object-cover"
+                                    />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <Film size={24} className="text-slate-300" />
+                                      <Film
+                                        size={24}
+                                        className="text-slate-300"
+                                      />
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">{snap.movieTitle}</p>
+                                  <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 mb-1">
+                                    {snap.movieTitle}
+                                  </p>
 
                                   {/* Tags */}
                                   <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                                    <span className="text-[11px] font-medium text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">{projLabel}</span>
+                                    <span className="text-[11px] font-medium text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
+                                      {projLabel}
+                                    </span>
                                     <AgeBadge ageType={snap.ageType} />
                                   </div>
 
                                   {/* Cinema */}
                                   <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-1">
-                                    <MapPin size={11} className="text-slate-400 shrink-0" />
-                                    <span className="truncate">{order.cinemaName} - Phòng {order.roomNumber}</span>
+                                    <MapPin
+                                      size={11}
+                                      className="text-slate-400 shrink-0"
+                                    />
+                                    <span className="truncate">
+                                      {order.cinemaName} - Phòng{" "}
+                                      {order.roomNumber}
+                                    </span>
                                   </div>
 
                                   {/* Time */}
                                   <div className="flex items-center gap-1 text-[12px] text-slate-600 mb-2">
-                                    <Clock size={11} className="text-slate-400 shrink-0" />
-                                    <span>{timeStr} - {dateStr}</span>
+                                    <Clock
+                                      size={11}
+                                      className="text-slate-400 shrink-0"
+                                    />
+                                    <span>
+                                      {timeStr} - {dateStr}
+                                    </span>
                                   </div>
 
                                   {/* Price */}
                                   <div className="flex justify-between items-center mt-2">
                                     <div className="flex-1 text-right">
-                                      <span className="font-bold text-alpha-orange text-sm">{formatCurrency(order.totalPayment)}</span>
+                                      <span className="font-bold text-alpha-orange text-sm">
+                                        {formatCurrency(order.totalPayment)}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -699,156 +815,187 @@ const ProfilePage: React.FC = () => {
                             );
                           })}
                         </div>
-                      </div >
+                      </div>
                     ))}
-                  </div >
+                  </div>
                 )}
-              </div >
+              </div>
             )}
 
             {/* Notifications Tab */}
-            {
-              activeTab === 'notifications' && (
-                <div>
-                  {isNotificationsLoading ? (
-                    <div className="flex justify-center py-20">
-                      <Loader2 className="animate-spin text-alpha-blue" size={36} />
-                    </div>
-                  ) : notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                      <Bell size={48} className="mb-4 opacity-30" />
-                      <p className="font-semibold text-lg">Không có thông báo nào</p>
-                      <p className="text-sm mt-1">Các thông báo mới của bạn sẽ hiển thị tại đây.</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {notifications.map((notification: any) => (
-                        <NotificationItem
-                          key={notification.id}
-                          notification={notification}
-                          onRead={(id, url) => {
-                            if (!notification.read) {
-                              notificationService.markAsRead(id).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ["notifications"] });
+            {activeTab === "notifications" && (
+              <div>
+                {isNotificationsLoading ? (
+                  <div className="flex justify-center py-20">
+                    <Loader2
+                      className="animate-spin text-alpha-blue"
+                      size={36}
+                    />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <Bell size={48} className="mb-4 opacity-30" />
+                    <p className="font-semibold text-lg">
+                      Không có thông báo nào
+                    </p>
+                    <p className="text-sm mt-1">
+                      Các thông báo mới của bạn sẽ hiển thị tại đây.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {notifications.map((notification: any) => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onRead={(id, url) => {
+                          if (!notification.read) {
+                            notificationService.markAsRead(id).then(() => {
+                              queryClient.invalidateQueries({
+                                queryKey: ["notifications"],
                               });
-                            }
-                            if (url) {
-                              window.location.href = url;
-                            }
-                          }}
-                          onDelete={(id) => {
-                            // Optimistic UI: Xóa ngay lập tức khỏi cache
-                            queryClient.setQueryData(['notifications'], (oldData: any) => {
+                            });
+                          }
+                          if (url) {
+                            window.location.href = url;
+                          }
+                        }}
+                        onDelete={(id) => {
+                          // Optimistic UI: Xóa ngay lập tức khỏi cache
+                          queryClient.setQueryData(
+                            ["notifications"],
+                            (oldData: any) => {
                               if (!oldData) return oldData;
                               return {
                                 ...oldData,
                                 pages: oldData.pages.map((page: any) => ({
                                   ...page,
-                                  content: page.content.filter((n: any) => n.id !== id),
+                                  content: page.content.filter(
+                                    (n: any) => n.id !== id,
+                                  ),
                                 })),
                               };
-                            });
-                            // Gọi API xóa ở background
-                            notificationService.deleteNotification(id);
-                          }}
-                        />
-                      ))}
+                            },
+                          );
+                          // Gọi API xóa ở background
+                          notificationService.deleteNotification(id);
+                        }}
+                      />
+                    ))}
 
-                      {hasMoreNotifications && (
-                        <div className="flex justify-center mt-6">
-                          <Button
-                            variant="outline"
-                            onClick={() => fetchNextNotifications()}
-                            disabled={isFetchingMoreNotifications}
-                            className="border-slate-200 text-slate-600 hover:text-alpha-blue hover:border-alpha-blue hover:bg-alpha-blue/5 transition-all"
-                          >
-                            {isFetchingMoreNotifications ? (
-                              <><Loader2 size={16} className="animate-spin mr-2" /> Đang tải...</>
-                            ) : 'Xem thêm'}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            }
+                    {hasMoreNotifications && (
+                      <div className="flex justify-center mt-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => fetchNextNotifications()}
+                          disabled={isFetchingMoreNotifications}
+                          className="border-slate-200 text-slate-600 hover:text-alpha-blue hover:border-alpha-blue hover:bg-alpha-blue/5 transition-all"
+                        >
+                          {isFetchingMoreNotifications ? (
+                            <>
+                              <Loader2
+                                size={16}
+                                className="animate-spin mr-2"
+                              />{" "}
+                              Đang tải...
+                            </>
+                          ) : (
+                            "Xem thêm"
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Reviews Tab */}
-            {
-              activeTab === 'reviews' && (
-                <div>
-                  {isReviewsLoading ? (
-                    <div className="flex justify-center py-20">
-                      <Loader2 size={32} className="animate-spin text-alpha-orange opacity-50" />
-                    </div>
-                  ) : reviews.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                      <Star size={48} className="mb-4 opacity-30" />
-                      <p className="font-semibold text-lg">Chưa có đánh giá nào</p>
-                      <p className="text-sm mt-1">Các đánh giá phim của bạn sẽ hiển thị tại đây.</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {reviews.map((review: any) => (
-                        <ReviewItem
-                          key={review.id}
-                          review={review}
-                          movie={moviesMap[review.movieId]}
-                        />
-                      ))}
+            {activeTab === "reviews" && (
+              <div>
+                {isReviewsLoading ? (
+                  <div className="flex justify-center py-20">
+                    <Loader2
+                      size={32}
+                      className="animate-spin text-alpha-orange opacity-50"
+                    />
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <Star size={48} className="mb-4 opacity-30" />
+                    <p className="font-semibold text-lg">
+                      Chưa có đánh giá nào
+                    </p>
+                    <p className="text-sm mt-1">
+                      Các đánh giá phim của bạn sẽ hiển thị tại đây.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {reviews.map((review: any) => (
+                      <ReviewItem
+                        key={review.id}
+                        review={review}
+                        movie={moviesMap[review.movieId]}
+                      />
+                    ))}
 
-                      {hasMoreReviews && (
-                        <div className="flex justify-center mt-6">
-                          <Button
-                            variant="outline"
-                            onClick={() => fetchNextReviews()}
-                            disabled={isFetchingMoreReviews}
-                            className="border-slate-200 text-slate-600 hover:text-alpha-blue hover:border-alpha-blue hover:bg-alpha-blue/5 transition-all"
-                          >
-                            {isFetchingMoreReviews ? (
-                              <><Loader2 size={16} className="animate-spin mr-2" /> Đang tải...</>
-                            ) : 'Xem thêm'}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            }
+                    {hasMoreReviews && (
+                      <div className="flex justify-center mt-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => fetchNextReviews()}
+                          disabled={isFetchingMoreReviews}
+                          className="border-slate-200 text-slate-600 hover:text-alpha-blue hover:border-alpha-blue hover:bg-alpha-blue/5 transition-all"
+                        >
+                          {isFetchingMoreReviews ? (
+                            <>
+                              <Loader2
+                                size={16}
+                                className="animate-spin mr-2"
+                              />{" "}
+                              Đang tải...
+                            </>
+                          ) : (
+                            "Xem thêm"
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Other Tabs */}
             {activeTab === "policy" && <Policy />}
-          </div >
-        </main >
-      </Container >
+          </div>
+        </main>
+      </Container>
 
       {/* Modals */}
-      < ChangePasswordModal
+      <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
       />
-      < ChangeEmailModal
+      <ChangeEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
       />
-      < OrderDetailModal
+      <OrderDetailModal
         orderId={selectedOrderId}
         isOpen={isOrderDetailOpen}
         onClose={() => setIsOrderDetailOpen(false)}
       />
-      {
-        reviewMovie && (
-          <WriteReviewModal
-            isOpen={isReviewModalOpen}
-            onClose={() => setIsReviewModalOpen(false)}
-            movieId={reviewMovie.id}
-            movieName={reviewMovie.name}
-          />
-        )
-      }
-    </Section >
+      {reviewMovie && (
+        <WriteReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          movieId={reviewMovie.id}
+          movieName={reviewMovie.name}
+        />
+      )}
+    </Section>
   );
 };
 

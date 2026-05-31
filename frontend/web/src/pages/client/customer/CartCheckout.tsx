@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cinemaService } from "@/services/cinema.service";
-import { userService } from "@/services/user.service";
+import { customerService } from "@/services/customer.service";
 import { checkoutService } from "@/services/checkout.service";
 import {
   selectCartItems,
@@ -55,7 +55,7 @@ export const CartCheckout: React.FC = () => {
   // Fetch User profile to get Star points
   const { data: profileResponse, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["customer-profile-checkout"],
-    queryFn: () => userService.getProfile(),
+    queryFn: () => customerService.getProfile(),
   });
   const profile = profileResponse?.data;
   const availablePoints = profile?.loyaltyPoint ?? 0;
@@ -520,46 +520,22 @@ export const CartCheckout: React.FC = () => {
                   <Loader2 className="animate-spin text-alpha-blue" size={32} />
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* City dropdown */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 block ml-1">
-                      Thành phố:
-                    </label>
-                    <select
-                      value={selectedCity}
-                      onChange={(e) => {
-                        setSelectedCity(e.target.value);
-                        setSelectedCinemaId(""); // Reset cinema on city change
-                      }}
-                      className="w-full h-12 bg-white border border-slate-200 rounded-2xl px-4 py-2 text-sm text-slate-700 font-medium focus:outline-hidden focus:ring-2 focus:ring-alpha-blue focus:border-alpha-blue cursor-pointer transition-all duration-300"
-                    >
-                      {citiesList.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Cinema dropdown */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 block ml-1">
-                      Nơi nhận hàng:
-                    </label>
-                    <select
-                      value={selectedCinemaId}
-                      onChange={(e) => setSelectedCinemaId(e.target.value)}
-                      className="w-full h-12 bg-white border border-slate-200 rounded-2xl px-4 py-2 text-sm text-slate-700 font-medium focus:outline-hidden focus:ring-2 focus:ring-alpha-blue focus:border-alpha-blue cursor-pointer transition-all duration-300"
-                    >
-                      <option value="">-- Chọn rạp nhận hàng --</option>
-                      {filteredCinemas.map((cinema) => (
-                        <option key={cinema.id} value={cinema.id}>
-                          {cinema.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-400 block ml-1">
+                    Nơi nhận hàng:
+                  </label>
+                  <select
+                    value={selectedCinemaId}
+                    onChange={(e) => setSelectedCinemaId(e.target.value)}
+                    className="w-full h-12 bg-white border border-slate-200 rounded-2xl px-4 py-2 text-sm text-slate-700 font-medium focus:outline-hidden focus:ring-2 focus:ring-alpha-blue focus:border-alpha-blue cursor-pointer transition-all duration-300"
+                  >
+                    <option value="">-- Chọn rạp nhận hàng --</option>
+                    {cinemas.map((cinema) => (
+                      <option key={cinema.id} value={cinema.id}>
+                        {cinema.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
               <div className="text-xs font-semibold text-slate-400">

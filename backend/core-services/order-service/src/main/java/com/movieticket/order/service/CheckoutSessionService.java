@@ -193,6 +193,8 @@ public class CheckoutSessionService {
         order.setShowScheduleDetails(showScheduleDetails);
 
         Order savedOrder = orderRepository.save(order);
+        savedOrder.setQrCode(savedOrder.getId());
+        savedOrder = orderRepository.save(savedOrder);
 
         cache.setOrderId(savedOrder.getId());
         cache.setStatus(SessionStatus.PAYMENT_PENDING);
@@ -268,6 +270,8 @@ public class CheckoutSessionService {
             order.setShowScheduleDetails(showScheduleDetails);
 
             Order savedOrder = orderRepository.save(order);
+            savedOrder.setQrCode(savedOrder.getId());
+            savedOrder = orderRepository.save(savedOrder);
             cache.setOrderId(savedOrder.getId());
             cache.setStatus(SessionStatus.PAYMENT_SUCCESSFUL);
 
@@ -330,7 +334,7 @@ public class CheckoutSessionService {
                         .price(item.getUnitPrice())
                         .subTotal(item.getSubtotal())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
 
         private List<ShowScheduleDetail> buildShowScheduleDetails(Order order, String showScheduleId, List<SeatRequestDto> seats, String movieId) {
@@ -344,13 +348,17 @@ public class CheckoutSessionService {
                 .finalPrice(seat.getFinalPrice() == null ? 0D : seat.getFinalPrice())
                 .showSeatType(ShowSeatType.LOCKED)
                 .build())
-            .toList();
+            .collect(Collectors.toList());
         }
 
     private CheckoutProductItemCache toProductItemCache(CheckoutProductItemRequest request, Map<String, ProductCache> productsById) {
         ProductCache product = productsById.get(request.getProductId());
         if (product == null || !product.isStatus()) {
             throw new BusinessException("Sản phẩm không tồn tại: " + request.getProductId());
+        }
+
+        if (product.getStockQty() != null && product.getStockQty() < request.getQuantity()) {
+            throw new BusinessException("Sản phẩm " + product.getName() + " không đủ tồn kho (còn lại: " + product.getStockQty() + ").");
         }
 
         double subtotal = request.getQuantity() * product.getUnitPrice();
