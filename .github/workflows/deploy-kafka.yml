@@ -5,9 +5,26 @@ on:
     branches: [ "main" ]
     paths:
       - 'backend/docker-compose.prod.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/docker-compose.prod.yml'
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Validate Production Compose
+      run: |
+        touch backend/.env
+        docker compose -f backend/docker-compose.prod.yml config --quiet
+
   deploy:
+    needs: validate
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -38,3 +55,27 @@ jobs:
           # Kéo bản mới và chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull kafka
           sudo docker compose -f docker-compose.prod.yml up -d kafka
+
+  smoke-test:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Verify Kafka
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.KAFKA_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_INFRASTRUCTURE }}
+        script: |
+          for attempt in $(seq 1 24); do
+            if [ "$(sudo docker inspect -f '{{.State.Running}}' alpha-kafka 2>/dev/null)" = "true" ] \
+              && sudo docker exec alpha-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list > /dev/null; then
+              echo "Kafka is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          sudo docker ps -a --filter name=alpha-kafka
+          sudo docker logs --tail 100 alpha-kafka || true
+          exit 1
