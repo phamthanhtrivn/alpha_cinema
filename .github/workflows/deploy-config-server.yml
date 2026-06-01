@@ -6,9 +6,37 @@ on:
     paths:
       - 'backend/infrastructure/config-server/**'
       - 'backend/docker-compose.prod.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/infrastructure/config-server/**'
+      - 'backend/docker-compose.prod.yml'
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+
+    - name: Run Maven Tests
+      run: mvn -B -f backend/infrastructure/config-server/pom.xml clean test
+
+    - name: Validate Production Compose
+      run: |
+        touch backend/.env
+        docker compose -f backend/docker-compose.prod.yml config --quiet
+
   build-and-push:
+    needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -35,6 +63,7 @@ jobs:
 
   deploy:
     needs: build-and-push
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -63,4 +92,28 @@ jobs:
           sudo docker rmi ${{ secrets.DOCKER_USERNAME }}/config-server:latest || true
           sudo docker compose -f docker-compose.prod.yml pull config-server
           sudo docker compose -f docker-compose.prod.yml up -d config-server
+
+  smoke-test:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Verify Config Server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.CONFIG_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_INFRASTRUCTURE }}
+        script: |
+          for attempt in $(seq 1 24); do
+            if [ "$(sudo docker inspect -f '{{.State.Running}}' config-server 2>/dev/null)" = "true" ] \
+              && curl -fsS "http://127.0.0.1:8888/application/default" > /dev/null; then
+              echo "Config Server is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          sudo docker ps -a --filter name=config-server
+          sudo docker logs --tail 100 config-server || true
+          exit 1
 
