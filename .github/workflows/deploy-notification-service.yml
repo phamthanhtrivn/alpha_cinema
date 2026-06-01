@@ -7,8 +7,37 @@ on:
       - 'backend/support-services/notification-service/**'
       - 'backend/docker-compose.prod.yml' # Chạy lại nếu file compose tổng có cập nhật
 
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/support-services/notification-service/**'
+      - 'backend/docker-compose.prod.yml'
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+
+    - name: Run Maven Tests
+      run: mvn -B -f backend/support-services/notification-service/pom.xml clean test
+
+    - name: Validate Production Compose
+      run: |
+        touch backend/.env
+        docker compose -f backend/docker-compose.prod.yml config --quiet
+
   build-and-push:
+    needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -35,6 +64,7 @@ jobs:
 
   deploy:
     needs: build-and-push
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -69,4 +99,29 @@ jobs:
           # Kéo bản mới và kích nổ
           sudo docker compose -f docker-compose.prod.yml pull notification-service
           sudo docker compose -f docker-compose.prod.yml up -d notification-service
+
+  smoke-test:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Verify Notification Service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.NOTIFICATION_SERVICE }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }}
+        script: |
+          for attempt in $(seq 1 24); do
+            if [ "$(sudo docker inspect -f '{{.State.Running}}' notification-service 2>/dev/null)" = "true" ] \
+              && curl -sS --connect-timeout 2 -o /dev/null "http://127.0.0.1:8087/" \
+              && curl -fsS -H 'Accept: application/json' "http://${{ secrets.EURUKA_SERVER_IP }}:8761/eureka/apps/NOTIFICATION-SERVICE" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+              echo "Notification Service is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          sudo docker ps -a --filter name=notification-service
+          sudo docker logs --tail 100 notification-service || true
+          exit 1
 

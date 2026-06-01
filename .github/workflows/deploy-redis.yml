@@ -5,9 +5,26 @@ on:
     branches: [ "main" ]
     paths:
       - 'backend/docker-compose.prod.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/docker-compose.prod.yml'
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Validate Production Compose
+      run: |
+        touch backend/.env
+        docker compose -f backend/docker-compose.prod.yml config --quiet
+
   deploy:
+    needs: validate
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -38,3 +55,31 @@ jobs:
           # Kéo bản mới và chạy ngầm
           sudo docker compose -f docker-compose.prod.yml pull redis
           sudo docker compose -f docker-compose.prod.yml up -d redis
+
+  smoke-test:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Verify Redis
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.REDIS_SERVER_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY_SUPPORT_SERVICES }}
+        script: |
+          cd /home/ubuntu/alpha_cinema/backend
+          set -a
+          . ./.env
+          set +a
+          for attempt in $(seq 1 24); do
+            if [ "$(sudo docker inspect -f '{{.State.Running}}' alpha-redis 2>/dev/null)" = "true" ] \
+              && sudo docker exec alpha-redis redis-cli -a "$REDIS_PASSWORD" ping | grep -q PONG; then
+              echo "Redis is healthy."
+              exit 0
+            fi
+            sleep 5
+          done
+          sudo docker ps -a --filter name=alpha-redis
+          sudo docker logs --tail 100 alpha-redis || true
+          exit 1
