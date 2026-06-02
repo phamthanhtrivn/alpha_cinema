@@ -130,6 +130,14 @@ export const Checkout = () => {
     enabled: !!movieId,
   });
 
+  useEffect(() => {
+    if (movie?.title) {
+      document.title = `Thanh toán: ${movie.title} | Alpha Cinema`;
+    } else {
+      document.title = "Thanh toán đặt vé | Alpha Cinema";
+    }
+  }, [movie]);
+
   const session = initialSession || sessionData;
   const sessionSeatIds = useMemo(
     () => session?.seats.map((seat) => seat.seatId) ?? [],

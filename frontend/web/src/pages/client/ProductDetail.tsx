@@ -35,6 +35,12 @@ const ProductDetail: React.FC = () => {
       }
     }
   }, [product]);
+
+  useEffect(() => {
+    if (product?.name) {
+      document.title = `${product.name} | Alpha Shop`;
+    }
+  }, [product?.name]);
   const handleIncrement = () => {
     if (!product) return;
     const maxStock = product.stockQty;

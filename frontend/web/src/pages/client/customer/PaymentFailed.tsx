@@ -11,6 +11,10 @@ export const PaymentFailed = () => {
   const navigate = useNavigate();
   const token = searchParams.get("token");
 
+  useEffect(() => {
+    document.title = "Thanh toán thất bại | Alpha Cinema";
+  }, []);
+
   const {
     data: result,
     isLoading,

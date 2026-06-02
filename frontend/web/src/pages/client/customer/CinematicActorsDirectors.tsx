@@ -13,6 +13,15 @@ const CinematicActorsDirectors: React.FC = () => {
   const [page, setPage] = useState<number>(0);
   const size = 10; // Hiển thị 5 nghệ sĩ mỗi trang giống ảnh mẫu
 
+  useEffect(() => {
+    const titleParts = [];
+    titleParts.push("Diễn viên & Đạo diễn");
+    if (nationality) {
+      titleParts.push(nationality);
+    }
+    document.title = `${titleParts.join(" - ")} | Alpha Cinema`;
+  }, [name, nationality]);
+
   // Cuộn lên đầu trang khi chuyển trang hoặc thay đổi bộ lọc
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

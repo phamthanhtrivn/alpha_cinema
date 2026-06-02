@@ -44,21 +44,13 @@ const TrailerModal: React.FC<TrailerModalProps> = ({ isOpen, onClose, trailerUrl
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 md:p-8">
             <div
                 className="absolute inset-0 bg-black/75 transition-opacity"
                 onClick={onClose}
             />
 
             <div className="relative w-full max-w-7xl aspect-video rounded-md bg-black overflow-hidden shadow-2xl z-10 animate-in zoom-in duration-300">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close trailer"
-                    className="absolute right-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
-                >
-                    <X size={22} />
-                </button>
 
                 {embedUrl ? (
                     <>

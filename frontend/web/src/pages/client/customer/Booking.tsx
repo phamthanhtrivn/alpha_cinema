@@ -137,6 +137,14 @@ export const Booking = () => {
     enabled: !!movieId,
   });
 
+  useEffect(() => {
+    if (movie?.title) {
+      document.title = `Đặt vé phim ${movie.title} | Alpha Cinema`;
+    } else {
+      document.title = "Đặt vé xem phim | Alpha Cinema";
+    }
+  }, [movie]);
+
   const { data: showtimes } = useQuery<Array<{ id: string; time: string }>>({
     queryKey: [
       "showtimes-on-date",

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { movieService } from '@/services/movie.service';
 import { Container, Section } from '@/components/common/Layout';
@@ -6,11 +6,18 @@ import { Loader2, Film } from 'lucide-react';
 import { ReleaseStatus } from '@/types/movie';
 import MovieItem from '@/components/client/MovieCard';
 import { Pagination } from '@/components/common/Pagination';
+import TrailerModal from '@/components/client/TrailerModel';
 
 const MoviesPage: React.FC = () => {
     const [nowShowingPage, setNowShowingPage] = useState(0);
     const [upcomingPage, setUpcomingPage] = useState(0);
+    const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+    const [currentTrailerUrl, setCurrentTrailerUrl] = useState('');
     const pageSize = 12;
+
+    useEffect(() => {
+        document.title = "Lịch chiếu phim";
+    }, []);
 
     // Fetch Now Showing Movies
     const { data: nowShowingData, isLoading: isLoadingNowShowing } = useQuery({
@@ -48,7 +55,14 @@ const MoviesPage: React.FC = () => {
                         <>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                                 {nowShowingData.data.content.map((movie: any) => (
-                                    <MovieItem key={movie.id} movie={movie} />
+                                    <MovieItem
+                                        key={movie.id}
+                                        movie={movie}
+                                        onWatchTrailer={(url) => {
+                                            setCurrentTrailerUrl(url);
+                                            setIsTrailerOpen(true);
+                                        }}
+                                    />
                                 ))}
                             </div>
                             <Pagination
@@ -82,7 +96,14 @@ const MoviesPage: React.FC = () => {
                         <>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                                 {upcomingData.data.content.map((movie: any) => (
-                                    <MovieItem key={movie.id} movie={movie} />
+                                    <MovieItem
+                                        key={movie.id}
+                                        movie={movie}
+                                        onWatchTrailer={(url) => {
+                                            setCurrentTrailerUrl(url);
+                                            setIsTrailerOpen(true);
+                                        }}
+                                    />
                                 ))}
                             </div>
                             <Pagination
@@ -99,6 +120,11 @@ const MoviesPage: React.FC = () => {
                     )}
                 </Container>
             </Section>
+            <TrailerModal
+                isOpen={isTrailerOpen}
+                onClose={() => setIsTrailerOpen(false)}
+                trailerUrl={currentTrailerUrl}
+            />
         </div>
     );
 };

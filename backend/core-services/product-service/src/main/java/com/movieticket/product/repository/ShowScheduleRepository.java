@@ -28,6 +28,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
     boolean existsOverlapExcludeId(String roomId, LocalDateTime startTime, LocalDateTime endTime, String excludeId);
 
     @Query("SELECT s FROM ShowSchedule s WHERE s.movie.id = :movieId " +
+            "AND s.movie.releaseStatus != com.movieticket.product.enums.ReleaseStatus.ENDED " +
             "AND CAST(s.startTime AS date) = :date " +
             "AND s.status = true " +
             "AND s.startTime >= :cutoff")
@@ -39,6 +40,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT s.id AS id, s.startTime AS startTime FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId " +
+            "AND s.movie.releaseStatus != com.movieticket.product.enums.ReleaseStatus.ENDED " +
             "AND s.cinemaId = :cinemaId " +
             "AND CAST(s.startTime AS date) = :date " +
             "AND s.status = true " +
@@ -53,6 +55,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT DISTINCT CAST(s.startTime AS date) FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId " +
+            "AND s.movie.releaseStatus != com.movieticket.product.enums.ReleaseStatus.ENDED " +
             "AND s.status = true " +
             "AND s.startTime >= :cutoff " +
             "ORDER BY 1")
@@ -75,6 +78,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT DISTINCT s.cinemaId FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId " +
+            "AND s.movie.releaseStatus != com.movieticket.product.enums.ReleaseStatus.ENDED " +
             "AND s.status = true " +
             "AND s.startTime >= :cutoff")
     List<String> findActiveCinemaIdsByMovie(
@@ -84,6 +88,7 @@ public interface ShowScheduleRepository extends JpaRepository<ShowSchedule, Stri
 
     @Query("SELECT DISTINCT CAST(s.startTime AS date) FROM ShowSchedule s " +
             "WHERE s.movie.id = :movieId AND s.cinemaId = :cinemaId " +
+            "AND s.movie.releaseStatus != com.movieticket.product.enums.ReleaseStatus.ENDED " +
             "AND s.status = true " +
             "AND s.startTime >= :cutoff " +
             "ORDER BY 1 ASC")

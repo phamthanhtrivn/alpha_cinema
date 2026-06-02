@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Section } from '../../components/common/Layout';
 import MovieItem from '../../components/client/MovieCard';
@@ -8,12 +8,19 @@ import { useQuery } from '@tanstack/react-query';
 import ScheduleSearchBar from '../../components/client/ScheduleSearchBar';
 import BannerSlider from '../../components/client/BannerSlider';
 import { Button } from '@/components/ui/button';
+import TrailerModal from '../../components/client/TrailerModel';
 
 type Tab = 'NOW_SHOWING' | 'UPCOMING';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('NOW_SHOWING');
+  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+  const [currentTrailerUrl, setCurrentTrailerUrl] = useState('');
+
+  useEffect(() => {
+    document.title = "Alpha Cinema | Hệ thống rạp chiếu phim mới";
+  }, []);
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies', activeTab],
@@ -75,7 +82,14 @@ const Home: React.FC = () => {
             <div className="flex flex-col gap-10">
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8 justify-items-center">
                 {movies.map((movie: any) => (
-                  <MovieItem key={movie.id} movie={movie} />
+                  <MovieItem
+                    key={movie.id}
+                    movie={movie}
+                    onWatchTrailer={(url) => {
+                      setCurrentTrailerUrl(url);
+                      setIsTrailerOpen(true);
+                    }}
+                  />
                 ))}
               </div>
 
@@ -156,6 +170,11 @@ const Home: React.FC = () => {
           </div>
         </Container>
       </Section>
+      <TrailerModal
+        isOpen={isTrailerOpen}
+        onClose={() => setIsTrailerOpen(false)}
+        trailerUrl={currentTrailerUrl}
+      />
     </div>
   );
 };

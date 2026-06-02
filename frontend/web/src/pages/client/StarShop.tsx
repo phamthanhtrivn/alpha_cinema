@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/Layout";
 import { productService } from "@/services/product.service";
@@ -21,6 +21,10 @@ interface ProductListDTO {
 const StarShop: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    document.title = "Alpha Shop | Alpha Cinema";
+  }, []);
 
   const { data: products = [], isLoading: loading } = useQuery<ProductListDTO[]>({
     queryKey: ["souvenir-products"],

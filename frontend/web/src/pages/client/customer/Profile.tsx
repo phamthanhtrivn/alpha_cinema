@@ -99,6 +99,7 @@ const ProfilePage: React.FC = () => {
       setActiveTab(tab as Tab);
     }
   }, [searchParams]);
+
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -121,6 +122,14 @@ const ProfilePage: React.FC = () => {
     queryFn: () => customerService.getProfile().then((res) => res.data),
   });
 
+  useEffect(() => {
+    if (profile?.fullName) {
+      document.title = `${profile.fullName} | Alpha Cinema`;
+    } else {
+      document.title = "Thông tin cá nhân | Alpha Cinema";
+    }
+  }, [profile]);
+
   const {
     data: orderHistory,
     isLoading: isHistoryLoading,
@@ -131,7 +140,6 @@ const ProfilePage: React.FC = () => {
       orderService.getOrderHistory().then((res: any) => res.data ?? res),
     enabled: activeTab === "history",
   });
-  console.log(orderHistory);
   // ---- Notifications Fetching ----
   const {
     data: notificationsData,
@@ -370,23 +378,23 @@ const ProfilePage: React.FC = () => {
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
                           <div
                             className={`text-[10px] font-bold px-2.5 py-1 rounded-md border shadow-sm relative transition-colors ${progressPct >= m.pos
-                                ? "bg-alpha-blue text-white border-alpha-blue"
-                                : "bg-white text-slate-500 border-slate-200"
+                              ? "bg-alpha-blue text-white border-alpha-blue"
+                              : "bg-white text-slate-500 border-slate-200"
                               }`}
                           >
                             {m.label}
                             <div
                               className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 border-r border-b rotate-45 ${progressPct >= m.pos
-                                  ? "bg-alpha-blue border-alpha-blue"
-                                  : "bg-white border-slate-200"
+                                ? "bg-alpha-blue border-alpha-blue"
+                                : "bg-white border-slate-200"
                                 }`}
                             />
                           </div>
                         </div>
                         <div
                           className={`w-3 h-3 rounded-full border-2 transition-all duration-300 -translate-x-1/2 ${progressPct >= m.pos
-                              ? "bg-white border-alpha-blue scale-110"
-                              : "bg-white border-slate-300"
+                            ? "bg-white border-alpha-blue scale-110"
+                            : "bg-white border-slate-300"
                             }`}
                         />
                       </div>

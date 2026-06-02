@@ -1,4 +1,7 @@
 import { useEffect, useMemo } from "react";
+import { useDispatch } from "react-redux";
+import { clearCartThunk } from "@/store/slices/cartSlice";
+import type { AppDispatch } from "@/store";
 import {
   Navigate,
   useLocation,
@@ -36,6 +39,12 @@ export const PaymentSuccess = () => {
 
   const result = useMemo(() => stateResult || data, [data, stateResult]);
 
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    document.title = "Thanh toán thành công | Alpha Cinema";
+  }, []);
+
   useEffect(() => {
     if (result && !result.success && token) {
       navigate(`/payment/failed?token=${encodeURIComponent(token)}`, {
@@ -43,6 +52,16 @@ export const PaymentSuccess = () => {
       });
     }
   }, [navigate, result, token]);
+
+  useEffect(() => {
+    if (result && result.success) {
+      const isCartCheckout = sessionStorage.getItem("isCartCheckout");
+      if (isCartCheckout === "true") {
+        void dispatch(clearCartThunk());
+        sessionStorage.removeItem("isCartCheckout");
+      }
+    }
+  }, [result, dispatch]);
 
   if (!token && !stateResult) {
     return <Navigate to="/" replace />;

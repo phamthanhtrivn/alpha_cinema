@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useLocation,
   useNavigate,
@@ -94,6 +94,14 @@ export const CheckoutConfirm = () => {
     },
     enabled: !!movieId,
   });
+
+  useEffect(() => {
+    if (movie?.title) {
+      document.title = `Xác nhận đặt vé: ${movie.title} | Alpha Cinema`;
+    } else {
+      document.title = "Xác nhận đặt vé | Alpha Cinema";
+    }
+  }, [movie]);
 
   const session = initialSession || sessionData;
   const { isExpired: isSessionExpired } = useBookingCountdown(

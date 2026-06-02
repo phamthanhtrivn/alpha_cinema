@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Container, Section } from "@/components/common/Layout";
@@ -23,6 +23,15 @@ const CinematicArtistDetail: React.FC = () => {
     enabled: !!id,
   });
 
+  const artist = data?.data;
+  const artistMovies = artistMoviesData?.data?.content || [];
+
+  useEffect(() => {
+    if (artist?.fullName) {
+      document.title = `Nghệ sĩ ${artist.fullName}`;
+    }
+  }, [artist?.fullName, artist?.type]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-32 min-h-[60vh]">
@@ -30,9 +39,6 @@ const CinematicArtistDetail: React.FC = () => {
       </div>
     );
   }
-
-  const artist = data?.data;
-  const artistMovies = artistMoviesData?.data?.content || [];
 
   if (!artist) {
     return (

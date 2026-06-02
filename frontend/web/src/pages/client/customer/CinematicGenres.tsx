@@ -17,6 +17,22 @@ const CinematicGenres: React.FC = () => {
   const [page, setPage] = useState<number>(0);
   const size = 6; // Hiển thị 6 phim mỗi trang
 
+  useEffect(() => {
+    const titleParts = [];
+    if (genre) {
+      titleParts.push(`Phim ${genre}`);
+    } else {
+      titleParts.push("Thể loại phim");
+    }
+    if (nationality) {
+      titleParts.push(nationality);
+    }
+    if (year) {
+      titleParts.push(`năm ${year}`);
+    }
+    document.title = `${titleParts.join(" - ")} | Alpha Cinema`;
+  }, [genre, nationality, year]);
+
   // Tự động cuộn lên đầu trang khi chuyển trang hoặc thay đổi bộ lọc
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

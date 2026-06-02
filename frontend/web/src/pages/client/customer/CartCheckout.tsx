@@ -34,6 +34,10 @@ export const CartCheckout: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
+  useEffect(() => {
+    document.title = "Thanh toán giỏ hàng | Alpha Cinema";
+  }, []);
+
   // Fetch Cart data from Redux store
   const cartItems = useSelector(selectCartItems);
   const cartTotalPrice = useSelector(selectCartTotalPrice);
@@ -267,15 +271,16 @@ export const CartCheckout: React.FC = () => {
       const response = await checkoutService.checkoutCartByMomo(payload, selectedCinemaId);
 
       if (response.success && response.data) {
-        // Clear customer cart since order was successfully created
-        await dispatch(clearCartThunk());
-
         if (response.data.paymentUrl) {
+          // Set flag in sessionStorage indicating that we are in a cart checkout flow
+          sessionStorage.setItem("isCartCheckout", "true");
           // Redirect to payment portal
           window.location.assign(response.data.paymentUrl);
         } else {
           // Zero payment or paid with points
           toast.success("Thanh toán thành công bằng điểm Star!");
+          await dispatch(clearCartThunk());
+          sessionStorage.removeItem("isCartCheckout");
           navigate("/payment/success");
         }
       } else {
@@ -698,18 +703,12 @@ export const CartCheckout: React.FC = () => {
                   </Button>
                 </div>
 
-                {/* Display dynamic alert under buttons like Mockup */}
-                {!selectedCinemaId ? (
+                {!selectedCinemaId && (
                   <div className="flex items-center gap-2 rounded-2xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-700 font-semibold animate-pulse">
                     <AlertCircle size={16} className="shrink-0" />
                     <span>Chọn rạp nhận hàng trước khi thanh toán</span>
                   </div>
-                ) : paymentMethod === "VNPAY" ? (
-                  <div className="flex items-center gap-2 rounded-2xl bg-orange-50 border border-orange-200 p-3.5 text-xs text-orange-700 font-semibold">
-                    <AlertCircle size={16} className="shrink-0" />
-                    <span>Vui lòng chọn Ví MoMo để tiến hành thanh toán bắp nước</span>
-                  </div>
-                ) : null}
+                )}
               </div>
             </CardContent>
           </Card>
