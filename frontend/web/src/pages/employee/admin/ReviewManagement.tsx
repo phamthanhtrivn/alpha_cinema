@@ -595,15 +595,13 @@ const ReviewManagement: React.FC = () => {
                 )}
 
                 {/* Nút xóa bình luận */}
-                {review.status !== "HIDDEN" && (
-                  <button
-                    onClick={() => handleDelete(review.id)}
-                    className="p-2.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow active:scale-95"
-                    title="Xóa bình luận"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+                <button
+                  onClick={() => handleDelete(review.id)}
+                  className="p-2.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow active:scale-95"
+                  title="Xóa bình luận"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             </TableCell>
           </TableRow>

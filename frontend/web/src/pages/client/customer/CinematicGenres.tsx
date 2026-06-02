@@ -126,7 +126,7 @@ const CinematicGenres: React.FC = () => {
 
               {/* Filters row & Divider line */}
               <div className="space-y-4 mb-6">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col-5 items-center gap-3">
                   {/* Filter Genre */}
                   <select
                     value={genre}
